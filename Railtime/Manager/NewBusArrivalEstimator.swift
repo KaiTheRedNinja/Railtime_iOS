@@ -29,7 +29,7 @@ struct BusArrivalEstimate {
     /// The service number of this bus.
     var busServiceNo: String
     /// The projected arrival time at the target stop.
-    var eta: TimeOfDay
+    var eta: Date
 
     /// Where the information for the bus's arrival came from
     var source: DataSource
@@ -57,7 +57,7 @@ struct BusArrivalEstimate {
     init(
         busId: String,
         busServiceNo: String,
-        eta: TimeOfDay,
+        eta: Date,
         source: DataSource,
         projectedFromStop: String? = nil,
         load: String? = nil,
@@ -76,7 +76,7 @@ struct BusArrivalEstimate {
 
     /// The time delta from `ref` until this bus's ETA.
     func minutesFrom(_ ref: Date) -> TimeDelta {
-        eta.timeDelta(since: .init(date: ref))
+        eta.timeDelta(since: ref)
     }
 }
 
@@ -179,12 +179,7 @@ final class NewBusArrivalEstimator {
             // translation sorts by each stop's earliest estimate instead,
             // which best matches the apparent intent.
             let sorted = estimates.sorted { lhs, rhs in
-                if let lhs = lhs.estimates.first?.eta, let rhs = rhs.estimates.first?.eta {
-                    lhs.isBetween(latest: rhs)
-                } else {
-                    // one or both missing - return false
-                    false
-                }
+                (lhs.estimates.first?.eta ?? .distantFuture) <= (rhs.estimates.first?.eta ?? .distantFuture)
             }
             return Array(sorted.prefix(numTarget))
         }
@@ -193,7 +188,7 @@ final class NewBusArrivalEstimator {
         if !confirmed.estimates.isEmpty {
             // we would like to use the 2nd confirmed ETA, but we will make do with the 1st if there is only one.
             let secondOrFirstIndex = min(confirmed.estimates.count - 1, 1)
-            let firstETADelta = confirmed.estimates[secondOrFirstIndex].eta.timeDelta(since: TimeOfDay(date: now))
+            let firstETADelta = confirmed.estimates[secondOrFirstIndex].eta.timeDelta(since: now)
             stopGap = min(firstETADelta * STOP_GAP_PERCENTAGE, MAX_STOP_GAP) // Cap the stop gap at the maximum allowed
         }
 
@@ -290,7 +285,7 @@ final class NewBusArrivalEstimator {
                 rawWindow.estimates.append(BusArrivalEstimate(
                     busId: "UNASSIGNED",
                     busServiceNo: serviceNo,
-                    eta: TimeOfDay(date: etaUpstream),
+                    eta: etaUpstream,
                     source: .live,
                     load: nextBusN.load,
                     feature: nextBusN.feature,
@@ -314,7 +309,7 @@ final class NewBusArrivalEstimator {
                     // to get the time until the bus arrives at this stop, which is what we want to use for the stop gap
                     // calculation.
                     let idx = min(etas.count - 1, 1)
-                    let candidateGap = min(etas[idx].eta.timeDelta(since: TimeOfDay(date: now)) * STOP_GAP_PERCENTAGE, MAX_STOP_GAP)
+                    let candidateGap = min(etas[idx].eta.timeDelta(since: now) * STOP_GAP_PERCENTAGE, MAX_STOP_GAP)
                     stopGap = max(stopGap, candidateGap)
                 }
             }
@@ -514,10 +509,12 @@ final class NewBusArrivalEstimator {
         }
 
         // compare the ETAs for both AT THEIR RESPECTIVE TIMES, then with the projected delta time of the raw window
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm:ss"
         print()
-        print(tail.deltaTime / 60, "min Tail ETAs:", tail.estimates.map { $0.eta.hhmmdd }.joined(separator: " | "))
-        print(rawWindow.deltaTime / 60, "min Raw ETAs:", rawWindow.estimates.map { $0.eta.hhmmdd  }.joined(separator: " | "))
-        print("PROJECTED ETAs:", projectedETAs.map { $0.hhmmdd }.joined(separator: " | "))
+        print(tail.deltaTime / 60, "min Tail ETAs:", tail.estimates.map { formatter.string(from: $0.eta) }.joined(separator: " | "))
+        print(rawWindow.deltaTime / 60, "min Raw ETAs:", rawWindow.estimates.map { formatter.string(from: $0.eta) }.joined(separator: " | "))
+        print("PROJECTED ETAs:", projectedETAs.map { formatter.string(from: $0) }.joined(separator: " | "))
         print()
 
         // get best alignment
@@ -571,7 +568,7 @@ final class NewBusArrivalEstimator {
 
                 // if the earliest projected ETA could feasibly be the same bus as the last bus in the tail,
                 // we disregard this offset because it is probably a ghost bus.
-                if projectedETAs[0].isBetween(latest: tail.estimates.last!.eta.incrementingBy(timeDelta: MAX_ALIGNMENT_ERROR)) {
+                if projectedETAs[0] <= tail.estimates.last!.eta.incrementingBy(timeDelta: MAX_ALIGNMENT_ERROR) {
                     print("[non-overlap] Has plausible alignment, but window starts before tail, skipping")
                     continue
                 }
@@ -634,7 +631,7 @@ final class NewBusArrivalEstimator {
         for i in rawWindowEstimates.indices {
             rawWindowEstimates[i].busId = "bus_\(firstBusNumForThisStop + i)"
         }
-        var thisStop = StopArrivalEstimates(
+        let thisStop = StopArrivalEstimates(
             stopId: rawWindow.stopId,
             deltaTime: rawWindow.deltaTime + bestDrift,
             deltaError: rawWindow.deltaError + resolvedBestError,
@@ -686,7 +683,7 @@ final class NewBusArrivalEstimator {
             out.append(BusArrivalEstimate(
                 busId: "bus_\(out.count)",
                 busServiceNo: serviceNo,
-                eta: TimeOfDay(date: eta),
+                eta: eta,
                 source: .live,
                 projectedFromStop: nil,
                 load: nextBus.load,
@@ -717,8 +714,8 @@ final class NewBusArrivalEstimator {
         var estimates = estimates
         let anchor = estimates.last?.estimates
             .map { $0.eta }
-            .max(by: { $0.secondsSinceMidnight > $1.secondsSinceMidnight }) ?? TimeOfDay(date: now)
-        let calendar = Calendar.current
+            .max() ?? now
+//        let calendar = Calendar.current
 
         func bandMidpoint(_ band: String?) -> Double? {
             let trimmed = (band ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
@@ -733,11 +730,12 @@ final class NewBusArrivalEstimator {
         }
 
         var gap: Double?
-        if anchor.isBetween(earliest: .init(hh: 6, mm: 30), latest: .init(hh: 8, mm: 30)) {
+        let anchorTOD = TimeOfDay(date: anchor)
+        if anchorTOD.isBetween(earliest: .init(hh: 6, mm: 30), latest: .init(hh: 8, mm: 30)) {
             gap = bandMidpoint(freq.amPeakFreq)
-        } else if anchor.isBetween(earliest: .init(hh: 17, mm: 00), latest: .init(hh: 19, mm: 00)) {
+        } else if anchorTOD.isBetween(earliest: .init(hh: 17, mm: 00), latest: .init(hh: 19, mm: 00)) {
             gap = bandMidpoint(freq.pmPeakFreq)
-        } else if anchor.isBetween(earliest: .init(hh: 19, mm: 00)) {
+        } else if anchorTOD.isBetween(earliest: .init(hh: 19, mm: 00)) {
             gap = bandMidpoint(freq.pmOffpeakFreq)
         } else {
             gap = bandMidpoint(freq.amOffpeakFreq)

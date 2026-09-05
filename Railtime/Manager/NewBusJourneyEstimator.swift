@@ -234,7 +234,7 @@ final class NewBusJourneyEstimator {
                     rawWindow.estimates.append(BusArrivalEstimate(
                         busId: "UNASSIGNED",
                         busServiceNo: serviceNo,
-                        eta: TimeOfDay(date: etaDownstream),
+                        eta: etaDownstream,
                         source: .live,
                         load: nextBusN.load,
                         feature: nextBusN.feature,
@@ -366,10 +366,12 @@ final class NewBusJourneyEstimator {
             $0.eta.incrementingBy(timeDelta: .zero - (rawWindow.deltaTime - tail.deltaTime))
         }
 
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm:ss"
         print()
-        print(tail.deltaTime.seconds / 60, "min Tail ETAs:", tail.estimates.map { $0.eta.hhmmdd }.joined(separator: " | "))
-        print(rawWindow.deltaTime.seconds / 60, "min Raw ETAs:", rawWindow.estimates.map { $0.eta.hhmmdd }.joined(separator: " | "))
-        print("PROJECTED (onto tail timeline) ETAs:", projectedETAs.map { $0.hhmmdd }.joined(separator: " | "))
+        print(tail.deltaTime / 60, "min Tail ETAs:", tail.estimates.map { formatter.string(from: $0.eta) }.joined(separator: " | "))
+        print(rawWindow.deltaTime / 60, "min Raw ETAs:", rawWindow.estimates.map { formatter.string(from: $0.eta) }.joined(separator: " | "))
+        print("PROJECTED ETAs:", projectedETAs.map { formatter.string(from: $0) }.joined(separator: " | "))
         print()
 
         // offset now walks over raw_window instead of tail (see the doc comment above).
@@ -480,7 +482,7 @@ final class NewBusJourneyEstimator {
             ))
         }
 
-        thisStop.estimates.sort { $0.eta.secondsSinceMidnight < $1.eta.secondsSinceMidnight }
+        thisStop.estimates.sort { $0.eta < $1.eta }
 
         known.append(thisStop)
         return (known, bestDrift)
