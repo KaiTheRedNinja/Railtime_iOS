@@ -1,99 +1,8 @@
 import Foundation
 
 // --------------------------------------------------------------------------
-// Array helper
+// Core estimator
 // --------------------------------------------------------------------------
-
-extension Array {
-    /// Indexes into the array the way Python's `list` does: a negative
-    /// index counts backwards from the end (`stops[-1]` is the last
-    /// element). Used to faithfully mirror a couple of spots in the
-    /// original Python where an index can legitimately go negative and
-    /// Python's wraparound (rather than a crash) is the observed behaviour.
-    /// Just like Python, an index that is out of range even after
-    /// wraparound will trap.
-    subscript(pythonIndex index: Int) -> Element {
-        let resolvedIndex = index >= 0 ? index : count + index
-        return self[resolvedIndex]
-    }
-}
-
-// --------------------------------------------------------------------------
-// Data models
-// --------------------------------------------------------------------------
-
-/// An estimate for when a bus, with a given ID, will arrive at a given stop.
-struct BusArrivalEstimate {
-    /// The ID of this bus.
-    var busId: String
-    /// The service number of this bus.
-    var busServiceNo: String
-    /// The projected arrival time at the target stop.
-    var eta: Date
-
-    /// Where the information for the bus's arrival came from
-    var source: DataSource
-    /// The upstream stop code used for this projection.
-    var projectedFromStop: String?
-
-    /// Optional metadata from the API.
-    var load: String?
-    /// Optional metadata from the API.
-    var feature: String?
-    /// Optional metadata from the API.
-    var busType: String?
-
-    /// Where the information for a bus' arrival comes from
-    enum DataSource {
-        /// The data was obtained directly from the LTA Live Bus API
-        case live
-        /// The data was projected from an up/downstream `live` bus
-        case projected
-        /// The data was extrapolated from the last known `live` or `projected` bus using known frequency data
-        case extrapolated
-    }
-
-    /// Optional metadata from the API.
-    init(
-        busId: String,
-        busServiceNo: String,
-        eta: Date,
-        source: DataSource,
-        projectedFromStop: String? = nil,
-        load: String? = nil,
-        feature: String? = nil,
-        busType: String? = nil
-    ) {
-        self.busId = busId
-        self.busServiceNo = busServiceNo
-        self.eta = eta
-        self.source = source
-        self.projectedFromStop = projectedFromStop
-        self.load = load
-        self.feature = feature
-        self.busType = busType
-    }
-
-    /// The time delta from `ref` until this bus's ETA.
-    func minutesFrom(_ ref: Date) -> TimeDelta {
-        eta.timeDelta(since: ref)
-    }
-}
-
-/// All the estimates for when busses will arrive at this stop.
-struct StopArrivalEstimates {
-    /// The ID of this stop.
-    var stopId: String
-    /// The delta-time of this stop, relative to some downstream target, in
-    /// seconds (equivalent to the Python `timedelta` field of the same
-    /// name).
-    var deltaTime: TimeDelta
-    /// The error in the delta-time of this stop, relative to some
-    /// downstream target, in seconds.
-    var deltaError: TimeDelta
-    /// The arrival estimates, first.
-    var estimates: [BusArrivalEstimate]
-}
 
 /// Errors thrown by ``NewBusArrivalEstimator``.
 enum BusArrivalEstimatorError: Error {
@@ -102,10 +11,6 @@ enum BusArrivalEstimatorError: Error {
     /// The requested stop isn't on any direction of the requested service.
     case stopNotFound(stopCode: String, serviceNo: String)
 }
-
-// --------------------------------------------------------------------------
-// Core estimator
-// --------------------------------------------------------------------------
 
 final class NewBusArrivalEstimator {
     /// The underlying API client.
@@ -221,7 +126,7 @@ final class NewBusArrivalEstimator {
             // only bumped on a successful, far-enough-upstream poll), this
             // indexes from the end of `stops`, exactly like the Python
             // source's `stops[upstream_idx]` would.
-            let upstreamRow = stops[pythonIndex: upstreamIdx]
+            let upstreamRow = stops[wrapping: upstreamIdx]
             let upstreamCode = upstreamRow.busStopCode
 
             guard let upstreamScheduleDelta = scheduleDelta(upstreamRow: upstreamRow, targetRow: targetRow, dayType: currentDayType) else {

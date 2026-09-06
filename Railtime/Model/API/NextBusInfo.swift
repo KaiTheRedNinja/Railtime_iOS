@@ -24,11 +24,11 @@ struct NextBusInfo: Decodable {
     /// The bus's visit number at this stop (1 = first visit this trip).
     let visitNumber: String?
     /// The bus's passenger load, e.g. "SEA", "SDA", "LSD".
-    let load: String?
+    let load: Load?
     /// Bus features, e.g. "WAB" for wheelchair-accessible.
     let feature: String?
     /// The bus type, e.g. "SD" (single-deck), "DD" (double-deck), "BD" (bendy).
-    let type: String?
+    let type: BusVariant?
 
     enum CodingKeys: String, CodingKey {
         case originCode = "OriginCode"
@@ -40,5 +40,17 @@ struct NextBusInfo: Decodable {
         case load = "Load"
         case feature = "Feature"
         case type = "Type"
+    }
+
+    enum Load: String, Codable {
+        case seatsAvailable = "SEA"
+        case standingAvailable = "SDA"
+        case limitedStanding = "LSD"
+    }
+
+    enum BusVariant: String, Codable {
+        case singleDeck = "SD"
+        case doubleDeck = "DD"
+        case bendy = "BD"
     }
 }
