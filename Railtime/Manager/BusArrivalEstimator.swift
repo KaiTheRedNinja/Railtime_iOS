@@ -4,7 +4,7 @@ import Foundation
 // Core estimator
 // --------------------------------------------------------------------------
 
-/// Errors thrown by ``NewBusArrivalEstimator``.
+/// Errors thrown by ``BusArrivalEstimator``.
 enum BusArrivalEstimatorError: Error {
     /// No BusRoutes data exists at all for the requested service.
     case noRouteData(serviceNo: String)
@@ -12,7 +12,7 @@ enum BusArrivalEstimatorError: Error {
     case stopNotFound(stopCode: String, serviceNo: String)
 }
 
-final class NewBusArrivalEstimator {
+final class BusArrivalEstimator {
     /// The underlying API client.
     let client: LTAClient
     /// The reference "current time" estimates are computed relative to.
@@ -198,7 +198,7 @@ final class NewBusArrivalEstimator {
                 ))
             }
 
-            let mergeResult = NewBusArrivalEstimator.alignMergeAndProjectWindow(
+            let mergeResult = BusArrivalEstimator.alignMergeAndProjectWindow(
                 known: estimates, rawWindow: rawWindow, currentBusCount: busCount
             )
             estimates = mergeResult.known

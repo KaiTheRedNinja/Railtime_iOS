@@ -4,9 +4,9 @@ import Foundation
 // Journey estimator
 // --------------------------------------------------------------------------
 
-/// Errors thrown by ``NewBusJourneyEstimator``.
+/// Errors thrown by ``BusJourneyEstimator``.
 enum BusJourneyEstimatorError: Error {
-    /// Neither an existing `NewBusArrivalEstimator` nor an `LTAClient` was
+    /// Neither an existing `BusArrivalEstimator` nor an `LTAClient` was
     /// supplied to the initializer.
     case missingArrivalEstimatorOrClient
     /// The requested service doesn't serve the destination stop at all (in
@@ -17,8 +17,8 @@ enum BusJourneyEstimatorError: Error {
     case destinationNotDownstream(destinationStopCode: String, busStopCode: String, serviceNo: String)
 }
 
-/// Wraps a `NewBusArrivalEstimator` to additionally estimate arrivals at a
-/// downstream destination stop. `NewBusArrivalEstimator` already knows how
+/// Wraps a `BusArrivalEstimator` to additionally estimate arrivals at a
+/// downstream destination stop. `BusArrivalEstimator` already knows how
 /// to look *upstream* of a target stop to fill in future arrivals; this
 /// class reuses it for the "upstream -> target" leg, then walks
 /// *downstream* from the target to the destination using a mirrored
@@ -29,9 +29,9 @@ enum BusJourneyEstimatorError: Error {
 /// because it only cares about the target stop's arrivals. Here, the user
 /// wants to see the bus's progress at every stop between the target and the
 /// destination, so every intermediate stop is queried and returned.
-final class NewBusJourneyEstimator {
+final class BusJourneyEstimator {
     /// The wrapped arrival estimator used for the upstream -> target leg.
-    let arrivalEstimator: NewBusArrivalEstimator
+    let arrivalEstimator: BusArrivalEstimator
     /// Convenience passthrough so callers can treat this like a
     /// self-contained object without reaching into `arrivalEstimator`.
     let client: LTAClient
@@ -43,7 +43,7 @@ final class NewBusJourneyEstimator {
     var now: Date
 
     /// Creates a journey estimator, either wrapping an existing
-    /// `NewBusArrivalEstimator` or building one from `client`.
+    /// `BusArrivalEstimator` or building one from `client`.
     ///
     /// - Parameters:
     ///   - arrivalEstimator: An existing arrival estimator to wrap. Takes
@@ -59,7 +59,7 @@ final class NewBusJourneyEstimator {
     /// - Throws: ``BusJourneyEstimatorError/missingArrivalEstimatorOrClient``
     ///   if neither `arrivalEstimator` nor `client` is supplied.
     init(
-        arrivalEstimator: NewBusArrivalEstimator? = nil,
+        arrivalEstimator: BusArrivalEstimator? = nil,
         client: LTAClient? = nil,
         now: Date? = nil,
         cacheDir: String = "./lta_cache",
@@ -71,7 +71,7 @@ final class NewBusJourneyEstimator {
             guard let client else {
                 throw BusJourneyEstimatorError.missingArrivalEstimatorOrClient
             }
-            self.arrivalEstimator = NewBusArrivalEstimator(
+            self.arrivalEstimator = BusArrivalEstimator(
                 client: client, now: now, cacheDir: cacheDir, cacheTTLHours: cacheTTLHours
             )
         }
@@ -156,7 +156,7 @@ final class NewBusJourneyEstimator {
         let targetRow = stops[targetIdx]
 
         // `known` mirrors the internal (pre-reversal) list used by
-        // NewBusArrivalEstimator.estimate: it grows one stop at a time, and
+        // BusArrivalEstimator.estimate: it grows one stop at a time, and
         // delta_time is measured as (this stop's time - target's time), so
         // it starts at 0 for the target stop itself and grows *positive* as
         // we move further downstream (no inversion needed here, since these
@@ -181,7 +181,7 @@ final class NewBusJourneyEstimator {
             let downstreamCode = downstreamRow.busStopCode
 
             // Schedule delta is always computed relative to the fixed target
-            // row (same pattern NewBusArrivalEstimator uses upstream), then
+            // row (same pattern BusArrivalEstimator uses upstream), then
             // we take the incremental difference from the previous stop's
             // schedule delta to get the hop-by-hop travel time.
             var downstreamScheduleDelta = arrivalEstimator.scheduleDelta(
@@ -215,7 +215,7 @@ final class NewBusJourneyEstimator {
                 // entry for it (it's a required intermediate stop on the
                 // journey), so fall back to a pure schedule-based projection
                 // of whatever we already know.
-                known = NewBusJourneyEstimator.projectKnownForward(
+                known = BusJourneyEstimator.projectKnownForward(
                     known: known, stopId: downstreamCode, deltaTime: estimatedDeltaTime
                 )
                 currentDelta = estimatedDeltaTime
@@ -243,7 +243,7 @@ final class NewBusJourneyEstimator {
                 }
             }
 
-            let mergeResult = NewBusJourneyEstimator.alignMergeAndProjectDownstream(known: known, rawWindow: rawWindow)
+            let mergeResult = BusJourneyEstimator.alignMergeAndProjectDownstream(known: known, rawWindow: rawWindow)
             known = mergeResult.known
             let drift = mergeResult.drift
             let realDeltaTime = estimatedDeltaTime + drift
@@ -311,7 +311,7 @@ final class NewBusJourneyEstimator {
     }
 
     /// Downstream counterpart to
-    /// `NewBusArrivalEstimator.alignMergeAndProjectWindow`.
+    /// `BusArrivalEstimator.alignMergeAndProjectWindow`.
     ///
     /// The direction of travel is reversed relative to the upstream case:
     ///   - `known` grows from the target stop outward towards the destination.
