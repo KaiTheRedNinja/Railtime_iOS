@@ -32,7 +32,7 @@ final class BusArrivalEstimator {
     init(
         client: LTAClient,
         now: Date? = nil,
-        cacheDir: String = "./lta_cache",
+        cacheDir: String = "lta_cache",
         cacheTTLHours: Double = 24.0
     ) {
         self.client = client
@@ -94,7 +94,7 @@ final class BusArrivalEstimator {
             // we would like to use the 2nd confirmed ETA, but we will make do with the 1st if there is only one.
             let secondOrFirstIndex = min(confirmed.estimates.count - 1, 1)
             let firstETADelta = confirmed.estimates[secondOrFirstIndex].eta.timeDelta(since: now)
-            stopGap = min(firstETADelta * STOP_GAP_PERCENTAGE, MAX_STOP_GAP) // Cap the stop gap at the maximum allowed
+            stopGap = min(firstETADelta.scale(by: STOP_GAP_PERCENTAGE), MAX_STOP_GAP) // Cap the stop gap at the maximum allowed
         }
 
         // Walk upstream stops, closest to target first, projecting their
@@ -129,6 +129,13 @@ final class BusArrivalEstimator {
             let upstreamRow = stops[wrapping: upstreamIdx]
             let upstreamCode = upstreamRow.busStopCode
 
+            // The terminal station is usually an interchange, which has terribly inaccurate data
+            // since it is ambiguous whether the busses are incoming or outgoing.
+            guard upstreamRow.busStopCode != stops.last?.busStopCode else {
+                print("Reached terminal station - skipping due to unreliable data")
+                break
+            }
+
             guard let upstreamScheduleDelta = scheduleDelta(upstreamRow: upstreamRow, targetRow: targetRow, dayType: currentDayType) else {
                 // attempt not made
                 continue
@@ -136,14 +143,14 @@ final class BusArrivalEstimator {
 
             // the current estimated delta time, which is calculated using:
             // D_curr,est = D_prev + (D_prev,sched - D_curr,sched)
-            let scheduleDeltaSinceLast = (upstreamScheduleDelta - currentScheduleDelta) * 60
+            let scheduleDeltaSinceLast = (upstreamScheduleDelta - currentScheduleDelta)
             let estimatedDeltaTime = currentDelta + scheduleDeltaSinceLast
             if scheduleDeltaSinceLast < stopGap {
                 print(
                     "Skipping upstream stop", upstreamCode,
                     "— projected delta", upstreamScheduleDelta,
-                    "min,", scheduleDeltaSinceLast / 60.0,
-                    "min from last is less than stop gap", stopGap / 60.0, "min"
+                    "min,", scheduleDeltaSinceLast.seconds / 60,
+                    "min from last is less than stop gap", stopGap.seconds / 60.0, "min"
                 )
                 // attempt not made
                 continue // too close to target stop to be useful
@@ -152,8 +159,8 @@ final class BusArrivalEstimator {
             print(
                 "Checking upstream stop", upstreamCode,
                 "— projected delta", upstreamScheduleDelta,
-                "min,", scheduleDeltaSinceLast / 60.0,
-                "min, estimated delta", estimatedDeltaTime / 60.0, "min"
+                "min,", scheduleDeltaSinceLast.seconds / 60.0,
+                "min, estimated delta", estimatedDeltaTime.seconds / 60.0, "min"
             )
 
             let upstreamBusArrival: LTABusArrivalResponse
@@ -214,7 +221,7 @@ final class BusArrivalEstimator {
                     // to get the time until the bus arrives at this stop, which is what we want to use for the stop gap
                     // calculation.
                     let idx = min(etas.count - 1, 1)
-                    let candidateGap = min(etas[idx].eta.timeDelta(since: now) * STOP_GAP_PERCENTAGE, MAX_STOP_GAP)
+                    let candidateGap = min(etas[idx].eta.timeDelta(since: now).scale(by: STOP_GAP_PERCENTAGE), MAX_STOP_GAP)
                     stopGap = max(stopGap, candidateGap)
                 }
             }
@@ -312,20 +319,12 @@ final class BusArrivalEstimator {
     func scheduleDelta(
         upstreamRow: LTABusRouteRow, targetRow: LTABusRouteRow, dayType: String
     ) -> TimeDelta? {
-        // NOTE: the first two entries below are a direct, literal
-        // translation of the Python source's `"{day_type}_FirstBus"` /
-        // `"{day_type}_LastBus"` — these read like they were meant to be
-        // f-strings interpolating `day_type`, but as written in the
-        // original they are plain literal strings that never match a real
-        // BusRoutes column name. That bug is preserved here:
-        // `scheduleColumn(named:)` returns `nil` for these two entries, so
-        // evaluation always falls through to the WD/SAT/SUN fallbacks
-        // below, exactly as it does in the Python source.
         let timeTargets = [
-            "{day_type}_FirstBus",
-            "{day_type}_LastBus",
+            "\(dayType)_FirstBus",
+            "\(dayType)_LastBus",
 
             // fallback to regular bus frequencies if today's type is unavailable
+            "WD_FirstBus",
             "WD_LastBus",
             "SAT_FirstBus",
             "SAT_LastBus",
@@ -417,8 +416,8 @@ final class BusArrivalEstimator {
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm:ss"
         print()
-        print(tail.deltaTime / 60, "min Tail ETAs:", tail.estimates.map { formatter.string(from: $0.eta) }.joined(separator: " | "))
-        print(rawWindow.deltaTime / 60, "min Raw ETAs:", rawWindow.estimates.map { formatter.string(from: $0.eta) }.joined(separator: " | "))
+        print(tail.deltaTime.seconds / 60, "min Tail ETAs:", tail.estimates.map { formatter.string(from: $0.eta) }.joined(separator: " | "))
+        print(rawWindow.deltaTime.seconds / 60, "min Raw ETAs:", rawWindow.estimates.map { formatter.string(from: $0.eta) }.joined(separator: " | "))
         print("PROJECTED ETAs:", projectedETAs.map { formatter.string(from: $0) }.joined(separator: " | "))
         print()
 
@@ -444,8 +443,8 @@ final class BusArrivalEstimator {
                 }
 
                 // a positive drift means the bus is early, adding the drift would make it on time.
-                drift = diffs.reduce(.zero, +) / Double(overlapLen)
-                error = max(.zero, diffs.map { $0.magnitude() }.reduce(.zero, +) / Double(overlapLen))
+                drift = diffs.reduce(.zero, +).scale(by: 1 / Double(overlapLen))
+                error = max(.zero, diffs.map { $0.magnitude() }.reduce(.zero, +).scale(by: 1 / Double(overlapLen)))
                 lastLoopDrift = drift
 
                 if error > MAX_ALIGNMENT_ERROR {
@@ -502,7 +501,7 @@ final class BusArrivalEstimator {
                 let diffs = (0..<overlapLen).map { i in
                     projectedETAs[i].timeDelta(since: tail.estimates[bestOffset! + i].eta)
                 }
-                bestDrift = lastLoopDrift - (diffs.reduce(.zero, +) / Double(overlapLen))
+                bestDrift = lastLoopDrift - (diffs.reduce(.zero, +).scale(by: 1 / Double(overlapLen)))
             }
             // NOTE: the Python source leaves `best_error` as `None` in this
             // branch (it's never assigned here), which would raise a

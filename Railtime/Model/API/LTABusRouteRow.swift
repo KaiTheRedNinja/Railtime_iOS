@@ -51,6 +51,25 @@ struct LTABusRouteRow: Codable {
         case sunLastBus = "SUN_LastBus"
     }
 
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.serviceNo = try container.decode(String.self, forKey: .serviceNo)
+        self.operator = try container.decode(String.self, forKey: .operator)
+        self.direction = try container.decode(Int.self, forKey: .direction)
+        self.stopSequence = try container.decode(Int.self, forKey: .stopSequence)
+        self.busStopCode = try container.decode(String.self, forKey: .busStopCode)
+        self.distance = try container.decode(Double.self, forKey: .distance)
+
+        // instead of "", LTA uses "-" to indicate an absence of information. This will not be decoded
+        // by TimeOfDay, so we simply assume that all errors are from an absence of data.
+        self.wdFirstBus = try? container.decodeIfPresent(TimeOfDay.self, forKey: .wdFirstBus) ?? nil
+        self.wdLastBus = try? container.decodeIfPresent(TimeOfDay.self, forKey: .wdLastBus) ?? nil
+        self.satFirstBus = try? container.decodeIfPresent(TimeOfDay.self, forKey: .satFirstBus) ?? nil
+        self.satLastBus = try? container.decodeIfPresent(TimeOfDay.self, forKey: .satLastBus) ?? nil
+        self.sunFirstBus = try? container.decodeIfPresent(TimeOfDay.self, forKey: .sunFirstBus) ?? nil
+        self.sunLastBus = try? container.decodeIfPresent(TimeOfDay.self, forKey: .sunLastBus) ?? nil
+    }
+
     /// Looks up one of this row's scheduled first/last-bus columns by name
     /// (e.g. "WD_FirstBus"), mirroring the Python code's `dict.get(target)`
     /// lookups against the raw BusRoutes row.

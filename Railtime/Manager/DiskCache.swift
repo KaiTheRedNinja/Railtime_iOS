@@ -62,7 +62,7 @@ final class DiskCache {
     ///     as categories are written.
     ///   - ttl: How long, in seconds, a cached payload remains valid.
     init(root: String, ttl: TimeInterval) {
-        self.root = URL(fileURLWithPath: root)
+        self.root = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!.appending(path: root)
         self.ttl = ttl
     }
 

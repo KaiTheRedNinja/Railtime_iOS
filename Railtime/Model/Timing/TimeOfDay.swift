@@ -12,7 +12,7 @@ import Foundation
 ///
 /// `TimeOfDay` intentionally does not conform to `AdditiveArithmetic` or `Comparable` as day boundaries
 /// can mess up operations if same-day assumptions are implicitly made.
-struct TimeOfDay: Codable {
+struct TimeOfDay: Codable, CustomDebugStringConvertible {
     /// The raw number of seconds since the start of the day (i.e. midnight)
     var secondsSinceMidnight: TimeInterval
 
@@ -24,7 +24,10 @@ struct TimeOfDay: Codable {
     var ss: Int { Int(secondsSinceMidnight.truncatingRemainder(dividingBy: 60)) }
 
     /// The date formatted as a `hh:mm:dd` string
-    var hhmmdd: String { "\(hh):\(mm):\(ss)" }
+    var hhmmdd: String { "\(String(format: "%02d", hh)):\(String(format: "%02d", mm)):\(String(format: "%02d", ss))" }
+
+    /// The debug description
+    var debugDescription: String { "\(hhmmdd), secondsSinceMidnight = \(secondsSinceMidnight)" }
 
     /// A time of day initialised from seconds since midnight. No validation done.
     init(secondsSinceMidnight: TimeInterval) {
@@ -33,11 +36,11 @@ struct TimeOfDay: Codable {
     /// A time of day obtained from a string in a format `HHmm`
     init?(hhmmString: String) {
         guard hhmmString.count == 4,
-              let hours = Int(hhmmString.prefix(2)), 0 <= hours && hours < 24,
+              let hours = Int(hhmmString.prefix(2)), 0 <= hours && hours <= 24, // note: 2400 is a valid time, will be wrapped to 0000
               let minutes = Int(hhmmString.suffix(2)), 0 <= minutes && minutes < 60
         else { return nil }
 
-        secondsSinceMidnight = TimeInterval(hours) * 3600 + TimeInterval(minutes) * 60
+        secondsSinceMidnight = (TimeInterval(hours) * 3600 + TimeInterval(minutes) * 60).truncatingRemainder(dividingBy: 24 * 60 * 60)
     }
     /// A time of day initialised from a date
     init(date: Date) {
@@ -102,7 +105,9 @@ struct TimeOfDay: Codable {
     }
 
     // Codable
-    func encode(to encoder: any Encoder) throws { try hhmmdd.encode(to: encoder) }
+    func encode(to encoder: any Encoder) throws {
+        try String(format: "%04d", hh * 100 + mm).encode(to: encoder)
+    }
     init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
         let rawString = try container.decode(String.self)

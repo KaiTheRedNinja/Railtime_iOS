@@ -43,13 +43,8 @@ nonisolated struct TimeDelta: AdditiveArithmetic, Equatable, Comparable, Sendabl
     }
 
     /// Multiplies a time delta by a scalar value
-    static func * (lhs: TimeDelta, rhs: Double) -> TimeDelta {
-        TimeDelta(seconds: lhs.seconds * rhs)
-    }
-
-    /// Divides a time delta by a scalar value
-    static func / (lhs: TimeDelta, rhs: Double) -> TimeDelta {
-        TimeDelta(seconds: lhs.seconds * rhs)
+    func scale(by rhs: Double) -> TimeDelta {
+        TimeDelta(seconds: self.seconds * rhs)
     }
 
     /// Performs the `abs` operation on the time delta and returns the result

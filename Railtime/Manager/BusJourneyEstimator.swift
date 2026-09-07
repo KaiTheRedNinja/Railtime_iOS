@@ -62,7 +62,7 @@ final class BusJourneyEstimator {
         arrivalEstimator: BusArrivalEstimator? = nil,
         client: LTAClient? = nil,
         now: Date? = nil,
-        cacheDir: String = "./lta_cache",
+        cacheDir: String = "lta_cache",
         cacheTTLHours: Double = 24.0
     ) throws {
         if let arrivalEstimator {
@@ -118,7 +118,7 @@ final class BusJourneyEstimator {
             inDirection: inDirection
         )
 
-        guard let destinationStopCode else {
+        guard let destinationStopCode, !destinationStopCode.isEmpty else {
             return upstreamEstimates
         }
 
@@ -369,8 +369,8 @@ final class BusJourneyEstimator {
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm:ss"
         print()
-        print(tail.deltaTime / 60, "min Tail ETAs:", tail.estimates.map { formatter.string(from: $0.eta) }.joined(separator: " | "))
-        print(rawWindow.deltaTime / 60, "min Raw ETAs:", rawWindow.estimates.map { formatter.string(from: $0.eta) }.joined(separator: " | "))
+        print(tail.deltaTime.seconds / 60, "min Tail ETAs:", tail.estimates.map { formatter.string(from: $0.eta) }.joined(separator: " | "))
+        print(rawWindow.deltaTime.seconds / 60, "min Raw ETAs:", rawWindow.estimates.map { formatter.string(from: $0.eta) }.joined(separator: " | "))
         print("PROJECTED ETAs:", projectedETAs.map { formatter.string(from: $0) }.joined(separator: " | "))
         print()
 
@@ -396,8 +396,8 @@ final class BusJourneyEstimator {
             let diffs = (0..<overlapLen).map { i in
                 projectedETAs[offset + i].timeDelta(since: tail.estimates[i].eta)
             }
-            let drift = diffs.reduce(.zero, +) / Double(overlapLen)
-            let error = max(.zero, diffs.map { $0.magnitude() }.reduce(.zero, +) / Double(overlapLen))
+            let drift = diffs.reduce(.zero, +).scale(by: 1 / Double(overlapLen))
+            let error = max(.zero, diffs.map { $0.magnitude() }.reduce(.zero, +).scale(by: 1 / Double(overlapLen)))
 
             if error > MAX_ALIGNMENT_ERROR {
                 // If offset==0 (nothing dropped from raw_window) and the
@@ -432,7 +432,7 @@ final class BusJourneyEstimator {
                 let diffs = (0..<overlapLen).map { i in
                     projectedETAs[i].timeDelta(since: tail.estimates[i].eta)
                 }
-                bestDrift = diffs.reduce(.zero, +) / Double(overlapLen)
+                bestDrift = diffs.reduce(.zero, +).scale(by: 1 / Double(overlapLen))
             }
         }
         let resolvedBestOffset = bestOffset ?? .zero
