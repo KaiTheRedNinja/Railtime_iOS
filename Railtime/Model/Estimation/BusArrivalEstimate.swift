@@ -22,11 +22,11 @@ struct BusArrivalEstimate {
     var projectedFromStop: String?
 
     /// Optional metadata from the API.
-    var load: NextBusInfo.Load?
+    var load: LTANextBusInfo.Load?
     /// Optional metadata from the API.
     var feature: String?
     /// Optional metadata from the API.
-    var busType: NextBusInfo.BusVariant?
+    var busType: LTANextBusInfo.BusVariant?
 
     /// Where the information for a bus' arrival comes from
     enum DataSource {
@@ -45,9 +45,9 @@ struct BusArrivalEstimate {
         eta: Date,
         source: DataSource,
         projectedFromStop: String? = nil,
-        load: NextBusInfo.Load? = nil,
+        load: LTANextBusInfo.Load? = nil,
         feature: String? = nil,
-        busType: NextBusInfo.BusVariant? = nil
+        busType: LTANextBusInfo.BusVariant? = nil
     ) {
         self.busId = busId
         self.busServiceNo = busServiceNo

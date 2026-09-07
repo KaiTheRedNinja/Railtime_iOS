@@ -1,5 +1,5 @@
 //
-//  BusRouteRow.swift
+//  LTABusRouteRow.swift
 //  Railtime
 //
 //  Created by Kai Quan Tay on 5/9/26.
@@ -9,7 +9,7 @@ import Foundation
 
 /// A single row from the 2.3 BusRoutes endpoint: one (service, direction,
 /// stop-sequence) entry along a route.
-struct BusRouteRow: Codable {
+struct LTABusRouteRow: Codable {
     /// The bus service number, e.g. "15".
     let serviceNo: String
     /// The bus operator code, e.g. "SBST".

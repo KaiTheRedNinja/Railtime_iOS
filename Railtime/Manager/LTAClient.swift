@@ -113,7 +113,7 @@ final class LTAClient {
     ///   - busStopCode: The bus stop code to query.
     ///   - serviceNo: If provided, restricts the response to this service.
     /// - Returns: The decoded BusArrival response.
-    func busArrival(busStopCode: String, serviceNo: String? = nil) async throws -> BusArrivalResponse {
+    func busArrival(busStopCode: String, serviceNo: String? = nil) async throws -> LTABusArrivalResponse {
         var params = ["BusStopCode": busStopCode]
         if let serviceNo {
             params["ServiceNo"] = serviceNo
@@ -130,7 +130,7 @@ final class LTAClient {
     /// - Parameter serviceNo: If provided, restricts the response to this
     ///   service.
     /// - Returns: Every matching BusServices row, across all pages.
-    func busServices(serviceNo: String? = nil) async throws -> [BusServiceInfo] {
+    func busServices(serviceNo: String? = nil) async throws -> [LTABusServiceInfo] {
         let params: [String: String] = serviceNo.map { ["ServiceNo": $0] } ?? [:]
         print("Getting bus service data for service", serviceNo as Any)
         return try await getAllPages(path: "BusServices", params: params)
@@ -145,7 +145,7 @@ final class LTAClient {
     /// is "Ad hoc").
     ///
     /// - Returns: Every BusRoutes row, across all pages.
-    func busRoutes() async throws -> [BusRouteRow] {
+    func busRoutes() async throws -> [LTABusRouteRow] {
         print("Getting all bus routes (this will take a while)")
         return try await getAllPages(path: "BusRoutes")
     }
@@ -156,9 +156,9 @@ final class LTAClient {
     ///
     /// - Parameter busStopCode: The bus stop code to look up.
     /// - Returns: The matching BusStops row, or `nil` if none was found.
-    func busStop(busStopCode: String) async throws -> BusStopInfo? {
+    func busStop(busStopCode: String) async throws -> LTABusStopInfo? {
         print("Getting bus stop info for code", busStopCode)
-        let results: [BusStopInfo] = try await getAllPages(path: "BusStops", params: ["BusStopCode": busStopCode])
+        let results: [LTABusStopInfo] = try await getAllPages(path: "BusStops", params: ["BusStopCode": busStopCode])
         return results.first
     }
 }

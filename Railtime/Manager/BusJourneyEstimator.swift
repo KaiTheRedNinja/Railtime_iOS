@@ -207,7 +207,7 @@ final class BusJourneyEstimator {
                 "estimated delta", estimatedDeltaTime.seconds / 60.0, "min"
             )
 
-            let downstreamBusArrival: BusArrivalResponse
+            let downstreamBusArrival: LTABusArrivalResponse
             do {
                 downstreamBusArrival = try await data.getBusArrival(busStopCode: downstreamCode, serviceNo: serviceNo)
             } catch {

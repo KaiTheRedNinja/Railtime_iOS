@@ -156,7 +156,7 @@ final class BusArrivalEstimator {
                 "min, estimated delta", estimatedDeltaTime / 60.0, "min"
             )
 
-            let upstreamBusArrival: BusArrivalResponse
+            let upstreamBusArrival: LTABusArrivalResponse
             do {
                 upstreamBusArrival = try await data.getBusArrival(busStopCode: upstreamCode, serviceNo: serviceNo)
             } catch {
@@ -255,7 +255,7 @@ final class BusArrivalEstimator {
     ///     direction.
     func routeFor(
         serviceNo: String, busStopCode: String, inDirection: Int? = nil
-    ) async throws -> ([BusRouteRow], Int) {
+    ) async throws -> ([LTABusRouteRow], Int) {
         print("Loading route info for service", serviceNo, "and stop", busStopCode)
         let rows = try await data.getServiceRoutes(serviceNo: serviceNo)
         if rows.isEmpty {
@@ -266,7 +266,7 @@ final class BusArrivalEstimator {
         // Python's dict does, so directions are tracked separately to keep
         // iteration order matching the order directions were first seen.
         var directionOrder: [Int] = []
-        var byDirection: [Int: [BusRouteRow]] = [:]
+        var byDirection: [Int: [LTABusRouteRow]] = [:]
         for r in rows {
             if byDirection[r.direction] == nil {
                 directionOrder.append(r.direction)
@@ -293,7 +293,7 @@ final class BusArrivalEstimator {
 
     /// Returns static BusServices dispatch-frequency information for
     /// `serviceNo`.
-    func serviceFreq(serviceNo: String) async throws -> BusServiceInfo? {
+    func serviceFreq(serviceNo: String) async throws -> LTABusServiceInfo? {
         try await data.getServiceInfo(serviceNo: serviceNo)
     }
 
@@ -310,7 +310,7 @@ final class BusArrivalEstimator {
     /// - Returns: The schedule-implied travel time, in minutes, or `nil` if
     ///   it can't be determined.
     func scheduleDelta(
-        upstreamRow: BusRouteRow, targetRow: BusRouteRow, dayType: String
+        upstreamRow: LTABusRouteRow, targetRow: LTABusRouteRow, dayType: String
     ) -> TimeDelta? {
         // NOTE: the first two entries below are a direct, literal
         // translation of the Python source's `"{day_type}_FirstBus"` /

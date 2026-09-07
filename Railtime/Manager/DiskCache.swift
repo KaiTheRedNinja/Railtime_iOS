@@ -148,7 +148,7 @@ final class CachedDataSource {
     let cache: DiskCache
     /// In-memory cache for the current run, keyed by (bus stop code, service
     /// number).
-    private var shortTermCache: [ShortTermCacheKey: (fetchedAt: Date, data: BusArrivalResponse)] = [:]
+    private var shortTermCache: [ShortTermCacheKey: (fetchedAt: Date, data: LTABusArrivalResponse)] = [:]
 
     /// Creates a cached data source wrapping `client`, using `cache` for
     /// its on-disk non-live cache.
@@ -167,7 +167,7 @@ final class CachedDataSource {
     ///   - busStopCode: The bus stop code to query.
     ///   - serviceNo: If provided, restricts the response to this service.
     /// - Returns: The live BusArrival response.
-    func getBusArrival(busStopCode: String, serviceNo: String? = nil) async throws -> BusArrivalResponse {
+    func getBusArrival(busStopCode: String, serviceNo: String? = nil) async throws -> LTABusArrivalResponse {
         let cacheKey = ShortTermCacheKey(busStopCode: busStopCode, serviceNo: serviceNo)
         if let cached = shortTermCache[cacheKey], Date().timeIntervalSince(cached.fetchedAt) < 5 {
             return cached.data
@@ -184,14 +184,14 @@ final class CachedDataSource {
     /// - Parameter serviceNo: The service number to look up routes for.
     /// - Returns: The route rows for `serviceNo`, or an empty array if none
     ///   exist.
-    func getServiceRoutes(serviceNo: String) async throws -> [BusRouteRow] {
+    func getServiceRoutes(serviceNo: String) async throws -> [LTABusRouteRow] {
         print("Getting service routes for", serviceNo)
-        if let cached: [BusRouteRow] = cache.read(category: "routes", key: serviceNo) {
+        if let cached: [LTABusRouteRow] = cache.read(category: "routes", key: serviceNo) {
             return cached
         }
 
         let allRows = try await client.busRoutes()
-        var byService: [String: [BusRouteRow]] = [:]
+        var byService: [String: [LTABusRouteRow]] = [:]
         for row in allRows {
             byService[row.serviceNo, default: []].append(row)
         }
@@ -207,9 +207,9 @@ final class CachedDataSource {
     /// - Parameter serviceNo: The service number to look up.
     /// - Returns: The service's info row, or `nil` if the service doesn't
     ///   exist.
-    func getServiceInfo(serviceNo: String) async throws -> BusServiceInfo? {
+    func getServiceInfo(serviceNo: String) async throws -> LTABusServiceInfo? {
         print("Getting service info for", serviceNo)
-        if let cached: [BusServiceInfo] = cache.read(category: "services", key: serviceNo) {
+        if let cached: [LTABusServiceInfo] = cache.read(category: "services", key: serviceNo) {
             return cached.first
         }
         let rows = try await client.busServices(serviceNo: serviceNo)
@@ -222,9 +222,9 @@ final class CachedDataSource {
     ///
     /// - Parameter busStopCode: The bus stop code to look up.
     /// - Returns: The stop's info, or `nil` if the stop doesn't exist.
-    func getStopInfo(busStopCode: String) async throws -> BusStopInfo? {
+    func getStopInfo(busStopCode: String) async throws -> LTABusStopInfo? {
         print("Getting stop info for", busStopCode)
-        if let cached: BusStopInfo = cache.read(category: "stops", key: busStopCode) {
+        if let cached: LTABusStopInfo = cache.read(category: "stops", key: busStopCode) {
             return cached
         }
         let info = try await client.busStop(busStopCode: busStopCode)

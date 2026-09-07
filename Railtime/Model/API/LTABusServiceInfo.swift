@@ -1,5 +1,5 @@
 //
-//  BusServiceInfo.swift
+//  LTABusServiceInfo.swift
 //  Railtime
 //
 //  Created by Kai Quan Tay on 5/9/26.
@@ -9,7 +9,7 @@ import Foundation
 
 /// A single row from the 2.2 BusServices endpoint: static, frequency-level
 /// information about a bus service.
-struct BusServiceInfo: Codable {
+struct LTABusServiceInfo: Codable {
     /// The bus service number, e.g. "15".
     let serviceNo: String
     /// The bus operator code, e.g. "SBST".

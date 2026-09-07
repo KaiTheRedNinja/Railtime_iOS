@@ -1,5 +1,5 @@
 //
-//  NextBusInfo.swift
+//  LTANextBusInfo.swift
 //  Railtime
 //
 //  Created by Kai Quan Tay on 5/9/26.
@@ -9,7 +9,7 @@ import Foundation
 
 /// Live tracking information for a single upcoming bus, as returned by the
 /// 2.1 BusArrival endpoint's NextBus/NextBus2/NextBus3 fields.
-struct NextBusInfo: Decodable {
+struct LTANextBusInfo: Decodable {
     /// The bus stop code of this bus's origin.
     let originCode: String?
     /// The bus stop code of this bus's destination.
