@@ -85,15 +85,9 @@ extension BusArrivalEstimator {
             print("Attempt #", attempted + 1, "of", lookback, "— bus count:", busCount, "of", numTarget)
 
             stopOffset += 1
-            if busCount >= numTarget {
-                break
-            }
+            guard busCount < numTarget else { break }
+
             let upstreamIdx = targetIdx - stopOffset
-            // Mirrors Python's negative-index wraparound: if `stopOffset`
-            // ever runs past `targetIdx` (possible since `attempted` is
-            // only bumped on a successful, far-enough-upstream poll), this
-            // indexes from the end of `stops`, exactly like the Python
-            // source's `stops[upstream_idx]` would.
             let upstreamRow = stops[wrapping: upstreamIdx]
             let upstreamCode = upstreamRow.busStopCode
 
@@ -103,17 +97,15 @@ extension BusArrivalEstimator {
                 print("Reached terminal station - skipping due to unreliable data")
                 break
             }
-
             guard let upstreamScheduleDelta = scheduleDelta(upstreamRow: upstreamRow, targetRow: targetRow, dayType: currentDayType) else {
                 // attempt not made
                 continue
             }
-
             // the current estimated delta time, which is calculated using:
             // D_curr,est = D_prev + (D_prev,sched - D_curr,sched)
             let scheduleDeltaSinceLast = (upstreamScheduleDelta - currentScheduleDelta)
             let estimatedDeltaTime = currentDelta + scheduleDeltaSinceLast
-            if scheduleDeltaSinceLast < stopGap {
+            guard scheduleDeltaSinceLast >= stopGap else {
                 print(
                     "Skipping upstream stop", upstreamCode,
                     "— projected delta", upstreamScheduleDelta,
