@@ -38,7 +38,7 @@ extension BusArrivalEstimator {
     ) -> (known: [StopArrivalEstimates], drift: TimeDelta, busCount: Int) {
         var known = known
 
-        if rawWindow.estimates.isEmpty {
+        guard !rawWindow.estimates.isEmpty else {
             // if no estimates are available, just add it verbatim.
             print("No estimates available for stop", rawWindow.stopId, "— adding verbatim")
             known.append(rawWindow)
@@ -47,20 +47,77 @@ extension BusArrivalEstimator {
 
         // get the arrivals from the stop closest to this
         // that actually has estimates. This is the "tail" of the known sequence.
-        var tail: StopArrivalEstimates?
-        for candidate in known.reversed() {
-            if !candidate.estimates.isEmpty {
-                tail = candidate
-                break
-            }
-        }
-        print("Tail stop:", tail?.stopId ?? "None")
-        guard let tail else {
+        guard let tail = known.reversed().first(where: { !$0.estimates.isEmpty }) else {
             print("No tail stop found for stop", rawWindow.stopId, "— adding verbatim")
             known.append(rawWindow)
             return (known, rawWindow.deltaTime, currentBusCount)
         }
+        print("Tail stop:", tail.stopId)
 
+        // determine the best alignment
+        let (resolvedBestOffset, resolvedBestError, bestDrift) = getBestAlignment(tail: tail, rawWindow: rawWindow)
+
+        print("Best offset: ", resolvedBestOffset)
+        print("Best drift: ", bestDrift, "seconds")
+
+        let overlapLen = min(rawWindow.estimates.count, tail.estimates.count - resolvedBestOffset)
+
+        // NOTE: `tail.estimates` is always non-empty here, since `tail` was
+        // only ever chosen above from a candidate with non-empty
+        // `estimates` — so the Python `else len(known) * 3` arm is dead
+        // code, kept below only for structural fidelity.
+        let lastKnownBusIdNum: Int
+        if let lastBusId = tail.estimates.last?.busId,
+           let numericSuffix = lastBusId.split(separator: "_").last,
+           let parsed = Int(numericSuffix) {
+            lastKnownBusIdNum = parsed
+        } else {
+            lastKnownBusIdNum = known.count * 3
+        }
+
+        let firstBusNumForThisStop = lastKnownBusIdNum - tail.estimates.count + resolvedBestOffset + 1
+        var rawWindowEstimates = rawWindow.estimates
+        for i in rawWindowEstimates.indices {
+            rawWindowEstimates[i].busId = "bus_\(firstBusNumForThisStop + i)"
+        }
+        let thisStop = StopArrivalEstimates(
+            stopId: rawWindow.stopId,
+            deltaTime: rawWindow.deltaTime + bestDrift,
+            deltaError: rawWindow.deltaError + resolvedBestError,
+            estimates: rawWindowEstimates
+        )
+
+        // project any new busses to downstream bus stops
+        for estimate in thisStop.estimates[overlapLen...] {
+            // go down the downstream stops
+            for i in known.indices {
+                let projectedETA = estimate.eta.incrementingBy(timeDelta: thisStop.deltaTime - known[i].deltaTime)
+                known[i].estimates.append(BusArrivalEstimate(
+                    busId: estimate.busId,
+                    busServiceNo: estimate.busServiceNo,
+                    eta: projectedETA,
+                    source: .projected,
+                    projectedFromStop: thisStop.stopId,
+                    load: estimate.load,
+                    feature: estimate.feature,
+                    busType: estimate.busType
+                ))
+            }
+        }
+
+        // literally just append the raw window to whats known, this is only for testing
+        known.append(thisStop)
+        return (known, bestDrift, firstBusNumForThisStop + rawWindow.estimates.count - 1)
+    }
+
+    private static func getBestAlignment(
+        tail: StopArrivalEstimates,
+        rawWindow: StopArrivalEstimates,
+    ) -> (
+        bestOffset: Int,
+        bestError: TimeDelta,
+        bestDrift: TimeDelta
+    ) {
         let projectedETAs = rawWindow.estimates.map {
             $0.eta.incrementingBy(timeDelta: rawWindow.deltaTime - tail.deltaTime)
         }
@@ -162,59 +219,7 @@ extension BusArrivalEstimator {
             // `raw_window.delta_error + best_error`. This translation
             // treats a still-unset `bestError` as zero instead of crashing.
         }
-        let resolvedBestOffset = bestOffset ?? 0
-        let resolvedBestError = bestError ?? .zero
 
-        print("Best offset: ", resolvedBestOffset)
-        print("Best drift: ", bestDrift, "seconds")
-
-        let overlapLen = min(rawWindow.estimates.count, tail.estimates.count - resolvedBestOffset)
-
-        // NOTE: `tail.estimates` is always non-empty here, since `tail` was
-        // only ever chosen above from a candidate with non-empty
-        // `estimates` — so the Python `else len(known) * 3` arm is dead
-        // code, kept below only for structural fidelity.
-        let lastKnownBusIdNum: Int
-        if let lastBusId = tail.estimates.last?.busId,
-           let numericSuffix = lastBusId.split(separator: "_").last,
-           let parsed = Int(numericSuffix) {
-            lastKnownBusIdNum = parsed
-        } else {
-            lastKnownBusIdNum = known.count * 3
-        }
-
-        let firstBusNumForThisStop = lastKnownBusIdNum - tail.estimates.count + resolvedBestOffset + 1
-        var rawWindowEstimates = rawWindow.estimates
-        for i in rawWindowEstimates.indices {
-            rawWindowEstimates[i].busId = "bus_\(firstBusNumForThisStop + i)"
-        }
-        let thisStop = StopArrivalEstimates(
-            stopId: rawWindow.stopId,
-            deltaTime: rawWindow.deltaTime + bestDrift,
-            deltaError: rawWindow.deltaError + resolvedBestError,
-            estimates: rawWindowEstimates
-        )
-
-        // project any new busses to downstream bus stops
-        for estimate in thisStop.estimates[overlapLen...] {
-            // go down the downstream stops
-            for i in known.indices {
-                let projectedETA = estimate.eta.incrementingBy(timeDelta: thisStop.deltaTime - known[i].deltaTime)
-                known[i].estimates.append(BusArrivalEstimate(
-                    busId: estimate.busId,
-                    busServiceNo: estimate.busServiceNo,
-                    eta: projectedETA,
-                    source: .projected,
-                    projectedFromStop: thisStop.stopId,
-                    load: estimate.load,
-                    feature: estimate.feature,
-                    busType: estimate.busType
-                ))
-            }
-        }
-
-        // literally just append the raw window to whats known, this is only for testing
-        known.append(thisStop)
-        return (known, bestDrift, firstBusNumForThisStop + rawWindow.estimates.count - 1)
+        return (bestOffset ?? 0, bestError ?? .zero, bestDrift)
     }
 }
