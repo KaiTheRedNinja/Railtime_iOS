@@ -129,7 +129,7 @@ extension BusArrivalEstimator {
                 continue
             }
             out.append(BusArrivalEstimate(
-                busId: "bus_\(out.count)",
+                busId: .ordered(index: out.count),
                 busServiceNo: serviceNo,
                 eta: eta,
                 source: .live,

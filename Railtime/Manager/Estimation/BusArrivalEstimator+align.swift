@@ -62,23 +62,11 @@ extension BusArrivalEstimator {
 
         let overlapLen = min(rawWindow.estimates.count, tail.estimates.count - resolvedBestOffset)
 
-        // NOTE: `tail.estimates` is always non-empty here, since `tail` was
-        // only ever chosen above from a candidate with non-empty
-        // `estimates` — so the Python `else len(known) * 3` arm is dead
-        // code, kept below only for structural fidelity.
-        let lastKnownBusIdNum: Int
-        if let lastBusId = tail.estimates.last?.busId,
-           let numericSuffix = lastBusId.split(separator: "_").last,
-           let parsed = Int(numericSuffix) {
-            lastKnownBusIdNum = parsed
-        } else {
-            lastKnownBusIdNum = known.count * 3
-        }
-
+        let lastKnownBusIdNum: Int = tail.estimates.compactMap { $0.busId.index }.max() ?? known.count * 3
         let firstBusNumForThisStop = lastKnownBusIdNum - tail.estimates.count + resolvedBestOffset + 1
         var rawWindowEstimates = rawWindow.estimates
         for i in rawWindowEstimates.indices {
-            rawWindowEstimates[i].busId = "bus_\(firstBusNumForThisStop + i)"
+            rawWindowEstimates[i].busId = .ordered(index: firstBusNumForThisStop + i)
         }
         let thisStop = StopArrivalEstimates(
             stopId: rawWindow.stopId,

@@ -62,7 +62,7 @@ extension BusArrivalEstimator {
             for i in (currentCount + 1)...numTarget {
                 let eta = anchor.incrementingBy(timeDelta: .mins(resolvedGap * Double(i - currentCount)))
                 extrapolated.append(BusArrivalEstimate(
-                    busId: "bus_\(i)",
+                    busId: .ordered(index: i),
                     busServiceNo: serviceNo,
                     eta: eta,
                     source: .extrapolated,

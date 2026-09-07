@@ -163,7 +163,7 @@ extension BusArrivalEstimator {
 
                 // add the arrival at the UPSTREAM stop to the current window
                 rawWindow.estimates.append(BusArrivalEstimate(
-                    busId: "UNASSIGNED",
+                    busId: .unassigned,
                     busServiceNo: serviceNo,
                     eta: etaUpstream,
                     source: .live,

@@ -9,13 +9,13 @@ import SwiftUI
 
 struct BusQueryView: View {
     @AppStorage("start_id") var startId: String = ""
-    @AppStorage("bus_id") var busId: String = ""
+    @AppStorage("bus_id") var serviceNo: String = ""
     @AppStorage("end_id") var endId: String = ""
     @AppStorage("est_count") var estimationCount: Int = 5
 
     @AppStorage("LTA_API_KEY") var apiKey: String = ""
 
-    @State var journeyEstimator: BusJourneyEstimator? = nil
+    @State var journeyEstimator: BusArrivalEstimator? = nil
 
     @State var startInfo: LTABusStopInfo?
     @State var endInfo: LTABusStopInfo?
@@ -63,8 +63,8 @@ struct BusQueryView: View {
             }
             .listRowSeparator(.hidden)
             HStack {
-                Text("Taking bus")
-                TextField("Bus number", text: $busId)
+                Text("Taking bus service")
+                TextField("Bus number", text: $serviceNo)
                     .multilineTextAlignment(.trailing)
             }
             .listRowSeparator(.hidden)
@@ -98,7 +98,7 @@ struct BusQueryView: View {
                 if newValue != "" {
                     do {
                         let client = try LTAClient(accountKey: apiKey)
-                        journeyEstimator = try .init(client: client)
+                        journeyEstimator = .init(client: client)
                     } catch {
                         print("Client creation error: \(error)")
                     }
@@ -107,14 +107,14 @@ struct BusQueryView: View {
         }
     }
 
-    func confirmJourney(estimator: BusJourneyEstimator) -> some View {
+    func confirmJourney(estimator: BusArrivalEstimator) -> some View {
         Section {
             HStack {
                 Text(startInfo?.description ?? "not specified")
                     .bold()
                     .frame(maxWidth: .infinity)
                     .multilineTextAlignment(.leading)
-                Text("taking \(busId) to")
+                Text("taking \(serviceNo) to")
                 Text(endInfo?.description ?? "not specified")
                     .bold()
                     .frame(maxWidth: .infinity)
@@ -127,9 +127,8 @@ struct BusQueryView: View {
                     do {
                         let estimates = try await estimator.estimate(
                             busStopCode: startId,
-                            serviceNo: busId,
-                            numTarget: estimationCount,
-                            destinationStopCode: endId
+                            serviceNo: serviceNo,
+                            numTarget: estimationCount
                         )
                         queryStatus = .success(estimates)
                     } catch {
@@ -162,11 +161,12 @@ struct BusQueryView: View {
     }
 
     func resultsView(estimates: [StopArrivalEstimates]) -> some View {
-        var uniqueBusses: Set<String> = []
-        var allBusses: [String] = []
+        var uniqueBusses: Set<Int> = []
+        var allBusses: [Int] = []
         for stopEstimate in estimates {
-            for busEstimate in stopEstimate.estimates where uniqueBusses.insert(busEstimate.busId).inserted {
-                allBusses.append(busEstimate.busId)
+            for busEstimate in stopEstimate.estimates {
+                guard case let .ordered(index) = busEstimate.busId, uniqueBusses.insert(index).inserted else { continue }
+                allBusses.append(index)
             }
         }
         allBusses.sort() // we order busses in increasing order, so this should sort it properly
@@ -188,12 +188,12 @@ struct BusQueryView: View {
                 }
                 ForEach(allBusses.enumerated(), id: \.offset) { (_, bus) in
                     GridRow {
-                        Text(bus)
+                        Text("bus_\(bus)")
                             .bold()
                             .padding(5)
                             .background { Color.red.opacity(0.2) }
                         ForEach(estimates.enumerated(), id: \.offset) { (_, estimate) in
-                            if let busEstimate = estimate.estimates.first(where: { $0.busId == bus }) {
+                            if let busEstimate = estimate.estimates.first(where: { $0.busId == .ordered(index: bus) }) {
                                 HStack {
                                     Text(formatter.string(from: busEstimate.eta))
                                     switch busEstimate.source {

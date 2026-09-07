@@ -10,7 +10,7 @@ import Foundation
 /// An estimate for when a bus, with a given ID, will arrive at a given stop.
 struct BusArrivalEstimate {
     /// The ID of this bus.
-    var busId: String
+    var busId: BusID
     /// The service number of this bus.
     var busServiceNo: String
     /// The projected arrival time at the target stop.
@@ -28,6 +28,28 @@ struct BusArrivalEstimate {
     /// Optional metadata from the API.
     var busType: LTANextBusInfo.BusVariant?
 
+    /// The ID of a bus
+    enum BusID: Equatable {
+        /// The ID of this bus is yet to be assigned
+        case unassigned
+        /// A sequential ID for this bus
+        case ordered(index: Int)
+
+        var description: String {
+            switch self {
+            case .unassigned: "UNASSIGNED"
+            case .ordered(let index): "bus_\(index)"
+            }
+        }
+
+        var index: Int? {
+            switch self {
+            case .unassigned: nil
+            case .ordered(let index): index
+            }
+        }
+    }
+
     /// Where the information for a bus' arrival comes from
     enum DataSource {
         /// The data was obtained directly from the LTA Live Bus API
@@ -40,7 +62,7 @@ struct BusArrivalEstimate {
 
     /// Optional metadata from the API.
     init(
-        busId: String,
+        busId: BusID,
         busServiceNo: String,
         eta: Date,
         source: DataSource,

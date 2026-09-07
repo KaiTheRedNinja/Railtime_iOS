@@ -53,4 +53,18 @@ struct LTANextBusInfo: Decodable {
         case doubleDeck = "DD"
         case bendy = "BD"
     }
+
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.originCode = try container.decodeIfPresent(String.self, forKey: .originCode)
+        self.destinationCode = try container.decodeIfPresent(String.self, forKey: .destinationCode)
+        self.estimatedArrival = try container.decodeIfPresent(String.self, forKey: .estimatedArrival)
+        self.latitude = try container.decodeIfPresent(String.self, forKey: .latitude)
+        self.longitude = try container.decodeIfPresent(String.self, forKey: .longitude)
+        self.visitNumber = try container.decodeIfPresent(String.self, forKey: .visitNumber)
+
+        self.load = try? container.decodeIfPresent(LTANextBusInfo.Load.self, forKey: .load)
+        self.feature = try? container.decodeIfPresent(String.self, forKey: .feature)
+        self.type = try? container.decodeIfPresent(LTANextBusInfo.BusVariant.self, forKey: .type)
+    }
 }
