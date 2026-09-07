@@ -1,5 +1,5 @@
 //
-//  BusArrivalEstimator+estimate.swift
+//  BusArrivalEstimator+track.swift
 //  Railtime
 //
 //  Created by Kai Quan Tay on 7/9/26.
@@ -8,41 +8,46 @@
 import Foundation
 
 extension BusArrivalEstimator {
-    // -- main entry point --------------------------------------------------
-
-    /// Estimate the arrival times of a bus at a given bus stop, based on the
-    /// arrival times of that bus at previous stops along its route.
+    /// Tracks the arrival times of a bus between a few given stops of interest, based on the
+    /// arrival times of that bus at other stops along its route.
     ///
     /// - Parameters:
-    ///   - busStopCode: The target stop to estimate arrivals at.
+    ///   - stopIdsOfInterest: The IDs of stops to estimate arrivals at.
     ///   - serviceNo: The bus service to estimate.
-    ///   - numTarget: The desired number of upcoming buses to estimate.
-    ///   - maxLookbackStops: The maximum number of upstream stops to poll.
+    ///   - numTarget: The desired number of upcoming buses to track at each stop of interest
     ///   - inDirection: If provided, restricts the route lookup to this
     ///     direction.
     /// - Returns: A list of `StopArrivalEstimates`, one for each stop along
     ///   the route, in upstream-to-downstream order (so the first stop in
     ///   the list is the furthest upstream, and the last stop in the list
-    ///   is the target stop).
-    func estimate(
-        busStopCode: String,
+    ///   is the most downstream stop of interest).
+    func track(
+        stopIdsOfInterest: [String],
         serviceNo: String,
         numTarget: Int = 5,
-        maxLookbackStops: Int = 12,
         inDirection: Int? = nil
     ) async throws -> [StopArrivalEstimates] {
-        let (stops, targetIdx) = try await routeFor(serviceNo: serviceNo, busStopCode: busStopCode, inDirection: inDirection)
-        let targetRow = stops[targetIdx]
+        guard !stopIdsOfInterest.isEmpty else { return [] } // no stops, therefore no results
+        var stopIdsSet = Set(stopIdsOfInterest) // stop IDs will be removed as they are processed
+
+        // we choose a "random" (ie. the first) stop ID to get the stops from
+        let (stops, _) = try await routeFor(serviceNo: serviceNo, busStopCode: stopIdsOfInterest.first!, inDirection: inDirection)
+        // ensure that all stops of interest are present
+        let missingStops = stopIdsSet.subtracting(stops.map(\.busStopCode))
+        guard missingStops.isEmpty else {
+            throw BusArrivalEstimatorError.stopNotFound(stopCode: missingStops.first!, serviceNo: serviceNo)
+        }
+        let lastTargetStopIdx: Int = stops.reversed().firstIndex(where: { stopIdsSet.contains($0.busStopCode) })!
+        let lastTargetStop = stops[lastTargetStopIdx]
         let currentDayType = dayType(for: now)
 
         // Confirmed arrivals directly at the target stop.
-        let confirmed = try await confirmedArrivals(busStopCode: busStopCode, serviceNo: serviceNo)
+        let confirmed = try await confirmedArrivals(busStopCode: lastTargetStop.busStopCode, serviceNo: serviceNo)
 
         // estimates are from the target stop first, upstream stops later. The earliest
         // stop in a bus's route will be the last in the list for ease of appending.
         // this will be inverted at the bottom.
         var estimates: [StopArrivalEstimates] = [confirmed]
-        if confirmed.estimates.count >= numTarget { return estimates }
 
         var stopGap: TimeDelta = .zero
         if !confirmed.estimates.isEmpty {
@@ -54,7 +59,6 @@ extension BusArrivalEstimator {
 
         // Walk upstream stops, closest to target first, projecting their
         // live buses forward to the target stop.
-        let lookback = min(maxLookbackStops, targetIdx) // don't look back past the first stop
         var stopOffset = 0
         // the "real" delta, adjusted for drift
         // even though we go backwards, this will increase (+ve) because negative numbers are annoying
@@ -67,14 +71,17 @@ extension BusArrivalEstimator {
 
         // the number of busses we have found
         var busCount = confirmed.estimates.count
+        // the number of busses we want to find. This increases as we discover more target stops.
+        var movingTarget = numTarget
 
-        while attempted < lookback {
-            print("Attempt #", attempted + 1, "of", lookback, "— bus count:", busCount, "of", numTarget)
+        while stopOffset < lastTargetStopIdx {
+            print("Attempt #", attempted + 1, " — bus count:", busCount, "of", numTarget)
 
             stopOffset += 1
-            guard busCount < numTarget else { break }
+            // if we have found all stops and met the moving target, break
+            if stopIdsSet.isEmpty && busCount >= movingTarget { break }
 
-            let upstreamIdx = targetIdx - stopOffset
+            let upstreamIdx = lastTargetStopIdx - stopOffset
             let upstreamRow = stops[wrapping: upstreamIdx]
             let upstreamCode = upstreamRow.busStopCode
 
@@ -84,7 +91,7 @@ extension BusArrivalEstimator {
                 print("Reached terminal station - skipping due to unreliable data")
                 break
             }
-            guard let upstreamScheduleDelta = scheduleDelta(upstreamRow: upstreamRow, targetRow: targetRow, dayType: currentDayType) else {
+            guard let upstreamScheduleDelta = scheduleDelta(upstreamRow: upstreamRow, targetRow: lastTargetStop, dayType: currentDayType) else {
                 // attempt not made
                 continue
             }
@@ -92,7 +99,9 @@ extension BusArrivalEstimator {
             // D_curr,est = D_prev + (D_prev,sched - D_curr,sched)
             let scheduleDeltaSinceLast = (upstreamScheduleDelta - currentScheduleDelta)
             let estimatedDeltaTime = currentDelta + scheduleDeltaSinceLast
-            guard scheduleDeltaSinceLast >= stopGap else {
+            // if it is a stop of interest, we always track it. If not, make sure it is past the stop gap.
+            let isOfInterest = stopIdsSet.remove(upstreamCode) != nil
+            guard isOfInterest || scheduleDeltaSinceLast >= stopGap else {
                 print(
                     "Skipping upstream stop", upstreamCode,
                     "— projected delta", upstreamScheduleDelta,
@@ -100,7 +109,7 @@ extension BusArrivalEstimator {
                     "min from last is less than stop gap", stopGap.seconds / 60.0, "min"
                 )
                 // attempt not made
-                continue // too close to target stop to be useful
+                continue // too close to target stop to be useful, and not a target of interest
             }
 
             print(
@@ -145,15 +154,20 @@ extension BusArrivalEstimator {
             print("New drift: ", drift, "seconds")
             print("New stop gap: ", stopGap, "seconds")
 
+            // calculate a new moving target
+            if isOfInterest {
+                movingTarget = busCount + max(0, numTarget - mergeResult.known.last!.estimates.count)
+            }
+
             currentDelta = realDeltaTime
             currentScheduleDelta = upstreamScheduleDelta
         }
 
         // 3) Fallback: extrapolate using BusServices dispatch frequency if
         //    we still don't have enough.
-        if busCount < numTarget {
+        if busCount < movingTarget {
             estimates = try await extrapolateWithFrequency(
-                estimates: estimates, serviceNo: serviceNo, numTarget: numTarget, currentCount: busCount
+                estimates: estimates, serviceNo: serviceNo, numTarget: movingTarget, currentCount: busCount
             )
         }
 
