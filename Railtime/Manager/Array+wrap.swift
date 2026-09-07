@@ -23,4 +23,11 @@ extension Array {
         let resolvedIndex = index >= 0 ? index : count + index
         return self[resolvedIndex]
     }
+
+    /// Similar to `map` but passes an inout of the current value instead
+    mutating func modify(_ modifier: (inout Element) -> Void) {
+        for index in self.indices {
+            modifier(&self[index])
+        }
+    }
 }

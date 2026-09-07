@@ -116,12 +116,7 @@ extension BusArrivalEstimator {
     internal func confirmedArrivals(busStopCode: String, serviceNo: String) async throws -> StopArrivalEstimates {
         let arrival = try await data.getBusArrival(busStopCode: busStopCode, serviceNo: serviceNo)
         guard let svc = arrival.services.first else {
-            // NOTE: the Python source returns a bare `[]` here despite the
-            // function being declared to return a `StopArrivalEstimates` —
-            // a latent type mismatch. This translation returns an empty
-            // `StopArrivalEstimates` instead, matching the declared and
-            // evidently intended return type.
-            return StopArrivalEstimates(stopId: busStopCode, deltaTime: .zero, deltaError: .zero, estimates: [])
+            throw BusArrivalEstimatorError.stopNotFound(stopCode: busStopCode, serviceNo: serviceNo)
         }
         var out: [BusArrivalEstimate] = []
         for nextBus in svc.nextBuses {

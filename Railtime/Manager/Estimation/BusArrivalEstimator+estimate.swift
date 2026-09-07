@@ -131,48 +131,18 @@ extension BusArrivalEstimator {
                 "min, estimated delta", estimatedDeltaTime.seconds / 60.0, "min"
             )
 
-            let upstreamBusArrival: LTABusArrivalResponse
-            do {
-                upstreamBusArrival = try await data.getBusArrival(busStopCode: upstreamCode, serviceNo: serviceNo)
-            } catch {
-                // attempt failed, do not count as an attempt
-                continue
-            }
-
             attempted += 1 // attempt made, regardless of whether we got a valid response
-            guard let service = upstreamBusArrival.services.first else { // filtered by ServiceNo, so at most one entry
-                continue
-            }
 
             // Build this stop's window: up to 3 buses, in the temporal
             // order the API already returns them, each projected forward
             // to the target stop's timeline.
             // this window is for THIS STOP!! It will be projected to future stops later.
-            var rawWindow = StopArrivalEstimates(
-                stopId: upstreamCode,
-                deltaTime: estimatedDeltaTime,
-                deltaError: .zero,
-                estimates: []
-            )
+            var rawWindow = try await confirmedArrivals(busStopCode: upstreamCode, serviceNo: serviceNo)
+            rawWindow.deltaTime = estimatedDeltaTime
+            rawWindow.deltaError = .zero
+            rawWindow.estimates.modify { $0.busId = .unassigned }
 
-            // get the next 3 busses and save them as arrivals at this (upstream) stop.
-            // projection will be done during merging.
-            for nextBusN in service.nextBuses {
-                // get the ETA for the next bus at this location
-                guard let nextBusN, let etaUpstream = parseISO(nextBusN.estimatedArrival) else { continue }
-
-                // add the arrival at the UPSTREAM stop to the current window
-                rawWindow.estimates.append(BusArrivalEstimate(
-                    busId: .unassigned,
-                    busServiceNo: serviceNo,
-                    eta: etaUpstream,
-                    source: .live,
-                    load: nextBusN.load,
-                    feature: nextBusN.feature,
-                    busType: nextBusN.type
-                ))
-            }
-
+            // align the estimates for this stop with existing estimates
             let mergeResult = BusArrivalEstimator.alignMergeAndProjectWindow(
                 known: estimates, rawWindow: rawWindow, currentBusCount: busCount
             )
@@ -202,7 +172,7 @@ extension BusArrivalEstimator {
 
         // 3) Fallback: extrapolate using BusServices dispatch frequency if
         //    we still don't have enough.
-        if estimates.count < numTarget {
+        if busCount < numTarget {
             estimates = try await extrapolateWithFrequency(
                 estimates: estimates, serviceNo: serviceNo, numTarget: numTarget, currentCount: busCount
             )
