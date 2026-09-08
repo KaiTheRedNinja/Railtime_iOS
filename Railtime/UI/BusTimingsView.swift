@@ -7,6 +7,11 @@
 
 import SwiftUI
 
+let leadingWidth: CGFloat = 40
+let topHeight: CGFloat = 40
+let trailingWidth: CGFloat = 100
+let bottomHeight: CGFloat = 100
+
 struct BusTimingsView: View {
     var estimates: [StopArrivalEstimates]
 
@@ -30,11 +35,11 @@ struct BusTimingsView: View {
             GridRow {
                 Text("mins")
                     .font(.caption)
-                    .frame(width: 40, height: 40, alignment: .bottomTrailing)
+                    .frame(width: leadingWidth, height: topHeight, alignment: .bottomTrailing)
 
                 ZStack(alignment: .bottomLeading) {
                     Spacer()
-                        .frame(width: width + 40, height: 40)
+                        .frame(width: width + leadingWidth, height: topHeight)
                     ForEach(estimates.enumerated(), id: \.offset) { (_, estimate) in
                         Text(estimate.stopId)
                             .frame(width: 100, alignment: .leading)
@@ -44,7 +49,7 @@ struct BusTimingsView: View {
                             .offset(x: (estTimeRange + estimate.deltaTime).seconds / 60 * scale)
                     }
                 }
-                .frame(width: width + 40, height: 40)
+                .frame(width: width + trailingWidth, height: topHeight)
             }
 
             GridRow {
@@ -53,7 +58,7 @@ struct BusTimingsView: View {
 
                 ZStack(alignment: .topTrailing) {
                     Spacer()
-                        .frame(width: 40, height: height + 40)
+                        .frame(width: leadingWidth, height: height + bottomHeight)
 
                     ForEach(0..<(tickerCount + 1), id: \.self) { tickerIndex in
                         Text("\(tickerIndex * 5)")
@@ -61,7 +66,7 @@ struct BusTimingsView: View {
                             .offset(y: CGFloat(tickerIndex) * scale * 5 - 8)
                     }
                 }
-                .frame(width: 40, height: height + 40)
+                .frame(width: leadingWidth, height: height + bottomHeight)
 
                 timeTimeGraph(
                     estTimeRange: estTimeRange,
@@ -85,13 +90,13 @@ struct BusTimingsView: View {
     ) -> some View {
         ZStack(alignment: .topLeading) {
             Spacer()
-                .frame(width: width + 40, height: height + 40)
+                .frame(width: width + trailingWidth, height: height + bottomHeight)
 
             // tickers
             ForEach(0..<(tickerCount + 1), id: \.self) { tickerIndex in
                 Rectangle()
                     .fill(Color.gray)
-                    .frame(width: width + 40, height: 1)
+                    .frame(width: width + trailingWidth, height: 1)
                     .offset(x: -10, y: CGFloat(tickerIndex) * scale * 5)
             }
 
@@ -99,41 +104,8 @@ struct BusTimingsView: View {
             ForEach(estimates.enumerated(), id: \.offset) { (_, estimate) in
                 Rectangle()
                     .fill(Color.gray)
-                    .frame(width: 1, height: height + 40)
+                    .frame(width: 1, height: height + bottomHeight)
                     .offset(x: (estTimeRange + estimate.deltaTime).seconds / 60 * scale, y: -10)
-            }
-
-            // bus dots
-            let allBusses = getAllBusses()
-            ForEach(allBusses.enumerated(), id: \.offset) { (_, bus) in
-                ForEach(estimates.enumerated(), id: \.offset) { (_, stopEstimate) in
-                    if let busEstimate = stopEstimate.estimates.first(where: { $0.busId == .ordered(index: bus) }) {
-                        let etaDelta = busEstimate.eta.timeDelta(since: .now)
-                        let yOffset = etaDelta.seconds / 60 * scale
-                        let shapeFillColor = if etaDelta > .zero { Color.blue } else { Color.green }
-
-                        Group {
-                            Group {
-                                switch busEstimate.source {
-                                case .live: Image(systemName: "star.fill").foregroundStyle(shapeFillColor)
-                                case .projected: Image(systemName: "circle.fill").foregroundStyle(shapeFillColor)
-                                case .extrapolated: Image(systemName: "circle.dotted").foregroundStyle(shapeFillColor)
-                                }
-                            }
-                            .frame(width: 10, height: 10, alignment: .center)
-                            .offset(x: -5, y: -5)
-
-                            let minutes = Int((etaDelta.seconds / 60).rounded(.towardZero))
-                            Text("\(minutes) min")
-                                .font(.caption)
-                                .offset(x: 10, y: -10)
-                        }
-                        .offset(
-                            x: (estTimeRange + stopEstimate.deltaTime).seconds / 60 * scale,
-                            y: max(0, yOffset)
-                        )
-                    }
-                }
             }
 
             // bus lines. We use the earliest estimation for each bus.
@@ -147,6 +119,47 @@ struct BusTimingsView: View {
                         .frame(width: offset.seconds / 60 * scale)
                         .padding(.leading, (estTimeRange - offset).seconds / 60 * scale)
                         .opacity(0.75)
+                }
+            }
+
+            // bus dots
+            let allBusses = getAllBusses()
+            ForEach(allBusses.enumerated(), id: \.offset) { (_, bus) in
+                ForEach(estimates.enumerated(), id: \.offset) { (_, stopEstimate) in
+                    if let busEstimate = stopEstimate.estimates.first(where: { $0.busId == .ordered(index: bus) }) {
+                        let etaDelta = busEstimate.eta.timeDelta(since: .now)
+                        let yOffset = etaDelta.seconds / 60 * scale
+                        let shapeFillColor = if etaDelta > .zero { Color.blue } else { Color.green }
+
+                        Group {
+                            let minutes = Int((etaDelta.seconds / 60).rounded(.towardZero))
+                            Text(minutes > 0 ? "\(minutes) min" : "Arr")
+                                .font(.caption)
+                                .background {
+                                    RoundedRectangle(cornerRadius: 5)
+                                        .fill(Color.white)
+                                        .blur(radius: 5)
+                                        .padding(.all, -5)
+                                }
+                                .offset(x: 10, y: -10)
+
+                            let image = switch busEstimate.source {
+                            case .live: Image(systemName: "star.fill")
+                            case .projected: Image(systemName: "circle.fill")
+                            case .extrapolated: Image(systemName: "circle.dotted")
+                            }
+
+                            image
+                                .foregroundStyle(shapeFillColor)
+                                .frame(width: 10, height: 10, alignment: .center)
+                                .shadow(radius: 5)
+                                .offset(x: -5, y: -5)
+                        }
+                        .offset(
+                            x: (estTimeRange + stopEstimate.deltaTime).seconds / 60 * scale,
+                            y: max(0, yOffset)
+                        )
+                    }
                 }
             }
         }

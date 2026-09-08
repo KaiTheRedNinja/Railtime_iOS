@@ -49,7 +49,6 @@ struct BusQueryView: View {
                 Text("Query failed: \(error)")
             case .success(let array):
                 BusTimingsView(estimates: array)
-//                resultsView(estimates: array)
             }
         }
     }
@@ -165,58 +164,6 @@ struct BusQueryView: View {
             }
             Task {
                 endInfo = try? await estimator.data.getStopInfo(busStopCode: newValue)
-            }
-        }
-    }
-
-    func resultsView(estimates: [StopArrivalEstimates]) -> some View {
-        var uniqueBusses: Set<Int> = []
-        var allBusses: [Int] = []
-        for stopEstimate in estimates {
-            for busEstimate in stopEstimate.estimates {
-                guard case let .ordered(index) = busEstimate.busId, uniqueBusses.insert(index).inserted else { continue }
-                allBusses.append(index)
-            }
-        }
-        allBusses.sort() // we order busses in increasing order, so this should sort it properly
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm:ss"
-
-        return ScrollView(.horizontal) {
-            Grid(alignment: .topLeading, horizontalSpacing: 20, verticalSpacing: 20) {
-                GridRow {
-                    Text("Bus")
-                        .bold()
-                        .padding(5)
-                    ForEach(estimates.enumerated(), id: \.offset) { (_, estimate) in
-                        Text(estimate.stopId)
-                            .bold()
-                            .padding(5)
-                            .background { Color.blue.opacity(0.2) }
-                    }
-                }
-                ForEach(allBusses.enumerated(), id: \.offset) { (_, bus) in
-                    GridRow {
-                        Text("bus_\(bus)")
-                            .bold()
-                            .padding(5)
-                            .background { Color.red.opacity(0.2) }
-                        ForEach(estimates.enumerated(), id: \.offset) { (_, estimate) in
-                            if let busEstimate = estimate.estimates.first(where: { $0.busId == .ordered(index: bus) }) {
-                                HStack {
-                                    Text(formatter.string(from: busEstimate.eta))
-                                    switch busEstimate.source {
-                                    case .live: Text("🚌")
-                                    case .projected: Text("🔢")
-                                    case .extrapolated: Text("🕑")
-                                    }
-                                }
-                            } else {
-                                Text("-")
-                            }
-                        }
-                    }
-                }
             }
         }
     }
