@@ -48,7 +48,8 @@ struct BusQueryView: View {
             case .failed(let error):
                 Text("Query failed: \(error)")
             case .success(let array):
-                resultsView(estimates: array)
+                BusTimingsView(estimates: array)
+//                resultsView(estimates: array)
             }
         }
     }
@@ -139,6 +140,14 @@ struct BusQueryView: View {
                 Text("Go!")
                     .padding(10)
                     .frame(width: 200)
+            }
+            .buttonStyle(.borderedProminent)
+            .padding(10)
+            .frame(maxWidth: .infinity)
+            Button {
+                queryStatus = .success(StopArrivalEstimates.sampleData)
+            } label: {
+                Text("Load Sample Data")
             }
             .buttonStyle(.borderedProminent)
             .padding(10)
