@@ -27,35 +27,17 @@ struct BusTimingsView: View {
         let estTimeDomain = estimates.last!.estimates.last!.eta.timeDelta(since: .now)
         let height = estTimeDomain.seconds / 60 * scale
 
-        Grid(
-            alignment: .topLeading,
-            horizontalSpacing: 20,
-            verticalSpacing: 20
-        ) {
-            GridRow {
+        // we have tickers in 5 minute intervals
+        let tickerCount = Int((estTimeDomain.seconds / 60 / 5).rounded(.awayFromZero))
+
+        HStack(alignment: .top, spacing: 20) {
+            VStack(alignment: .trailing, spacing: 20) {
+                // "mins" text
                 Text("mins")
                     .font(.caption)
                     .frame(width: leadingWidth, height: topHeight, alignment: .bottomTrailing)
 
-                ZStack(alignment: .bottomLeading) {
-                    Spacer()
-                        .frame(width: width + leadingWidth, height: topHeight)
-                    ForEach(estimates.enumerated(), id: \.offset) { (_, estimate) in
-                        Text(estimate.stopId)
-                            .frame(width: 100, alignment: .leading)
-                            .multilineTextAlignment(.leading)
-                            .font(.caption)
-                            .rotationEffect(.degrees(-45), anchor: .bottomLeading)
-                            .offset(x: (estTimeRange + estimate.deltaTime).seconds / 60 * scale)
-                    }
-                }
-                .frame(width: width + trailingWidth, height: topHeight)
-            }
-
-            GridRow {
-                // we have tickers in 5 minute intervals
-                let tickerCount = Int((estTimeDomain.seconds / 60 / 5).rounded(.awayFromZero))
-
+                // time tickers
                 ZStack(alignment: .topTrailing) {
                     Spacer()
                         .frame(width: leadingWidth, height: height + bottomHeight)
@@ -67,18 +49,44 @@ struct BusTimingsView: View {
                     }
                 }
                 .frame(width: leadingWidth, height: height + bottomHeight)
-
-                timeTimeGraph(
-                    estTimeRange: estTimeRange,
-                    width: width,
-                    estTimeDomain: estTimeDomain,
-                    height: height,
-                    tickerCount: tickerCount
-                )
             }
-        }
 
-        EmptyView()
+            ScrollView(.horizontal) {
+                VStack(alignment: .leading, spacing: 20) {
+                    // stop IDs
+                    ZStack(alignment: .bottomLeading) {
+                        Spacer()
+                            .frame(width: width + trailingWidth, height: topHeight)
+                        ForEach(estimates.enumerated(), id: \.offset) { (_, estimate) in
+                            Text(estimate.stopId)
+                                .frame(width: 100, alignment: .leading)
+                                .multilineTextAlignment(.leading)
+                                .font(.caption)
+                                .rotationEffect(.degrees(-45), anchor: .bottomLeading)
+                                .offset(x: (estTimeRange + estimate.deltaTime).seconds / 60 * scale)
+                        }
+                    }
+                    .frame(width: width + trailingWidth, height: topHeight)
+
+                    // TT graph
+                    timeTimeGraph(
+                        estTimeRange: estTimeRange,
+                        width: width,
+                        estTimeDomain: estTimeDomain,
+                        height: height,
+                        tickerCount: tickerCount
+                    )
+                }
+            }
+            .scrollClipDisabled() // disable scroll clipping and implement our own
+            .mask {
+                Rectangle()
+                    .fill(.black)
+                    .blur(radius: 20)
+                    .padding(.all, -10)
+            }
+            .frame(maxWidth: .infinity)
+        }
     }
 
     func timeTimeGraph(
