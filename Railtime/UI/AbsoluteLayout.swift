@@ -74,18 +74,18 @@ struct AbsoluteLayout: Layout {
             // note that these are obtained in a "positive y = up" frame of reference, but iOS uses "positive y = down".
             // we will flip these in `placeSubviews`.
             let minX = offsets.x - h * cos(offsets.angle.radians)
-            let maxX = offsets.x + w * cos(offsets.angle.radians)
+//            let maxX = offsets.x + w * cos(offsets.angle.radians)
             let minY = offsets.y
-            let maxY = offsets.y + w * sin(offsets.angle.radians) + h * cos(offsets.angle.radians)
+//            let maxY = offsets.y + w * sin(offsets.angle.radians) + h * cos(offsets.angle.radians)
 
             subview.place(
                 at: .init(
                     x: minX - cache.minX,
-                    y: maxY - cache.minY
+                    y: cache.maxY - minY - h
                 ),
                 proposal: .init(
-                    width: maxX - minX,
-                    height: maxY - minY
+                    width: w,
+                    height: h
                 )
             )
         }

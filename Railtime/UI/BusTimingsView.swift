@@ -54,19 +54,31 @@ struct BusTimingsView: View {
             ScrollView(.horizontal) {
                 VStack(alignment: .leading, spacing: 20) {
                     // stop IDs
-                    ZStack(alignment: .bottomLeading) {
-                        Spacer()
-                            .frame(width: width + trailingWidth, height: topHeight)
+                    AbsoluteLayout {
                         ForEach(estimates.enumerated(), id: \.offset) { (_, estimate) in
                             Text(estimate.stopId)
-                                .frame(width: 100, alignment: .leading)
                                 .multilineTextAlignment(.leading)
                                 .font(.caption)
-                                .rotationEffect(.degrees(-45), anchor: .bottomLeading)
-                                .offset(x: (estTimeRange + estimate.deltaTime).seconds / 60 * scale)
+                                .fanOffset(
+                                    x: (estTimeRange + estimate.deltaTime).seconds / 60 * scale,
+                                    angle: .degrees(45)
+                                )
                         }
                     }
-                    .frame(width: width + trailingWidth, height: topHeight)
+
+//                    ZStack(alignment: .bottomLeading) {
+//                        Spacer()
+//                            .frame(width: width + trailingWidth, height: topHeight)
+//                        ForEach(estimates.enumerated(), id: \.offset) { (_, estimate) in
+//                            Text(estimate.stopId)
+//                                .frame(width: 100, alignment: .leading)
+//                                .multilineTextAlignment(.leading)
+//                                .font(.caption)
+//                                .rotationEffect(.degrees(-45), anchor: .bottomLeading)
+//                                .offset(x: (estTimeRange + estimate.deltaTime).seconds / 60 * scale)
+//                        }
+//                    }
+//                    .frame(width: width + trailingWidth, height: topHeight)
 
                     // TT graph
                     timeTimeGraph(
