@@ -21,6 +21,7 @@ struct BusQueryView: View {
     @State var endInfo: LTABusStopInfo?
 
     @State var queryStatus: BusQueryStatus = .none
+    @State var stopLookup: [String: LTABusStopInfo] = [:]
 
     enum BusQueryStatus {
         /// No query has been made
@@ -48,7 +49,7 @@ struct BusQueryView: View {
             case .failed(let error):
                 Text("Query failed: \(error)")
             case .success(let array):
-                BusTimingsView(estimates: array)
+                BusTimingsView(estimates: array, stopLookup: stopLookup)
             }
         }
     }
@@ -145,6 +146,12 @@ struct BusQueryView: View {
             .frame(maxWidth: .infinity)
             Button {
                 queryStatus = .success(StopArrivalEstimates.sampleData)
+
+                Task {
+                    for stop in StopArrivalEstimates.sampleData {
+                        stopLookup[stop.stopId] = try await estimator.data.getStopInfo(busStopCode: stop.stopId)
+                    }
+                }
             } label: {
                 Text("Load Sample Data")
             }

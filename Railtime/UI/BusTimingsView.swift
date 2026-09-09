@@ -14,6 +14,7 @@ let bottomHeight: CGFloat = 100
 
 struct BusTimingsView: View {
     var estimates: [StopArrivalEstimates]
+    var stopLookup: [String: LTABusStopInfo] = [:]
 
     var scale: CGFloat = 10 // 10 points of spacing per minute
 
@@ -56,7 +57,7 @@ struct BusTimingsView: View {
                     // stop IDs
                     AbsoluteLayout {
                         ForEach(estimates.enumerated(), id: \.offset) { (_, estimate) in
-                            Text(estimate.stopId)
+                            Text(stopLookup[estimate.stopId]?.description ?? estimate.stopId)
                                 .multilineTextAlignment(.leading)
                                 .font(.caption)
                                 .fanOffset(
