@@ -50,6 +50,10 @@ struct BusQueryView: View {
                 Text("Query failed: \(error)")
             case .success(let array):
                 BusTimingsView(estimates: array)
+//                Text("Showing sheet...")
+//                    .sheet(isPresented: .constant(true)) {
+//                        BusJourneyView(estimates: array, stopLookup: stopLookup)
+//                    }
             }
         }
     }

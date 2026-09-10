@@ -16,7 +16,12 @@ struct BusJourneyView: View {
     // Number of points of spacing per minute, horizontally. This value should never be larger than verticalScale
     var horizontalScale: CGFloat = 10
 
+    // horizontal offset, in TimeDelta
+    var horizontalOffset: TimeDelta = .zero
+
     var body: some View {
-        
+        OffsetScrollView { offset in
+
+        }
     }
 }
