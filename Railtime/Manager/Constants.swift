@@ -16,10 +16,14 @@ let PAGE_SIZE = 500
 /// 3x next busses to be the same as station A's next 3 busses. This value
 /// should not be set higher than 0.75 because it may cause desync at
 /// large gaps between stations.
-let STOP_GAP_PERCENTAGE = 0.4
+///
+/// A stop gap percentage of 0 disables the stop gap system.
+let STOP_GAP_PERCENTAGE = 0.0 // 0.4
 
 /// The largest stop gap allowed, expressed in seconds (equivalent to the
 /// Python `timedelta(minutes=15)`).
+///
+/// A maximum stop gap of 0 disables the stop gap system.
 let MAX_STOP_GAP: TimeDelta = .mins(15)
 
 /// When aligning one stop's projected window of up to-3 buses against the

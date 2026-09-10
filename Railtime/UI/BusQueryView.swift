@@ -149,7 +149,7 @@ struct BusQueryView: View {
             .padding(10)
             .frame(maxWidth: .infinity)
             Button {
-                queryStatus = .success(StopArrivalEstimates.sampleData)
+                queryStatus = .success(StopArrivalEstimates.sampleData2)
 
                 Task {
                     for stop in StopArrivalEstimates.sampleData {

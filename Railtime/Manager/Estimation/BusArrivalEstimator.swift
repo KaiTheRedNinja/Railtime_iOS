@@ -31,7 +31,7 @@ final class BusArrivalEstimator {
         client: LTAClient,
         now: Date? = nil,
         cacheDir: String = "lta_cache",
-        cacheTTLHours: Double = 24.0
+        cacheTTLHours: Double = 24.0 * 30 // 30 days
     ) {
         self.client = client
         self.now = now ?? .now
