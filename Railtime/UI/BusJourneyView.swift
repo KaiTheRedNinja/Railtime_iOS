@@ -20,14 +20,19 @@ struct BusJourneyView: View {
     // Number of points of spacing per minute, horizontally. This value should never be larger than verticalScale
     var horizontalScale: CGFloat = 10
 
-    // horizontal offset, in TimeDelta
-    var horizontalOffset: TimeDelta = .zero
-
     // the current time
     @State var now: Date = .now
 
-    // the current scroll position
+    // the current scroll position from the scroll view
     @State var scrollPosition: CGPoint = .zero
+
+    // the current horizontal scroll position, from our own manual processing
+    @State var horizontalScroll: CGFloat = .zero
+    @State var savedHorizontalScroll: CGFloat = .zero // saved value for gesture reasons
+
+    var horizontalOffset: CGFloat {
+        min(0, scrollPosition.y * -(horizontalScale / verticalScale) + horizontalScroll)
+    }
 
     var body: some View {
         // first we need to determine how large (horizontally and vertically) we need to be.
@@ -46,10 +51,37 @@ struct BusJourneyView: View {
 
                 Divider()
 
-                content(
-                    stopTimeRange: stopTimeRange,
-                    arrivalTimeRange: arrivalTimeRange,
-                    tickerCount: tickerCount
+                ScrollView(.vertical) {
+                    HStack(alignment: .top, spacing: 0) {
+
+                        stopLine(stopTimeRange: stopTimeRange)
+                            .zIndex(2)
+
+                        Color.clear
+                            .overlay(alignment: .topLeading) {
+                                ttGraph(tickerCount: tickerCount, stopTimeRange: stopTimeRange)
+                            }
+                            .zIndex(1)
+
+                        Spacer()
+                    }
+                    .padding(.top, 30)
+                }
+                .onScrollGeometryChange(for: CGPoint.self) { geo in
+                    geo.contentOffset
+                } action: { oldValue, newValue in
+                    scrollPosition = newValue
+                }
+                .simultaneousGesture(
+                    DragGesture(minimumDistance: 3)
+                        .onChanged { value in
+                            horizontalScroll = savedHorizontalScroll + value.translation.width
+                            print("Horizontal scroll changed to ", horizontalScroll)
+                        }
+                        .onEnded { value in
+                            savedHorizontalScroll += value.translation.width
+                            horizontalScroll = savedHorizontalScroll
+                        }
                 )
             }
             .navigationTitle("Bus 154")
@@ -80,26 +112,12 @@ struct BusJourneyView: View {
                 .offset(x: CGFloat(tickerIndex) * 5 * horizontalScale)
             }
         }
-        .offset(x: scrollPosition.y * -(horizontalScale / verticalScale))
+        .offset(x: horizontalOffset)
         .padding(.leading, 30)
     }
 
-    fileprivate func content(stopTimeRange: TimeDelta, arrivalTimeRange: TimeDelta, tickerCount: Int) -> some View {
-        OffsetScrollView(offset: $scrollPosition) {
-            HStack(alignment: .top, spacing: 0) {
-
-                stopLine(stopTimeRange: stopTimeRange)
-
-                ttGraph(tickerCount: tickerCount, stopTimeRange: stopTimeRange)
-
-                Spacer()
-            }
-            .padding(.top, 30)
-        }
-    }
-
     fileprivate func stopLine(stopTimeRange: TimeDelta) -> some View {
-        return ZStack(alignment: .top) {
+        ZStack(alignment: .top) {
             // stopline: the rectangle that goes from the top to the bottom
             Capsule()
                 .fill(Color.green)
@@ -123,6 +141,14 @@ struct BusJourneyView: View {
             }
         }
         .padding(.horizontal, 10)
+        .background {
+            ZStack(alignment: .trailing) {
+                Color.white
+                if scrollPosition.y != 0 {
+                    HStack { Divider() }
+                }
+            }
+        }
     }
 
     fileprivate func ttGraph(tickerCount: Int, stopTimeRange: TimeDelta) -> some View {
@@ -166,6 +192,7 @@ struct BusJourneyView: View {
                             .font(.caption)
                             .foregroundStyle(Color.secondary)
                     }
+                    .offset(x: -horizontalOffset) // completely negate scroll
 
                     // bus indicators
                     ForEach(stopEstimate.estimates.enumerated(), id: \.offset) { (_, busEstimate) in
@@ -187,7 +214,7 @@ struct BusJourneyView: View {
                                     x: -(busIndicatorDiameter + 10)/2,
                                     y: -busIndicatorDiameter
                                 )
-                                .offset(x: etaFromNow.seconds / 60 * horizontalScale)
+                                .padding(.leading, etaFromNow.seconds / 60 * horizontalScale)
                         }
                     }
                 }
@@ -198,7 +225,7 @@ struct BusJourneyView: View {
                 )
             }
         }
-        .offset(x: scrollPosition.y * -(horizontalScale / verticalScale))
+        .offset(x: horizontalOffset)
         .mask {
             Rectangle()
                 .fill(.black)
