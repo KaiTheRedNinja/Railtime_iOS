@@ -14,7 +14,6 @@ let bottomHeight: CGFloat = 100
 
 struct BusTimingsView: View {
     var estimates: [StopArrivalEstimates]
-    var stopLookup: [String: LTABusStopInfo] = [:]
 
     var scale: CGFloat = 10 // 10 points of spacing per minute
 
@@ -55,31 +54,19 @@ struct BusTimingsView: View {
             ScrollView(.horizontal) {
                 VStack(alignment: .leading, spacing: 20) {
                     // stop IDs
-                    AbsoluteLayout {
+                    ZStack(alignment: .bottomLeading) {
+                        Spacer()
+                            .frame(width: width + trailingWidth, height: topHeight)
                         ForEach(estimates.enumerated(), id: \.offset) { (_, estimate) in
-                            Text(stopLookup[estimate.stopId]?.description ?? estimate.stopId)
+                            Text(estimate.stopId)
+                                .frame(width: 100, alignment: .leading)
                                 .multilineTextAlignment(.leading)
                                 .font(.caption)
-                                .fanOffset(
-                                    x: (estTimeRange + estimate.deltaTime).seconds / 60 * scale,
-                                    angle: .degrees(45)
-                                )
+                                .rotationEffect(.degrees(-45), anchor: .bottomLeading)
+                                .offset(x: (estTimeRange + estimate.deltaTime).seconds / 60 * scale)
                         }
                     }
-
-//                    ZStack(alignment: .bottomLeading) {
-//                        Spacer()
-//                            .frame(width: width + trailingWidth, height: topHeight)
-//                        ForEach(estimates.enumerated(), id: \.offset) { (_, estimate) in
-//                            Text(estimate.stopId)
-//                                .frame(width: 100, alignment: .leading)
-//                                .multilineTextAlignment(.leading)
-//                                .font(.caption)
-//                                .rotationEffect(.degrees(-45), anchor: .bottomLeading)
-//                                .offset(x: (estTimeRange + estimate.deltaTime).seconds / 60 * scale)
-//                        }
-//                    }
-//                    .frame(width: width + trailingWidth, height: topHeight)
+                    .frame(width: width + trailingWidth, height: topHeight)
 
                     // TT graph
                     timeTimeGraph(

@@ -49,7 +49,7 @@ struct BusQueryView: View {
             case .failed(let error):
                 Text("Query failed: \(error)")
             case .success(let array):
-                BusTimingsView(estimates: array, stopLookup: stopLookup)
+                BusTimingsView(estimates: array)
             }
         }
     }
