@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Combine
 
 let stopLineWidth: CGFloat = 5
 let stopIndicatorDiameter: CGFloat = 10
@@ -24,6 +25,7 @@ struct BusJourneyView: View {
 
     // the current time
     @State var now: Date = .now
+    @State var nowRefreshTimer = Timer.publish(every: 0.1, on: .main, in: .default).autoconnect()
 
     // the current scroll position from the scroll view
     @State var scrollPosition: CGPoint = .zero
@@ -84,6 +86,9 @@ struct BusJourneyView: View {
             .navigationTitle("Bus 154")
             .navigationBarTitleDisplayMode(.inline)
         }
+        .onReceive(nowRefreshTimer) { _ in
+            now = .now
+        }
     }
 
     fileprivate func timeTickers(tickerCount: Int) -> some View {
@@ -143,7 +148,7 @@ struct BusJourneyView: View {
                 ForEach(busEarliestTimes.enumerated(), id: \.offset) { (_, earliestTiming) in
                     let offset = earliestTiming.eta.timeDelta(since: now)
 
-                    if offset > .zero {
+                    if offset > .zero, offset <= stopTimeRange { // dont show negative offsets, dont show ones too far away
                         Image(systemName: "bus")
                             .resizable()
                             .scaledToFit()
@@ -155,7 +160,7 @@ struct BusJourneyView: View {
                 }
             }
         }
-        .padding(.horizontal, 10)
+        .frame(width: 30)
         .background {
             ZStack(alignment: .trailing) {
                 Color.white
@@ -171,7 +176,7 @@ struct BusJourneyView: View {
         ZStack(alignment: .topLeading) {
             // time tickers
             ZStack(alignment: .topLeading) {
-                ForEach(1..<(tickerCount+1), id: \.self) { tickerIndex in
+                ForEach(0..<(tickerCount+1), id: \.self) { tickerIndex in
                     Rectangle()
                         .fill(Color.gray)
                         .opacity(0.5)
@@ -181,8 +186,9 @@ struct BusJourneyView: View {
             }
             .padding(.vertical, -30)
             .offset(y: scrollPosition.y) // completely negate scroll
+            .padding(.leading, ttGraphLeadingPadding)
 
-            // bus indexes
+            // bus diagonal lines
             let busEarliestTimes = getBusEarliestTimes()
             ZStack(alignment: .topLeading) {
                 ForEach(busEarliestTimes.enumerated(), id: \.offset) { (_, earliestTiming) in
@@ -216,7 +222,7 @@ struct BusJourneyView: View {
             // bus information
             ForEach(estimates.enumerated(), id: \.element.stopId) { (index, stopEstimate) in
                 // if the previous one was less than 2x bus indicator diameter away from this one, show a mini version
-//                let useMini = index > 0 && (stopEstimate.deltaTime - estimates[index-1].deltaTime) <= .mins(40 / verticalScale)
+                let useMini = index > 0 && (stopEstimate.deltaTime - estimates[index-1].deltaTime) <= .mins(20 / verticalScale)
 
                 ZStack(alignment: .topLeading) {
                     // horizontal line and name of bus stop
@@ -225,9 +231,12 @@ struct BusJourneyView: View {
                             .fill(Color.gray)
                             .frame(height: 1)
 
-                        Text(stopLookup[stopEstimate.stopId]?.description ?? stopEstimate.stopId)
-                            .font(.caption)
-                            .foregroundStyle(Color.secondary)
+                        if !useMini {
+                            Text(stopLookup[stopEstimate.stopId]?.description ?? stopEstimate.stopId)
+                                .font(.caption)
+                                .foregroundStyle(Color.secondary)
+                                .padding(.leading, 2)
+                        }
                     }
                     .padding(.leading, -ttGraphLeadingPadding) // completely negate leading padding
                     .offset(x: scrollPosition.x) // completely negate scroll
@@ -238,7 +247,7 @@ struct BusJourneyView: View {
 
                         if etaFromNow > TimeDelta.zero {
                             Group {
-//                                if useMini {
+                                if index + 1 < estimates.count {
                                     Circle()
                                         .fill(Color.blue)
                                         .frame(width: stopIndicatorDiameter, height: stopIndicatorDiameter)
@@ -246,23 +255,23 @@ struct BusJourneyView: View {
                                             x: -(stopIndicatorDiameter)/2,
                                             y: -(stopIndicatorDiameter)/2
                                         )
-//                                } else {
-//                                    Text(busEstimate.busServiceNo)
-//                                        .font(.caption)
-//                                        .bold()
-//                                        .foregroundStyle(Color.white)
-//                                        .frame(width: busIndicatorDiameter + 4, height: busIndicatorDiameter - 6)
-//                                        .padding(3)
-//                                        .background {
-//                                            Capsule()
-//                                                .fill(Color.blue)
-//                                                .frame(height: busIndicatorDiameter)
-//                                        }
-//                                        .offset( // make the bus appear above the horizontal line, centered
-//                                            x: -(busIndicatorDiameter + 10)/2,
-//                                            y: -busIndicatorDiameter
-//                                        )
-//                                }
+                                } else {
+                                    Text(busEstimate.busServiceNo)
+                                        .font(.caption)
+                                        .bold()
+                                        .foregroundStyle(Color.white)
+                                        .frame(width: busIndicatorDiameter + 4, height: busIndicatorDiameter - 6)
+                                        .padding(3)
+                                        .background {
+                                            Capsule()
+                                                .fill(Color.blue)
+                                                .frame(height: busIndicatorDiameter)
+                                        }
+                                        .offset( // make the bus appear above the horizontal line, centered
+                                            x: -(busIndicatorDiameter + 10)/2,
+                                            y: -busIndicatorDiameter
+                                        )
+                                }
                             }
                             .padding(.leading, etaFromNow.seconds / 60 * horizontalScale)
                         }
