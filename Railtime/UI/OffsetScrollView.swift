@@ -8,22 +8,22 @@
 import SwiftUI
 
 struct OffsetScrollView<Content: View>: View {
-    @State private var offset = CGPoint.zero
-
+    var offset: Binding<CGPoint>
     var axes: Axis.Set
     var showsIndicators: Bool
-    var content: (CGPoint) -> Content
+    var content: Content
 
-    public init(_ axes: Axis.Set = .vertical, showsIndicators: Bool = true, @ViewBuilder content: @escaping (CGPoint) -> Content) {
+    public init(offset: Binding<CGPoint>, axes: Axis.Set = .vertical, showsIndicators: Bool = true, @ViewBuilder content: () -> Content) {
+        self.offset = offset
         self.axes = axes
         self.showsIndicators = showsIndicators
-        self.content = content
+        self.content = content()
     }
 
     var body: some View {
         ScrollView(axes, showsIndicators: showsIndicators) {
             VStack {
-                content(offset)
+                content
             }
             .background(
                 GeometryReader { proxy in
@@ -35,7 +35,7 @@ struct OffsetScrollView<Content: View>: View {
                 }
             )
             .onPreferenceChange(ViewOffsetKey.self) {
-                offset = $0
+                offset.wrappedValue = $0
             }
         }
         .coordinateSpace(name: "scroll")

@@ -7,6 +7,10 @@
 
 import SwiftUI
 
+let stopLineWidth: CGFloat = 5
+let stopIndicatorDiameter: CGFloat = 10
+let busIndicatorDiameter: CGFloat = 20
+
 struct BusJourneyView: View {
     var estimates: [StopArrivalEstimates]
     var stopLookup: [String: LTABusStopInfo] = [:]
@@ -22,6 +26,9 @@ struct BusJourneyView: View {
     // the current time
     @State var now: Date = .now
 
+    // the current scroll position
+    @State var scrollPosition: CGPoint = .zero
+
     var body: some View {
         // first we need to determine how large (horizontally and vertically) we need to be.
 
@@ -35,26 +42,7 @@ struct BusJourneyView: View {
 
         NavigationStack {
             VStack(spacing: 0) {
-                ZStack(alignment: .topLeading) {
-                    Spacer()
-                        .frame(height: 1)
-
-                    // time ticker labels
-                    ForEach(1..<(tickerCount+1), id: \.self) { tickerIndex in
-                        HStack(alignment: .bottom, spacing: 1) {
-                            Rectangle()
-                                .fill(Color.gray)
-                                .opacity(0.5)
-                                .frame(width: 1, height: 10)
-
-                            Text("\(tickerIndex*5)min")
-                                .font(.caption)
-                                .foregroundStyle(Color.gray)
-                        }
-                        .offset(x: CGFloat(tickerIndex) * 5 * horizontalScale)
-                    }
-                }
-                .padding(.leading, 30)
+                timeTickers(tickerCount: tickerCount)
 
                 Divider()
 
@@ -69,122 +57,154 @@ struct BusJourneyView: View {
         }
     }
 
-    @ViewBuilder
-    func content(stopTimeRange: TimeDelta, arrivalTimeRange: TimeDelta, tickerCount: Int) -> some View {
-        OffsetScrollView { offset in
-            HStack(alignment: .top, spacing: 0) {
-                let stopLineWidth: CGFloat = 5
-                let stopIndicatorDiameter: CGFloat = 10
-                let busIndicatorDiameter: CGFloat = 20
+    fileprivate func timeTickers(tickerCount: Int) -> some View {
+        ZStack(alignment: .topLeading) {
+            Spacer()
+                .frame(height: 1)
 
-                ZStack(alignment: .top) {
-                    // stopline: the rectangle that goes from the top to the bottom
-                    Capsule()
-                        .fill(Color.green)
-                        .opacity(0.7)
-                        .frame(
-                            width: stopLineWidth,
-                            // adjust height so that timeDelta=0 is located at the center of the capsule's top semicircle
-                            height: stopTimeRange.seconds / 60 * verticalScale + stopLineWidth
-                        )
-                        .padding(.vertical, (stopIndicatorDiameter - stopLineWidth)/2) // offset to be on same height as indicators
-
-                    // stop indicators
-                    ForEach(estimates, id: \.stopId) { estimate in
-                        Circle()
-                            .fill(Color.green)
-                            .frame(width: stopIndicatorDiameter, height: stopIndicatorDiameter)
-                            .padding(
-                                .top,
-                                (stopTimeRange + estimate.deltaTime).seconds / 60 * verticalScale  // offset but actual position rather than just visual
-                            )
-                    }
-                }
-                .padding(.horizontal, 10)
-
-                ZStack(alignment: .topLeading) {
-                    // time tickers
-                    ZStack(alignment: .topLeading) {
-                        ForEach(0..<(tickerCount+1), id: \.self) { tickerIndex in
-                            Rectangle()
-                                .fill(Color.gray)
-                                .opacity(0.5)
-                                .frame(width: 1)
-                                .offset(x: CGFloat(tickerIndex) * 5 * horizontalScale)
-                        }
-                    }
-                    .padding(.vertical, -30)
-
-                    // bus indexes
-                    let busEarliestTimes = getBusEarliestTimes()
-                    ForEach(busEarliestTimes.enumerated(), id: \.offset) { (_, earliestTiming) in
-                        let offset = earliestTiming.eta.timeDelta(since: now)
-
-                        if offset > .zero {
-                            AngledLine(angle: .radians(atan(Double(verticalScale/horizontalScale))))
-                                .stroke(Color.accentColor, lineWidth: 2)
-                                .opacity(0.5)
-                                .padding(.top, stopIndicatorDiameter/2) // offset to be on same height as indicators
-                                .offset(y: (stopTimeRange - offset).seconds / 60 * verticalScale)
-                        }
-                    }
-
-                    // bus information
-                    ForEach(estimates, id: \.stopId) { stopEstimate in
-                        ZStack(alignment: .topLeading) {
-                            // horizontal line and name of bus stop
-                            VStack(alignment: .leading, spacing: 2) {
-                                Rectangle()
-                                    .fill(Color.gray)
-                                    .frame(height: 1)
-
-                                Text(stopLookup[stopEstimate.stopId]?.description ?? stopEstimate.stopId)
-                                    .font(.caption)
-                                    .foregroundStyle(Color.secondary)
-                            }
-
-                            // bus indicators
-                            ForEach(stopEstimate.estimates.enumerated(), id: \.offset) { (_, busEstimate) in
-                                let etaFromNow = busEstimate.eta.timeDelta(since: now)
-
-                                if etaFromNow > TimeDelta.zero {
-                                    Text(busEstimate.busServiceNo)
-                                        .font(.caption)
-                                        .bold()
-                                        .foregroundStyle(Color.white)
-                                        .frame(width: busIndicatorDiameter + 4, height: busIndicatorDiameter - 6)
-                                        .padding(3)
-                                        .background {
-                                            Capsule()
-                                                .fill(Color.blue)
-                                                .frame(height: busIndicatorDiameter)
-                                        }
-                                        .offset( // make the bus appear above the horizontal line, centered
-                                            x: -(busIndicatorDiameter + 10)/2,
-                                            y: -busIndicatorDiameter
-                                        )
-                                        .offset(x: etaFromNow.seconds / 60 * horizontalScale)
-                                }
-                            }
-                        }
-                        .padding(
-                            .top,
-                            stopIndicatorDiameter/2 + // offset to be on same height as indicators
-                            (stopTimeRange + stopEstimate.deltaTime).seconds / 60 * verticalScale  // offset but actual position rather than just visual
-                        )
-                    }
-                }
-                .mask {
+            // time ticker labels
+            Text("Now")
+                .font(.caption)
+                .foregroundStyle(Color.gray)
+            ForEach(1..<(tickerCount+1), id: \.self) { tickerIndex in
+                HStack(alignment: .bottom, spacing: 1) {
                     Rectangle()
-                        .fill(.black)
-                        .blur(radius: 20)
-                        .padding(.top, -30)
-                        .padding(.all, -10)
+                        .fill(Color.gray)
+                        .opacity(0.5)
+                        .frame(width: 1, height: 10)
+
+                    Text("\(tickerIndex*5)min")
+                        .font(.caption)
+                        .foregroundStyle(Color.gray)
                 }
+                .offset(x: CGFloat(tickerIndex) * 5 * horizontalScale)
+            }
+        }
+        .offset(x: scrollPosition.y * -(horizontalScale / verticalScale))
+        .padding(.leading, 30)
+    }
+
+    fileprivate func content(stopTimeRange: TimeDelta, arrivalTimeRange: TimeDelta, tickerCount: Int) -> some View {
+        OffsetScrollView(offset: $scrollPosition) {
+            HStack(alignment: .top, spacing: 0) {
+
+                stopLine(stopTimeRange: stopTimeRange)
+
+                ttGraph(tickerCount: tickerCount, stopTimeRange: stopTimeRange)
 
                 Spacer()
             }
             .padding(.top, 30)
+        }
+    }
+
+    fileprivate func stopLine(stopTimeRange: TimeDelta) -> some View {
+        return ZStack(alignment: .top) {
+            // stopline: the rectangle that goes from the top to the bottom
+            Capsule()
+                .fill(Color.green)
+                .opacity(0.7)
+                .frame(
+                    width: stopLineWidth,
+                    // adjust height so that timeDelta=0 is located at the center of the capsule's top semicircle
+                    height: stopTimeRange.seconds / 60 * verticalScale + stopLineWidth
+                )
+                .padding(.vertical, (stopIndicatorDiameter - stopLineWidth)/2) // offset to be on same height as indicators
+
+            // stop indicators
+            ForEach(estimates, id: \.stopId) { estimate in
+                Circle()
+                    .fill(Color.green)
+                    .frame(width: stopIndicatorDiameter, height: stopIndicatorDiameter)
+                    .padding(
+                        .top,
+                        (stopTimeRange + estimate.deltaTime).seconds / 60 * verticalScale  // offset but actual position rather than just visual
+                    )
+            }
+        }
+        .padding(.horizontal, 10)
+    }
+
+    fileprivate func ttGraph(tickerCount: Int, stopTimeRange: TimeDelta) -> some View {
+        ZStack(alignment: .topLeading) {
+            // time tickers
+            ZStack(alignment: .topLeading) {
+                ForEach(1..<(tickerCount+1), id: \.self) { tickerIndex in
+                    Rectangle()
+                        .fill(Color.gray)
+                        .opacity(0.5)
+                        .frame(width: 1)
+                        .offset(x: CGFloat(tickerIndex) * 5 * horizontalScale)
+                }
+            }
+            .padding(.vertical, -30)
+
+            // bus indexes
+            let busEarliestTimes = getBusEarliestTimes()
+            ForEach(busEarliestTimes.enumerated(), id: \.offset) { (_, earliestTiming) in
+                let offset = earliestTiming.eta.timeDelta(since: now)
+
+                if offset > .zero {
+                    AngledLine(angle: .radians(atan(Double(verticalScale/horizontalScale))))
+                        .stroke(Color.accentColor, lineWidth: 2)
+                        .opacity(0.5)
+                        .padding(.top, stopIndicatorDiameter/2) // offset to be on same height as indicators
+                        .offset(y: (stopTimeRange - offset).seconds / 60 * verticalScale)
+                }
+            }
+
+            // bus information
+            ForEach(estimates, id: \.stopId) { stopEstimate in
+                ZStack(alignment: .topLeading) {
+                    // horizontal line and name of bus stop
+                    VStack(alignment: .leading, spacing: 2) {
+                        Rectangle()
+                            .fill(Color.gray)
+                            .frame(height: 1)
+
+                        Text(stopLookup[stopEstimate.stopId]?.description ?? stopEstimate.stopId)
+                            .font(.caption)
+                            .foregroundStyle(Color.secondary)
+                    }
+
+                    // bus indicators
+                    ForEach(stopEstimate.estimates.enumerated(), id: \.offset) { (_, busEstimate) in
+                        let etaFromNow = busEstimate.eta.timeDelta(since: now)
+
+                        if etaFromNow > TimeDelta.zero {
+                            Text(busEstimate.busServiceNo)
+                                .font(.caption)
+                                .bold()
+                                .foregroundStyle(Color.white)
+                                .frame(width: busIndicatorDiameter + 4, height: busIndicatorDiameter - 6)
+                                .padding(3)
+                                .background {
+                                    Capsule()
+                                        .fill(Color.blue)
+                                        .frame(height: busIndicatorDiameter)
+                                }
+                                .offset( // make the bus appear above the horizontal line, centered
+                                    x: -(busIndicatorDiameter + 10)/2,
+                                    y: -busIndicatorDiameter
+                                )
+                                .offset(x: etaFromNow.seconds / 60 * horizontalScale)
+                        }
+                    }
+                }
+                .padding(
+                    .top,
+                    stopIndicatorDiameter/2 + // offset to be on same height as indicators
+                    (stopTimeRange + stopEstimate.deltaTime).seconds / 60 * verticalScale  // offset but actual position rather than just visual
+                )
+            }
+        }
+        .offset(x: scrollPosition.y * -(horizontalScale / verticalScale))
+        .mask {
+            Rectangle()
+                .fill(.black)
+                .blur(radius: 20)
+                .padding(.top, -30)
+                .padding(.all, -10)
         }
     }
 
