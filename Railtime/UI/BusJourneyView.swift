@@ -10,6 +10,7 @@ import SwiftUI
 let stopLineWidth: CGFloat = 5
 let stopIndicatorDiameter: CGFloat = 10
 let busIndicatorDiameter: CGFloat = 20
+let ttGraphLeadingPadding: CGFloat = 20
 
 struct BusJourneyView: View {
     var estimates: [StopArrivalEstimates]
@@ -18,21 +19,14 @@ struct BusJourneyView: View {
     // Number of points of spacing per minute, vertically
     var verticalScale: CGFloat = 40
     // Number of points of spacing per minute, horizontally. This value should never be larger than verticalScale
-    var horizontalScale: CGFloat = 10
+    @State var horizontalScale: CGFloat = 10
+    @State var savedHorizontalScale: CGFloat = 10
 
     // the current time
     @State var now: Date = .now
 
     // the current scroll position from the scroll view
     @State var scrollPosition: CGPoint = .zero
-
-    // the current horizontal scroll position, from our own manual processing
-    @State var horizontalScroll: CGFloat = .zero
-    @State var savedHorizontalScroll: CGFloat = .zero // saved value for gesture reasons
-
-    var horizontalOffset: CGFloat {
-        min(0, scrollPosition.y * -(horizontalScale / verticalScale) + horizontalScroll)
-    }
 
     var body: some View {
         // first we need to determine how large (horizontally and vertically) we need to be.
@@ -51,16 +45,13 @@ struct BusJourneyView: View {
 
                 Divider()
 
-                ScrollView(.vertical) {
+                ScrollView([.horizontal, .vertical]) {
                     HStack(alignment: .top, spacing: 0) {
-
                         stopLine(stopTimeRange: stopTimeRange)
+                            .offset(x: scrollPosition.x) // offset scroll position
                             .zIndex(2)
 
-                        Color.clear
-                            .overlay(alignment: .topLeading) {
-                                ttGraph(tickerCount: tickerCount, stopTimeRange: stopTimeRange)
-                            }
+                        ttGraph(tickerCount: tickerCount, stopTimeRange: stopTimeRange)
                             .zIndex(1)
 
                         Spacer()
@@ -71,16 +62,22 @@ struct BusJourneyView: View {
                     geo.contentOffset
                 } action: { oldValue, newValue in
                     scrollPosition = newValue
+                    print("New scroll position: \(scrollPosition)")
                 }
                 .simultaneousGesture(
-                    DragGesture(minimumDistance: 3)
+                    MagnifyGesture(minimumScaleDelta: 0.05)
                         .onChanged { value in
-                            horizontalScroll = savedHorizontalScroll + value.translation.width
-                            print("Horizontal scroll changed to ", horizontalScroll)
+                            withAnimation(.interactiveSpring) {
+                                horizontalScale = max(8, min(savedHorizontalScale * value.magnification, verticalScale))
+                            }
+                            print("Horizontal scale changed to ", horizontalScale)
                         }
                         .onEnded { value in
-                            savedHorizontalScroll += value.translation.width
-                            horizontalScroll = savedHorizontalScroll
+                            withAnimation(.interactiveSpring) {
+                                horizontalScale = max(8, min(savedHorizontalScale * value.magnification, verticalScale))
+                                savedHorizontalScale = horizontalScale
+                            }
+                            print("Horizontal scale saved as ", horizontalScale)
                         }
                 )
             }
@@ -112,7 +109,7 @@ struct BusJourneyView: View {
                 .offset(x: CGFloat(tickerIndex) * 5 * horizontalScale)
             }
         }
-        .offset(x: horizontalOffset)
+        .offset(x: -scrollPosition.x + ttGraphLeadingPadding)
         .padding(.leading, 30)
     }
 
@@ -139,18 +136,37 @@ struct BusJourneyView: View {
                         (stopTimeRange + estimate.deltaTime).seconds / 60 * verticalScale  // offset but actual position rather than just visual
                     )
             }
+
+            // bus locations
+            let busEarliestTimes = getBusEarliestTimes()
+            ZStack(alignment: .topLeading) {
+                ForEach(busEarliestTimes.enumerated(), id: \.offset) { (_, earliestTiming) in
+                    let offset = earliestTiming.eta.timeDelta(since: now)
+
+                    if offset > .zero {
+                        Image(systemName: "bus")
+                            .resizable()
+                            .scaledToFit()
+                            .foregroundStyle(Color.accentColor)
+                            .frame(width: busIndicatorDiameter, height: busIndicatorDiameter)
+                            .padding(.vertical, -stopLineWidth/2) // offset to be on same height as indicators
+                            .offset(y: (stopTimeRange - offset).seconds / 60 * verticalScale)
+                    }
+                }
+            }
         }
         .padding(.horizontal, 10)
         .background {
             ZStack(alignment: .trailing) {
                 Color.white
-                if scrollPosition.y != 0 {
-                    HStack { Divider() }
-                }
+                HStack { Divider() }
             }
+            .padding(.top, -30)
+            .offset(y: scrollPosition.y) // completely negate scroll
         }
     }
 
+    @ViewBuilder
     fileprivate func ttGraph(tickerCount: Int, stopTimeRange: TimeDelta) -> some View {
         ZStack(alignment: .topLeading) {
             // time tickers
@@ -164,23 +180,44 @@ struct BusJourneyView: View {
                 }
             }
             .padding(.vertical, -30)
+            .offset(y: scrollPosition.y) // completely negate scroll
 
             // bus indexes
             let busEarliestTimes = getBusEarliestTimes()
-            ForEach(busEarliestTimes.enumerated(), id: \.offset) { (_, earliestTiming) in
-                let offset = earliestTiming.eta.timeDelta(since: now)
+            ZStack(alignment: .topLeading) {
+                ForEach(busEarliestTimes.enumerated(), id: \.offset) { (_, earliestTiming) in
+                    let offset = earliestTiming.eta.timeDelta(since: now)
 
-                if offset > .zero {
-                    AngledLine(angle: .radians(atan(Double(verticalScale/horizontalScale))))
-                        .stroke(Color.accentColor, lineWidth: 2)
-                        .opacity(0.5)
+                    if offset > .zero {
+                        ZStack(alignment: .topLeading) {
+                            Capsule()
+                                .fill(Color.accentColor)
+                                .frame(width: ttGraphLeadingPadding - min(scrollPosition.x, 0), height: 2)
+                                .offset(x: min(scrollPosition.x, 0))
+                            AngledLine(angle: .radians(atan(Double(verticalScale/horizontalScale))))
+                                .stroke(Color.accentColor, lineWidth: 2)
+                                .offset(x: ttGraphLeadingPadding)
+                        }
                         .padding(.top, stopIndicatorDiameter/2) // offset to be on same height as indicators
+                        .opacity(0.5)
                         .offset(y: (stopTimeRange - offset).seconds / 60 * verticalScale)
+                    }
                 }
+            }
+            .mask {
+                Rectangle()
+                    .fill(.black)
+                    .blur(radius: 20)
+                    .padding(.top, -30)
+                    .padding(.leading, min(scrollPosition.x, 0))
+                    .padding(.all, -10)
             }
 
             // bus information
-            ForEach(estimates, id: \.stopId) { stopEstimate in
+            ForEach(estimates.enumerated(), id: \.element.stopId) { (index, stopEstimate) in
+                // if the previous one was less than 2x bus indicator diameter away from this one, show a mini version
+//                let useMini = index > 0 && (stopEstimate.deltaTime - estimates[index-1].deltaTime) <= .mins(40 / verticalScale)
+
                 ZStack(alignment: .topLeading) {
                     // horizontal line and name of bus stop
                     VStack(alignment: .leading, spacing: 2) {
@@ -192,29 +229,42 @@ struct BusJourneyView: View {
                             .font(.caption)
                             .foregroundStyle(Color.secondary)
                     }
-                    .offset(x: -horizontalOffset) // completely negate scroll
+                    .padding(.leading, -ttGraphLeadingPadding) // completely negate leading padding
+                    .offset(x: scrollPosition.x) // completely negate scroll
 
                     // bus indicators
                     ForEach(stopEstimate.estimates.enumerated(), id: \.offset) { (_, busEstimate) in
                         let etaFromNow = busEstimate.eta.timeDelta(since: now)
 
                         if etaFromNow > TimeDelta.zero {
-                            Text(busEstimate.busServiceNo)
-                                .font(.caption)
-                                .bold()
-                                .foregroundStyle(Color.white)
-                                .frame(width: busIndicatorDiameter + 4, height: busIndicatorDiameter - 6)
-                                .padding(3)
-                                .background {
-                                    Capsule()
+                            Group {
+//                                if useMini {
+                                    Circle()
                                         .fill(Color.blue)
-                                        .frame(height: busIndicatorDiameter)
-                                }
-                                .offset( // make the bus appear above the horizontal line, centered
-                                    x: -(busIndicatorDiameter + 10)/2,
-                                    y: -busIndicatorDiameter
-                                )
-                                .padding(.leading, etaFromNow.seconds / 60 * horizontalScale)
+                                        .frame(width: stopIndicatorDiameter, height: stopIndicatorDiameter)
+                                        .offset( // make the bus appear ON the horizontal line, centered
+                                            x: -(stopIndicatorDiameter)/2,
+                                            y: -(stopIndicatorDiameter)/2
+                                        )
+//                                } else {
+//                                    Text(busEstimate.busServiceNo)
+//                                        .font(.caption)
+//                                        .bold()
+//                                        .foregroundStyle(Color.white)
+//                                        .frame(width: busIndicatorDiameter + 4, height: busIndicatorDiameter - 6)
+//                                        .padding(3)
+//                                        .background {
+//                                            Capsule()
+//                                                .fill(Color.blue)
+//                                                .frame(height: busIndicatorDiameter)
+//                                        }
+//                                        .offset( // make the bus appear above the horizontal line, centered
+//                                            x: -(busIndicatorDiameter + 10)/2,
+//                                            y: -busIndicatorDiameter
+//                                        )
+//                                }
+                            }
+                            .padding(.leading, etaFromNow.seconds / 60 * horizontalScale)
                         }
                     }
                 }
@@ -223,15 +273,8 @@ struct BusJourneyView: View {
                     stopIndicatorDiameter/2 + // offset to be on same height as indicators
                     (stopTimeRange + stopEstimate.deltaTime).seconds / 60 * verticalScale  // offset but actual position rather than just visual
                 )
+                .padding(.leading, ttGraphLeadingPadding)
             }
-        }
-        .offset(x: horizontalOffset)
-        .mask {
-            Rectangle()
-                .fill(.black)
-                .blur(radius: 20)
-                .padding(.top, -30)
-                .padding(.all, -10)
         }
     }
 

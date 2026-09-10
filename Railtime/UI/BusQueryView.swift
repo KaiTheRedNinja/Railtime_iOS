@@ -136,6 +136,10 @@ struct BusQueryView: View {
                             numTarget: estimationCount
                         )
                         queryStatus = .success(estimates)
+
+                        for stop in estimates {
+                            stopLookup[stop.stopId] = try await estimator.data.getStopInfo(busStopCode: stop.stopId)
+                        }
                     } catch {
                         queryStatus = .failed(error)
                     }
