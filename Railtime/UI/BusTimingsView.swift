@@ -220,3 +220,13 @@ struct DiagonalLine: Shape {
         }
     }
 }
+struct AngledLine: Shape {
+    var angle: Angle
+
+    func path(in rect: CGRect) -> Path {
+        Path { path in
+            path.move(to: .init(x: rect.minX, y: rect.minY))
+            path.addLine(to: .init(x: rect.maxX, y: rect.minY + rect.width * tan(angle.radians)))
+        }
+    }
+}

@@ -47,13 +47,13 @@ struct BusQueryView: View {
                 ProgressView()
                     .progressViewStyle(.circular)
             case .failed(let error):
-                Text("Query failed: \(error)")
+                Text("Query failed: \(error.localizedDescription)")
             case .success(let array):
-                BusTimingsView(estimates: array)
-//                Text("Showing sheet...")
-//                    .sheet(isPresented: .constant(true)) {
-//                        BusJourneyView(estimates: array, stopLookup: stopLookup)
-//                    }
+//                BusTimingsView(estimates: array)
+                Text("Showing sheet...")
+                    .sheet(isPresented: .constant(true)) {
+                        BusJourneyView(estimates: array, stopLookup: stopLookup)
+                    }
             }
         }
     }
@@ -149,10 +149,11 @@ struct BusQueryView: View {
             .padding(10)
             .frame(maxWidth: .infinity)
             Button {
-                queryStatus = .success(StopArrivalEstimates.sampleData2)
+                let sampleData = StopArrivalEstimates.sampleData2
+                queryStatus = .success(sampleData)
 
                 Task {
-                    for stop in StopArrivalEstimates.sampleData {
+                    for stop in sampleData {
                         stopLookup[stop.stopId] = try await estimator.data.getStopInfo(busStopCode: stop.stopId)
                     }
                 }
