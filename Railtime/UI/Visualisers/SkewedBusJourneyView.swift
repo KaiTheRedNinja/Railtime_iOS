@@ -53,7 +53,7 @@ struct SkewedBusJourneyView: View {
             VStack(alignment: .leading, spacing: 0) {
                 // stop line and tt graph
                 GeometryReader { geometry in
-                    ScrollView([.horizontal, .vertical]) {
+                    ScrollView([.horizontal, .vertical], showsIndicators: false) {
                         VStack {
                             HStack(alignment: .top, spacing: 0) {
                                 // stop line
@@ -205,17 +205,19 @@ private struct TimeTicker: View {
     var minutes: Int
 
     var body: some View {
-        let xOffset = min(ttGraphSize.width, CGFloat(minutes) * horizontalScale)
-        let yOffset = max(0, (CGFloat(minutes) - (ttGraphSize.width/horizontalScale)) * verticalScale)
+        let xOffset = min(ttGraphSize.width, CGFloat(minutes) * horizontalScale - scrollPosition.x - scrollPosition.y * horizontalScale / verticalScale)
+        let yOffset = max(0, (CGFloat(minutes) - (ttGraphSize.width + scrollPosition.x)/horizontalScale) * verticalScale - scrollPosition.y)
 
         ZStack(alignment: .bottomLeading) {
             Path { path in
-                path.move(to: .init(x: 0, y: CGFloat(minutes) * verticalScale))
+                path.move(to: .init(x: 0, y: CGFloat(minutes) * verticalScale - scrollPosition.y - scrollPosition.x * verticalScale / horizontalScale))
                 path.addLine(to: .init(x: xOffset, y: yOffset))
             }
             .stroke(Color.gray, style: .init(lineWidth: 1, lineCap: .round, lineJoin: .round, miterLimit: 0, dash: [5, 5], dashPhase: 0))
             .frame(width: ttGraphSize.width, height: ttGraphSize.height)
-            .clipShape(Rectangle())
+            .mask {
+                Rectangle().ignoresSafeArea()
+            }
 
             Path { path in
                 path.move(to: .init(x: xOffset, y: yOffset + timeTickerLabelsHeight))
@@ -231,7 +233,7 @@ private struct TimeTicker: View {
                 width: ttGraphSize.width + timeTickerLabelsWidth,
                 height: ttGraphSize.height + timeTickerLabelsHeight
             )
-            .clipShape(Rectangle())
+//            .clipShape(Rectangle())
         }
         .overlay(alignment: .topLeading) {
             ZStack(alignment: .bottomLeading) {
