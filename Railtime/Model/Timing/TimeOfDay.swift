@@ -23,11 +23,13 @@ struct TimeOfDay: Codable, CustomDebugStringConvertible {
     /// The `ss` part of the time of day, represented as `hh:mm:dd`
     var ss: Int { Int(secondsSinceMidnight.truncatingRemainder(dividingBy: 60)) }
 
-    /// The date formatted as a `hh:mm:dd` string
-    var hhmmdd: String { "\(String(format: "%02d", hh)):\(String(format: "%02d", mm)):\(String(format: "%02d", ss))" }
+    /// The date formatted as a `hh:mm:ss` string
+    var hhmmss: String { "\(String(format: "%02d", hh)):\(String(format: "%02d", mm)):\(String(format: "%02d", ss))" }
+    /// The date formatted as a `hh:mm` string
+    var hhmm: String { "\(String(format: "%02d", hh)):\(String(format: "%02d", mm))" }
 
     /// The debug description
-    var debugDescription: String { "\(hhmmdd), secondsSinceMidnight = \(secondsSinceMidnight)" }
+    var debugDescription: String { "\(hhmmss), secondsSinceMidnight = \(secondsSinceMidnight)" }
 
     /// A time of day initialised from seconds since midnight. No validation done.
     init(secondsSinceMidnight: TimeInterval) {

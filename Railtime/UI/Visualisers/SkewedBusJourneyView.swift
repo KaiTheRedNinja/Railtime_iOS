@@ -145,6 +145,19 @@ struct SkewedBusJourneyView: View {
                         )
 
                         if horizontalOffset >= 0 {
+                            Text(TimeOfDay(date: busEstimate.eta).hhmm)
+                                .font(.caption)
+                                .padding(3)
+                                .background {
+                                    RoundedRectangle(cornerRadius: 3)
+                                        .fill(Color.white)
+                                        .blur(radius: 3)
+                                }
+                                .padding(1)
+                                .frame(height: firstStopVerticalOffset * 2, alignment: .bottomLeading)
+                                .offset(y: -firstStopVerticalOffset)
+                                .padding(.leading, horizontalOffset)
+
                             Circle()
                                 .fill(Color.blue)
                                 .frame(width: stopIndicatorDiameter, height: stopIndicatorDiameter)
