@@ -52,7 +52,7 @@ struct BusQueryView: View {
 //                BusTimingsView(estimates: array)
                 Text("Showing sheet...")
                     .sheet(isPresented: .constant(true)) {
-                        BusJourneyView(estimates: array, stopLookup: stopLookup)
+                        SkewedBusJourneyView(estimates: array, stopLookup: stopLookup)
                     }
             }
         }
@@ -153,14 +153,7 @@ struct BusQueryView: View {
             .padding(10)
             .frame(maxWidth: .infinity)
             Button {
-                let sampleData = StopArrivalEstimates.sampleData2
-                queryStatus = .success(sampleData)
-
-                Task {
-                    for stop in sampleData {
-                        stopLookup[stop.stopId] = try await estimator.data.getStopInfo(busStopCode: stop.stopId)
-                    }
-                }
+                loadSampleData(estimator: estimator)
             } label: {
                 Text("Load Sample Data")
             }
@@ -180,6 +173,20 @@ struct BusQueryView: View {
             }
             Task {
                 endInfo = try? await estimator.data.getStopInfo(busStopCode: newValue)
+            }
+        }
+        .onAppear {
+            loadSampleData(estimator: estimator)
+        }
+    }
+
+    func loadSampleData(estimator: BusArrivalEstimator) {
+        let sampleData = StopArrivalEstimates.sampleData2
+        queryStatus = .success(sampleData)
+
+        Task {
+            for stop in sampleData {
+                stopLookup[stop.stopId] = try await estimator.data.getStopInfo(busStopCode: stop.stopId)
             }
         }
     }

@@ -8,10 +8,10 @@
 import SwiftUI
 import Combine
 
-let stopLineWidth: CGFloat = 5
-let stopIndicatorDiameter: CGFloat = 10
-let busIndicatorDiameter: CGFloat = 20
-let ttGraphLeadingPadding: CGFloat = 20
+private let stopLineWidth: CGFloat = 5
+private let stopIndicatorDiameter: CGFloat = 10
+private let busIndicatorDiameter: CGFloat = 20
+private let ttGraphLeadingPadding: CGFloat = 20
 
 struct BusJourneyView: View {
     var estimates: [StopArrivalEstimates]
