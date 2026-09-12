@@ -29,6 +29,9 @@ private let stopsHorizontalOffset: CGFloat = 15
 // the horizontal offset from the left of left of the tt graph to the center of the first bus
 private let firstBusHorizontalOffset: CGFloat = 30
 
+// the collapsed distance between the center of the first and last stops
+private let collapsedVerticalDistance: CGFloat = 80
+
 struct SkewedBusJourneyView: View {
     var estimates: [StopArrivalEstimates]
     var stopLookup: [String: LTABusStopInfo] = [:]
@@ -76,7 +79,7 @@ struct SkewedBusJourneyView: View {
                                     busHOffset: busHOffset
                                 )
                             }
-                            .frame(minHeight: geometry.size.height)
+                            .frame(minHeight: geometry.size.height, alignment: .top)
                         }
                     }
                     .onScrollGeometryChange(for: CGPoint.self) { geo in
@@ -119,7 +122,7 @@ struct SkewedBusJourneyView: View {
                         Image(systemName: "minus")
                     }
                     Button {
-                        now = estimates.first!.estimates.first!.eta
+                        now = .now
                     } label: {
                         Image(systemName: "equal")
                     }
@@ -131,6 +134,9 @@ struct SkewedBusJourneyView: View {
                 }
             }
         }
+        .onReceive(nowRefreshTimer) { _ in
+            now = now.addingTimeInterval(0.1)
+        }
     }
 
     func stopLine(stopTimeRange: TimeDelta) -> some View {
@@ -138,12 +144,20 @@ struct SkewedBusJourneyView: View {
             // stop line
             Capsule()
                 .fill(Color.green)
-                .frame(width: stopLineWidth, height: stopTimeRange.seconds / 60 * verticalScale + stopLineWidth)
+                .frame(
+                    width: stopLineWidth,
+                    height: isCollapsed
+                        ? (collapsedVerticalDistance + stopLineWidth)
+                        : (stopTimeRange.seconds / 60 * verticalScale + stopLineWidth)
+                )
                 .padding(.top, -stopLineWidth/2 + firstStopVerticalOffset)
                 .padding(.leading, -stopLineWidth/2 + stopsHorizontalOffset)
 
             // stop indicators
-            ForEach(estimates, id: \.stopId) { stopEstimate in
+            ForEach(
+                isCollapsed ? [estimates.first!, estimates.last!] : estimates,
+                id: \.stopId
+            ) { stopEstimate in
                 HStack(alignment: .center, spacing: 5) {
                     Circle()
                         .fill(Color.green)
@@ -156,35 +170,41 @@ struct SkewedBusJourneyView: View {
                 }
                 .frame(height: firstStopVerticalOffset * 2)
                 .padding(.leading, -stopIndicatorDiameter/2 + stopsHorizontalOffset)
-                .padding(.top, (stopTimeRange + stopEstimate.deltaTime).seconds / 60 * verticalScale)
+                .padding(
+                    .top,
+                    isCollapsed ? (stopEstimate.stopId == estimates.first!.stopId ? 0 : collapsedVerticalDistance)
+                                : ((stopTimeRange + stopEstimate.deltaTime).seconds / 60 * verticalScale)
+                )
             }
 
             // bus location indicator
-            ForEach(estimates.first!.estimates.enumerated(), id: \.offset) { (_, busEstimate) in
-                let etaFromNow = busEstimate.eta.timeDelta(since: now)
-                HStack(alignment: .center, spacing: 5) {
-                    Image(systemName: "bus")
-                        .resizable()
-                        .scaledToFit()
-                        .foregroundStyle(Color.blue)
-                        .padding(2)
-                        .background {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 5)
-                                    .fill(Color.white)
-                                RoundedRectangle(cornerRadius: 5)
-                                    .stroke(Color.gray, lineWidth: 1)
+            if !isCollapsed {
+                ForEach(estimates.first!.estimates.enumerated(), id: \.offset) { (_, busEstimate) in
+                    let etaFromNow = busEstimate.eta.timeDelta(since: now)
+                    HStack(alignment: .center, spacing: 5) {
+                        Image(systemName: "bus")
+                            .resizable()
+                            .scaledToFit()
+                            .foregroundStyle(Color.blue)
+                            .padding(2)
+                            .background {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 5)
+                                        .fill(Color.white)
+                                    RoundedRectangle(cornerRadius: 5)
+                                        .stroke(Color.gray, lineWidth: 1)
+                                }
                             }
-                        }
-                        .frame(width: busIndicatorDiameter, height: busIndicatorDiameter)
+                            .frame(width: busIndicatorDiameter, height: busIndicatorDiameter)
 
-                    Rectangle()
-                        .fill(Color.accentColor)
-                        .frame(height: 1)
+                        Rectangle()
+                            .fill(Color.accentColor)
+                            .frame(height: 1)
+                    }
+                    .frame(height: firstStopVerticalOffset * 2)
+                    .padding(.leading, -busIndicatorDiameter/2 + stopsHorizontalOffset)
+                    .padding(.top, -etaFromNow.seconds / 60 * verticalScale)
                 }
-                .frame(height: firstStopVerticalOffset * 2)
-                .padding(.leading, -busIndicatorDiameter/2 + stopsHorizontalOffset)
-                .padding(.top, -etaFromNow.seconds / 60 * verticalScale)
             }
         }
         .background(alignment: .topLeading) {
@@ -206,7 +226,10 @@ struct SkewedBusJourneyView: View {
     func ttGraph(geometrySize: CGSize, stopTimeRange: TimeDelta, arrivalTimeRange: TimeDelta, busHOffset: CGFloat) -> some View {
         // tt graph
         ZStack(alignment: .topLeading) {
-            ForEach(estimates, id: \.stopId) { stopEstimate in
+            ForEach(
+                isCollapsed ? [estimates.first!, estimates.last!] : estimates,
+                id: \.stopId
+            ) { stopEstimate in
                 ZStack(alignment: .leading) {
                     // horizontal line for the stop
                     Rectangle()
@@ -266,7 +289,8 @@ struct SkewedBusJourneyView: View {
                 .frame(height: firstStopVerticalOffset * 2)
                 .padding(
                     .top,
-                    (stopTimeRange + stopEstimate.deltaTime).seconds / 60 * verticalScale
+                    isCollapsed ? (stopEstimate.stopId == estimates.first!.stopId ? 0 : collapsedVerticalDistance)
+                                : ((stopTimeRange + stopEstimate.deltaTime).seconds / 60 * verticalScale)
                 )
             }
 
@@ -279,9 +303,9 @@ struct SkewedBusJourneyView: View {
                 )
 
                 VStack(alignment: .leading, spacing: 0) {
-                    if etaFromNow < .zero {
+                    if etaFromNow < .zero && !isCollapsed {
                         Rectangle()
-                            .fill(Color.gray)
+                            .fill(Color.gray) // TODO: consider if we want to do a sort of incremental fade for collapsed??
                             .frame(height: etaFromNow.seconds / 60 * verticalScale * -1)
                             .opacity(0.5)
                     }
@@ -290,14 +314,34 @@ struct SkewedBusJourneyView: View {
                         .fill(Color.blue)
                         .frame(minHeight: 0)
                 }
-                .frame(width: 1, height: stopTimeRange.seconds / 60 * verticalScale)
+                .frame(
+                    width: 1,
+                    height: isCollapsed ? collapsedVerticalDistance : stopTimeRange.seconds / 60 * verticalScale
+                )
                 .padding(.leading, horizontalOffset)
                 .padding(.top, firstStopVerticalOffset)
 
-                Rectangle()
-                    .fill(Color.blue)
-                    .frame(width: horizontalOffset, height: 1)
-                    .padding(.top, firstStopVerticalOffset - etaFromNow.seconds / 60 * verticalScale)
+                if !isCollapsed {
+                    Rectangle()
+                        .fill(Color.blue)
+                        .frame(width: horizontalOffset, height: 1)
+                        .padding(.top, firstStopVerticalOffset - etaFromNow.seconds / 60 * verticalScale)
+                } else {
+                    // estimated duration label
+                    Text(busEstimate.busServiceNo)
+                        .lineLimit(1)
+                        .font(.caption)
+                        .foregroundStyle(Color.white)
+                        .padding(3)
+                        .background {
+                            RoundedRectangle(cornerRadius: 5)
+                                .fill(Color.accentColor)
+                        }
+                        .frame(width: firstBusHorizontalOffset * 2) // horizontally center
+                        .padding(.top, stopIndicatorDiameter) // dont intersect the stop indicator
+                        .padding(.leading, horizontalOffset - firstBusHorizontalOffset) // position
+                        .padding(.top, firstStopVerticalOffset) // position
+                }
             }
         }
     }
