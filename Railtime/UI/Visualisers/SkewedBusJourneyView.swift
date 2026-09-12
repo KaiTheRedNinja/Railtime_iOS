@@ -10,8 +10,10 @@ import Combine
 
 // the width of the vertical line showing the stops
 private let stopLineWidth: CGFloat = 5
-// the diameter of the circle used to indicate a stop and a bus
+// the diameter of the circle used to indicate a stop in the stop line, or a bus in the tt graph
 private let stopIndicatorDiameter: CGFloat = 10
+// the diameter of the image used to indicate a bus on the stop line
+private let busIndicatorDiameter: CGFloat = 16
 
 // the width of the stop line + labels area
 private let stopLineAndLabelsWidth: CGFloat = 100
@@ -132,28 +134,57 @@ struct SkewedBusJourneyView: View {
     }
 
     func stopLine(stopTimeRange: TimeDelta) -> some View {
-        // stop line
         ZStack(alignment: .topLeading) {
+            // stop line
             Capsule()
                 .fill(Color.green)
                 .frame(width: stopLineWidth, height: stopTimeRange.seconds / 60 * verticalScale + stopLineWidth)
                 .padding(.top, -stopLineWidth/2 + firstStopVerticalOffset)
                 .padding(.leading, -stopLineWidth/2 + stopsHorizontalOffset)
 
-            ForEach(estimates, id: \.stopId) { estimate in
+            // stop indicators
+            ForEach(estimates, id: \.stopId) { stopEstimate in
                 HStack(alignment: .center, spacing: 5) {
                     Circle()
                         .fill(Color.green)
                         .frame(width: stopIndicatorDiameter, height: stopIndicatorDiameter)
 
-                    Text(stopLookup[estimate.stopId]?.description ?? estimate.stopId)
+                    Text(stopLookup[stopEstimate.stopId]?.description ?? stopEstimate.stopId)
                         .font(.caption)
                         .truncationMode(.middle)
                         .lineLimit(1)
                 }
                 .frame(height: firstStopVerticalOffset * 2)
                 .padding(.leading, -stopIndicatorDiameter/2 + stopsHorizontalOffset)
-                .padding(.top, (stopTimeRange + estimate.deltaTime).seconds / 60 * verticalScale)
+                .padding(.top, (stopTimeRange + stopEstimate.deltaTime).seconds / 60 * verticalScale)
+            }
+
+            // bus location indicator
+            ForEach(estimates.first!.estimates.enumerated(), id: \.offset) { (_, busEstimate) in
+                let etaFromNow = busEstimate.eta.timeDelta(since: now)
+                HStack(alignment: .center, spacing: 5) {
+                    Image(systemName: "bus")
+                        .resizable()
+                        .scaledToFit()
+                        .foregroundStyle(Color.blue)
+                        .padding(2)
+                        .background {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 5)
+                                    .fill(Color.white)
+                                RoundedRectangle(cornerRadius: 5)
+                                    .stroke(Color.gray, lineWidth: 1)
+                            }
+                        }
+                        .frame(width: busIndicatorDiameter, height: busIndicatorDiameter)
+
+                    Rectangle()
+                        .fill(Color.accentColor)
+                        .frame(height: 1)
+                }
+                .frame(height: firstStopVerticalOffset * 2)
+                .padding(.leading, -busIndicatorDiameter/2 + stopsHorizontalOffset)
+                .padding(.top, -etaFromNow.seconds / 60 * verticalScale)
             }
         }
         .background(alignment: .topLeading) {
@@ -242,6 +273,10 @@ struct SkewedBusJourneyView: View {
             // line for each bus
             ForEach((estimates.first?.estimates ?? []).enumerated(), id: \.offset) { (_, busEstimate) in
                 let etaFromNow = busEstimate.eta.timeDelta(since: now)
+                let horizontalOffset = ( // 1st is regular time offset, 2nd is to align
+                    (etaFromNow.seconds / 60 * horizontalScale) +
+                    busHOffset
+                )
 
                 VStack(alignment: .leading, spacing: 0) {
                     if etaFromNow < .zero {
@@ -256,14 +291,13 @@ struct SkewedBusJourneyView: View {
                         .frame(minHeight: 0)
                 }
                 .frame(width: 1, height: stopTimeRange.seconds / 60 * verticalScale)
-                .padding(
-                    .leading,
-                    ( // 1st is regular time offset, 2nd is to align
-                        (etaFromNow.seconds / 60 * horizontalScale) +
-                        busHOffset
-                    )
-                )
+                .padding(.leading, horizontalOffset)
                 .padding(.top, firstStopVerticalOffset)
+
+                Rectangle()
+                    .fill(Color.blue)
+                    .frame(width: horizontalOffset, height: 1)
+                    .padding(.top, firstStopVerticalOffset - etaFromNow.seconds / 60 * verticalScale)
             }
         }
     }
