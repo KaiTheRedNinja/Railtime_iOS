@@ -8,16 +8,24 @@
 import SwiftUI
 import Combine
 
+// the width of the vertical line showing the stops
 private let stopLineWidth: CGFloat = 5
+// the diameter of the circle used to indicate a stop and a bus
 private let stopIndicatorDiameter: CGFloat = 10
-private let busIndicatorDiameter: CGFloat = 20
 
+// the width of the stop line + labels area
 private let stopLineAndLabelsWidth: CGFloat = 100
+// the height of the top section of the time ticker labels
 private let timeTickerLabelsHeight: CGFloat = 20
+// the width of the trailing section of the time ticker labels
 private let timeTickerLabelsWidth: CGFloat = 30
 
+// the vertical offset from the top of the screen to the center of the first stop
 private let firstStopVerticalOffset: CGFloat = 20
+// the horizontal offset from the left of the screen to the center of the stop line
 private let stopsHorizontalOffset: CGFloat = 15
+// the horizontal offset from the left of left of the tt graph to the center of the first bus
+private let firstBusHorizontalOffset: CGFloat = 30
 
 struct SkewedBusJourneyView: View {
     var estimates: [StopArrivalEstimates]
@@ -35,6 +43,9 @@ struct SkewedBusJourneyView: View {
     // the current scroll position from the scroll view
     @State var scrollPosition: CGPoint = .zero
 
+    // the currently selected bus
+    @State var busId: Int?
+
     // whether or not the view is collapsed
     @State var isCollapsed: Bool = false
 
@@ -46,6 +57,8 @@ struct SkewedBusJourneyView: View {
         // the time difference between the first and last bus arrival estimate
         let arrivalTimeRange = estimates.last!.estimates.last!.eta.timeDelta(since: .now)
 
+        let busHOffset = busHorizontalOffset()
+
         NavigationStack {
             VStack(alignment: .leading, spacing: 0) {
                 // stop line and tt graph
@@ -54,7 +67,12 @@ struct SkewedBusJourneyView: View {
                         VStack {
                             HStack(alignment: .top, spacing: 0) {
                                 stopLine(stopTimeRange: stopTimeRange)
-                                ttGraph(geometrySize: geometry.size, stopTimeRange: stopTimeRange, arrivalTimeRange: arrivalTimeRange)
+                                ttGraph(
+                                    geometrySize: geometry.size,
+                                    stopTimeRange: stopTimeRange,
+                                    arrivalTimeRange: arrivalTimeRange,
+                                    busHOffset: busHOffset
+                                )
                             }
                             .frame(minHeight: geometry.size.height)
                         }
@@ -70,7 +88,7 @@ struct SkewedBusJourneyView: View {
                         let totalTimeSpan = arrivalTimeRange // the time range for actual bus arrivals
                             + .mins((geometry.size.width - stopLineAndLabelsWidth) / horizontalScale) // the scroll allowance
                         let tickerCount = Int((totalTimeSpan.seconds / 60 / 5).rounded(.awayFromZero))
-                        timeTickers(tickerCount: tickerCount, geometrySize: geometry.size)
+                        timeTickers(tickerCount: tickerCount, geometrySize: geometry.size, busHOffset: busHOffset)
                     }
                 }
                 .overlay(alignment: .trailing) { HStack { Divider() } }
@@ -81,6 +99,20 @@ struct SkewedBusJourneyView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .navigationTitle("Bus 154")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItemGroup(placement: .primaryAction) {
+                    Button {
+                        now = now.addingTimeInterval(-30)
+                    } label: {
+                        Image(systemName: "minus")
+                    }
+                    Button {
+                        now = now.addingTimeInterval(30)
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                }
+            }
         }
     }
 
@@ -117,11 +149,15 @@ struct SkewedBusJourneyView: View {
                 .offset(y: scrollPosition.y)
         }
         .frame(width: stopLineAndLabelsWidth, alignment: .leading)
+        .onTapGesture {
+            isCollapsed.toggle()
+        }
         .offset(x: scrollPosition.x)
         .zIndex(2)
     }
 
-    func ttGraph(geometrySize: CGSize, stopTimeRange: TimeDelta, arrivalTimeRange: TimeDelta) -> some View {
+    @ViewBuilder
+    func ttGraph(geometrySize: CGSize, stopTimeRange: TimeDelta, arrivalTimeRange: TimeDelta, busHOffset: CGFloat) -> some View {
         // tt graph
         ZStack(alignment: .topLeading) {
             ForEach(estimates, id: \.stopId) { stopEstimate in
@@ -139,9 +175,10 @@ struct SkewedBusJourneyView: View {
                     ForEach(stopEstimate.estimates.enumerated(), id: \.offset) { (_, busEstimate) in
                         let etaFromNow = busEstimate.eta.timeDelta(since: now)
 
-                        let horizontalOffset = ( // 1st is regular time offset, 2nd is to actually skew the time
+                        let horizontalOffset = ( // 1st is regular time offset, 2nd is to actually skew the time, 3rd to align
                             (etaFromNow.seconds / 60 * horizontalScale) -
-                            ((stopTimeRange + stopEstimate.deltaTime).seconds / 60 * horizontalScale)
+                            ((stopTimeRange + stopEstimate.deltaTime).seconds / 60 * horizontalScale) +
+                            busHOffset
                         )
 
                         if horizontalOffset >= 0 {
@@ -191,8 +228,9 @@ struct SkewedBusJourneyView: View {
                     .frame(width: 1, height: stopTimeRange.seconds / 60 * verticalScale)
                     .padding(
                         .leading,
-                        ( // 1st is regular time offset, 2nd is to actually skew the time
-                            (etaFromNow.seconds / 60 * horizontalScale)
+                        ( // 1st is regular time offset, 2nd is to align
+                            (etaFromNow.seconds / 60 * horizontalScale) +
+                            busHOffset
                         )
                     )
                     .padding(.top, firstStopVerticalOffset)
@@ -200,7 +238,7 @@ struct SkewedBusJourneyView: View {
         }
     }
 
-    func timeTickers(tickerCount: Int, geometrySize: CGSize) -> some View {
+    func timeTickers(tickerCount: Int, geometrySize: CGSize, busHOffset: CGFloat) -> some View {
         ForEach(0..<(tickerCount + 1), id: \.self) { tickerIndex in
             TimeTicker(
                 verticalScale: verticalScale,
@@ -209,13 +247,24 @@ struct SkewedBusJourneyView: View {
                     width: geometrySize.width - stopLineAndLabelsWidth,
                     height: geometrySize.height
                 ),
-                scrollPosition: scrollPosition,
+                scrollPosition: .init(x: scrollPosition.x - busHOffset, y: scrollPosition.y),
                 minutes: tickerIndex * 5
             )
             .padding(.leading, stopLineAndLabelsWidth)
             .padding(.trailing, -timeTickerLabelsWidth) // reverse later padding
             .padding(.top, -timeTickerLabelsHeight) // reverse later padding
         }
+    }
+
+    // calculates the horizontal offset (to the right) to transform all time-dependent objects by
+    // such that the first bus is located at firstBusHorizontalOffset
+    func busHorizontalOffset() -> CGFloat {
+        guard let firstBus = estimates.first?.estimates.first else { return .zero }
+
+        // leftwards adjustment such that the bus is located at the very left of the graph
+        let leftwardsTare = firstBus.eta.timeDelta(since: now).seconds / 60 * horizontalScale
+        // then adjust rightwards to be at the correct offset
+        return -leftwardsTare + firstBusHorizontalOffset
     }
 }
 
