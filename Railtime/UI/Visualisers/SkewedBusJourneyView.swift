@@ -54,6 +54,8 @@ struct SkewedBusJourneyView: View {
     // whether or not the view is collapsed
     @State var isCollapsed: Bool = false
 
+    @Namespace var namespace
+
     var body: some View {
         // first we need to determine how large (horizontally and vertically) we need to be.
 
@@ -217,7 +219,9 @@ struct SkewedBusJourneyView: View {
         }
         .frame(width: stopLineAndLabelsWidth, alignment: .leading)
         .onTapGesture {
-            isCollapsed.toggle()
+            withAnimation {
+                isCollapsed.toggle()
+            }
         }
         .offset(x: scrollPosition.x)
         .zIndex(2)
@@ -327,22 +331,29 @@ struct SkewedBusJourneyView: View {
                         .fill(Color.blue)
                         .frame(width: horizontalOffset, height: 1)
                         .padding(.top, firstStopVerticalOffset - etaFromNow.seconds / 60 * verticalScale)
-                } else {
-                    // estimated duration label
-                    Text(busEstimate.busServiceNo)
-                        .lineLimit(1)
-                        .font(.caption)
-                        .foregroundStyle(Color.white)
-                        .padding(3)
-                        .background {
-                            RoundedRectangle(cornerRadius: 5)
-                                .fill(Color.accentColor)
-                        }
-                        .frame(width: firstBusHorizontalOffset * 2) // horizontally center
-                        .padding(.top, stopIndicatorDiameter) // dont intersect the stop indicator
-                        .padding(.leading, horizontalOffset - firstBusHorizontalOffset) // position
-                        .padding(.top, firstStopVerticalOffset) // position
                 }
+
+                // bus service label
+                Text(busEstimate.busServiceNo)
+                    .lineLimit(1)
+                    .font(.caption)
+                    .foregroundStyle(Color.white)
+                    .padding(3)
+                    .background {
+                        RoundedRectangle(cornerRadius: 5)
+                            .fill(Color.accentColor)
+                    }
+                    .matchedGeometryEffect(id: "\(busEstimate.busServiceNo)\(busEstimate.busId.description)", in: namespace)
+                    .frame(
+                        width: firstBusHorizontalOffset * 2,
+                        height: isCollapsed ? nil : firstStopVerticalOffset * 2
+                    ) // horizontally (and vertically center, if not collapsed)
+                    .padding(.leading, horizontalOffset - firstBusHorizontalOffset) // position
+                    .padding(
+                        .top,
+                        isCollapsed ? (firstStopVerticalOffset + stopIndicatorDiameter)
+                        : min(stopTimeRange.seconds / 60 * verticalScale, max(0, scrollPosition.y))
+                    ) // move with scroll, but only on the line
             }
         }
     }
