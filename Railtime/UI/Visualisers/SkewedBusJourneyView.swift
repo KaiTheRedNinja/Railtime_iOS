@@ -88,7 +88,6 @@ struct SkewedBusJourneyView: View {
                         geo.contentOffset
                     } action: { oldValue, newValue in
                         scrollPosition = newValue
-                        print("New scroll position: \(scrollPosition)")
                     }
                     .background(alignment: .bottomLeading) {
 
@@ -313,8 +312,16 @@ struct SkewedBusJourneyView: View {
                                 .offset(y: -firstStopVerticalOffset)
                                 .padding(.leading, horizontalOffset)
 
-                            Circle()
-                                .fill(etaFromNow > .zero ? Color.blue : Color.gray)
+                            let indicatorShape = switch busEstimate.source {
+                            case .live: "circle.fill"
+                            case .projected: "circle.circle.fill"
+                            case .extrapolated: "circle"
+                            }
+
+                            Image(systemName: indicatorShape)
+                                .resizable()
+                                .scaledToFit()
+                                .foregroundStyle(etaFromNow > .zero ? Color.blue : Color.gray)
                                 .opacity(etaFromNow > .zero ? 1 : 0.5)
                                 .frame(width: stopIndicatorDiameter, height: stopIndicatorDiameter)
                                 .padding(.leading, -stopIndicatorDiameter/2)

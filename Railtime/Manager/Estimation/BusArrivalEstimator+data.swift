@@ -93,9 +93,10 @@ extension BusArrivalEstimator {
             let tTgt = targetRow.scheduleColumn(named: target)
             if let tUp, let tTgt {
                 let delta = tTgt.timeDelta(since: tUp)
-                // sometimes the schedule is weird and returns negative data.
+                // sometimes the schedule is weird and returns negative data, OR it returns a delta that is huge.
+                // We ignore deltas that are negative or larger than 2 hours (i.e. the length of Singapore)
                 // therefore we sometimes have to use backup data.
-                if delta >= .zero {
+                if delta >= .zero && delta <= .hours(2) {
                     return delta
                 }
             }

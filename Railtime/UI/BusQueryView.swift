@@ -129,6 +129,7 @@ struct BusQueryView: View {
                 estimator.now = .now
                 Task {
                     queryStatus = .loading
+                    print(estimator.data.cache.root)
                     do {
                         let estimates = try await estimator.estimate(
                             busStopCode: startId,
@@ -175,9 +176,9 @@ struct BusQueryView: View {
                 endInfo = try? await estimator.data.getStopInfo(busStopCode: newValue)
             }
         }
-        .onAppear {
-            loadSampleData(estimator: estimator)
-        }
+//        .onAppear {
+//            loadSampleData(estimator: estimator)
+//        }
     }
 
     func loadSampleData(estimator: BusArrivalEstimator) {
