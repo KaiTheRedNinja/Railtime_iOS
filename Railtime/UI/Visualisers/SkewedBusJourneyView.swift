@@ -363,6 +363,14 @@ struct SkewedBusJourneyView: View {
                     minutes: tickerIndex * step
                 )
                 .padding(.leading, stopLineAndLabelsWidth)
+                .mask(alignment: .top) {
+                    if isCollapsed {
+                        Rectangle()
+                            .frame(height: timeTickerLabelsHeight + firstStopVerticalOffset - scrollPosition.y)
+                    } else {
+                        Rectangle()
+                    }
+                }
                 .padding(.trailing, -timeTickerLabelsWidth) // reverse later padding
                 .padding(.top, -timeTickerLabelsHeight) // reverse later padding
             }
