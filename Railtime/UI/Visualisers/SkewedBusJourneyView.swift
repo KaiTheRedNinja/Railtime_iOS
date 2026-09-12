@@ -84,11 +84,21 @@ struct SkewedBusJourneyView: View {
                         print("New scroll position: \(scrollPosition)")
                     }
                     .background(alignment: .bottomLeading) {
-                        // we have tickers in 5 minute intervals for arrivals
-                        let totalTimeSpan = arrivalTimeRange // the time range for actual bus arrivals
-                            + .mins((geometry.size.width - stopLineAndLabelsWidth) / horizontalScale) // the scroll allowance
-                        let tickerCount = Int((totalTimeSpan.seconds / 60 / 5).rounded(.awayFromZero))
-                        timeTickers(tickerCount: tickerCount, geometrySize: geometry.size, busHOffset: busHOffset)
+
+                        // lowerbound
+                        let lowerbound = (min(.zero, estimates.first!.estimates.first!.eta.timeDelta(since: now)).seconds / 60 / 5).rounded(.awayFromZero)
+                        let upperbound = ((
+                            estimates.last!.estimates.last!.eta.timeDelta(since: now) +
+                                .mins((geometry.size.width - stopLineAndLabelsWidth) / horizontalScale) // the scroll allowance
+                        ).seconds / 60 / 5).rounded(.awayFromZero)
+
+                        timeTickers(
+                            lowerbound: Int(lowerbound),
+                            upperbound: Int(upperbound),
+                            step: 5,
+                            geometrySize: geometry.size,
+                            busHOffset: busHOffset
+                        )
                     }
                 }
                 .overlay(alignment: .trailing) { HStack { Divider() } }
@@ -238,21 +248,23 @@ struct SkewedBusJourneyView: View {
         }
     }
 
-    func timeTickers(tickerCount: Int, geometrySize: CGSize, busHOffset: CGFloat) -> some View {
-        ForEach(0..<(tickerCount + 1), id: \.self) { tickerIndex in
-            TimeTicker(
-                verticalScale: verticalScale,
-                horizontalScale: horizontalScale,
-                ttGraphSize: .init(
-                    width: geometrySize.width - stopLineAndLabelsWidth,
-                    height: geometrySize.height
-                ),
-                scrollPosition: .init(x: scrollPosition.x - busHOffset, y: scrollPosition.y),
-                minutes: tickerIndex * 5
-            )
-            .padding(.leading, stopLineAndLabelsWidth)
-            .padding(.trailing, -timeTickerLabelsWidth) // reverse later padding
-            .padding(.top, -timeTickerLabelsHeight) // reverse later padding
+    func timeTickers(lowerbound: Int, upperbound: Int, step: Int, geometrySize: CGSize, busHOffset: CGFloat) -> some View {
+        ZStack(alignment: .bottomLeading) {
+            ForEach(lowerbound..<(upperbound + 1), id: \.self) { tickerIndex in
+                TimeTicker(
+                    verticalScale: verticalScale,
+                    horizontalScale: horizontalScale,
+                    ttGraphSize: .init(
+                        width: geometrySize.width - stopLineAndLabelsWidth,
+                        height: geometrySize.height
+                    ),
+                    scrollPosition: .init(x: scrollPosition.x - busHOffset, y: scrollPosition.y),
+                    minutes: tickerIndex * step
+                )
+                .padding(.leading, stopLineAndLabelsWidth)
+                .padding(.trailing, -timeTickerLabelsWidth) // reverse later padding
+                .padding(.top, -timeTickerLabelsHeight) // reverse later padding
+            }
         }
     }
 
