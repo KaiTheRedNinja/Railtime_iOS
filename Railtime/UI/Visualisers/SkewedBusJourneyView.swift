@@ -102,7 +102,8 @@ struct SkewedBusJourneyView: View {
                             upperbound: Int(upperbound),
                             step: 5,
                             geometrySize: geometry.size,
-                            busHOffset: busHOffset
+                            busHOffset: busHOffset,
+                            stopTimeRange: stopTimeRange
                         )
                     }
                 }
@@ -282,7 +283,7 @@ struct SkewedBusJourneyView: View {
                         .fill(Color.clear)
                         .frame(
                             width: (arrivalTimeRange - stopTimeRange).seconds / 60 * horizontalScale
-                            + geometrySize.width - stopLineAndLabelsWidth,
+                            + geometrySize.width - stopLineAndLabelsWidth - firstBusHorizontalOffset,
                             height: 1
                         )
                 }
@@ -346,7 +347,14 @@ struct SkewedBusJourneyView: View {
         }
     }
 
-    func timeTickers(lowerbound: Int, upperbound: Int, step: Int, geometrySize: CGSize, busHOffset: CGFloat) -> some View {
+    func timeTickers(
+        lowerbound: Int,
+        upperbound: Int,
+        step: Int,
+        geometrySize: CGSize,
+        busHOffset: CGFloat,
+        stopTimeRange: TimeDelta
+    ) -> some View {
         ZStack(alignment: .bottomLeading) {
             ForEach(lowerbound..<(upperbound + 1), id: \.self) { tickerIndex in
                 TimeTicker(
@@ -357,8 +365,8 @@ struct SkewedBusJourneyView: View {
                         height: geometrySize.height
                     ),
                     scrollPosition: .init(
-                        x: scrollPosition.x - busHOffset - (firstStopVerticalOffset * horizontalScale / verticalScale),
-                        y: scrollPosition.y
+                        x: scrollPosition.x - busHOffset,
+                        y: scrollPosition.y - firstStopVerticalOffset
                     ),
                     minutes: tickerIndex * step
                 )
@@ -366,13 +374,34 @@ struct SkewedBusJourneyView: View {
                 .mask(alignment: .top) {
                     if isCollapsed {
                         Rectangle()
-                            .frame(height: timeTickerLabelsHeight + firstStopVerticalOffset - scrollPosition.y)
+                            .frame(height: max(0, timeTickerLabelsHeight + firstStopVerticalOffset - scrollPosition.y))
                     } else {
                         Rectangle()
                     }
                 }
                 .padding(.trailing, -timeTickerLabelsWidth) // reverse later padding
                 .padding(.top, -timeTickerLabelsHeight) // reverse later padding
+            }
+
+            if isCollapsed {
+                ForEach(lowerbound..<(upperbound + 1), id: \.self) { tickerIndex in
+                    TimeTicker(
+                        verticalScale: verticalScale,
+                        horizontalScale: horizontalScale,
+                        ttGraphSize: .init(
+                            width: geometrySize.width - stopLineAndLabelsWidth,
+                            height: geometrySize.height - max(0, collapsedVerticalDistance - scrollPosition.y)
+                        ),
+                        scrollPosition: .init(
+                            x: scrollPosition.x - busHOffset + (stopTimeRange.seconds / 60 * horizontalScale),
+                            y: scrollPosition.y - firstStopVerticalOffset
+                        ),
+                        minutes: tickerIndex * step
+                    )
+                    .padding(.leading, stopLineAndLabelsWidth)
+                    .padding(.trailing, -timeTickerLabelsWidth) // reverse later padding
+                    .padding(.top, -timeTickerLabelsHeight) // reverse later padding
+                }
             }
         }
     }
