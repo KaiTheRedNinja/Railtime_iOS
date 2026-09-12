@@ -117,6 +117,11 @@ struct SkewedBusJourneyView: View {
                         Image(systemName: "minus")
                     }
                     Button {
+                        now = estimates.first!.estimates.first!.eta
+                    } label: {
+                        Image(systemName: "equal")
+                    }
+                    Button {
                         now = now.addingTimeInterval(30)
                     } label: {
                         Image(systemName: "plus")
@@ -194,11 +199,15 @@ struct SkewedBusJourneyView: View {
                         if horizontalOffset >= 0 {
                             Text(TimeOfDay(date: busEstimate.eta).hhmm)
                                 .font(.caption)
+                                .foregroundStyle(etaFromNow > .zero ? Color.primary : Color.gray)
+                                .opacity(etaFromNow > .zero ? 1 : 0.5)
                                 .padding(3)
                                 .background {
-                                    RoundedRectangle(cornerRadius: 3)
-                                        .fill(Color.white)
-                                        .blur(radius: 3)
+                                    if etaFromNow > .zero {
+                                        RoundedRectangle(cornerRadius: 3)
+                                            .fill(Color.white)
+                                            .blur(radius: 3)
+                                    }
                                 }
                                 .padding(1)
                                 .frame(height: firstStopVerticalOffset * 2, alignment: .bottomLeading)
@@ -206,7 +215,8 @@ struct SkewedBusJourneyView: View {
                                 .padding(.leading, horizontalOffset)
 
                             Circle()
-                                .fill(Color.blue)
+                                .fill(etaFromNow > .zero ? Color.blue : Color.gray)
+                                .opacity(etaFromNow > .zero ? 1 : 0.5)
                                 .frame(width: stopIndicatorDiameter, height: stopIndicatorDiameter)
                                 .padding(.leading, -stopIndicatorDiameter/2)
                                 .padding(.leading, horizontalOffset)
@@ -233,17 +243,27 @@ struct SkewedBusJourneyView: View {
             ForEach((estimates.first?.estimates ?? []).enumerated(), id: \.offset) { (_, busEstimate) in
                 let etaFromNow = busEstimate.eta.timeDelta(since: now)
 
-                Rectangle()
-                    .fill(Color.blue)
-                    .frame(width: 1, height: stopTimeRange.seconds / 60 * verticalScale)
-                    .padding(
-                        .leading,
-                        ( // 1st is regular time offset, 2nd is to align
-                            (etaFromNow.seconds / 60 * horizontalScale) +
-                            busHOffset
-                        )
+                VStack(alignment: .leading, spacing: 0) {
+                    if etaFromNow < .zero {
+                        Rectangle()
+                            .fill(Color.gray)
+                            .frame(height: etaFromNow.seconds / 60 * verticalScale * -1)
+                            .opacity(0.5)
+                    }
+
+                    Rectangle()
+                        .fill(Color.blue)
+                        .frame(minHeight: 0)
+                }
+                .frame(width: 1, height: stopTimeRange.seconds / 60 * verticalScale)
+                .padding(
+                    .leading,
+                    ( // 1st is regular time offset, 2nd is to align
+                        (etaFromNow.seconds / 60 * horizontalScale) +
+                        busHOffset
                     )
-                    .padding(.top, firstStopVerticalOffset)
+                )
+                .padding(.top, firstStopVerticalOffset)
             }
         }
     }
@@ -258,7 +278,10 @@ struct SkewedBusJourneyView: View {
                         width: geometrySize.width - stopLineAndLabelsWidth,
                         height: geometrySize.height
                     ),
-                    scrollPosition: .init(x: scrollPosition.x - busHOffset, y: scrollPosition.y),
+                    scrollPosition: .init(
+                        x: scrollPosition.x - busHOffset - (firstStopVerticalOffset * horizontalScale / verticalScale),
+                        y: scrollPosition.y
+                    ),
                     minutes: tickerIndex * step
                 )
                 .padding(.leading, stopLineAndLabelsWidth)
@@ -294,12 +317,21 @@ private struct TimeTicker: View {
         let xOffset = min(ttGraphSize.width, CGFloat(minutes) * horizontalScale - scrollPosition.x - scrollPosition.y * horizontalScale / verticalScale)
         let yOffset = max(0, (CGFloat(minutes) - (ttGraphSize.width + scrollPosition.x)/horizontalScale) * verticalScale - scrollPosition.y)
 
+        let isNow = minutes == 0
+
         ZStack(alignment: .bottomLeading) {
+            let strokeColor = isNow ? Color.green : Color.gray
+
             Path { path in
                 path.move(to: .init(x: 0, y: CGFloat(minutes) * verticalScale - scrollPosition.y - scrollPosition.x * verticalScale / horizontalScale))
                 path.addLine(to: .init(x: xOffset, y: yOffset))
             }
-            .stroke(Color.gray, style: .init(lineWidth: 1, lineCap: .round, lineJoin: .round, miterLimit: 0, dash: [5, 5], dashPhase: 0))
+            .stroke(
+                strokeColor,
+                style: isNow
+                    ? .init(lineWidth: 2, lineCap: .round, lineJoin: .round, miterLimit: 0)
+                    : .init(lineWidth: 1, lineCap: .round, lineJoin: .round, miterLimit: 0, dash: [5, 5], dashPhase: 0)
+            )
             .frame(width: ttGraphSize.width, height: ttGraphSize.height)
             .mask {
                 Rectangle().ignoresSafeArea()
@@ -314,7 +346,7 @@ private struct TimeTicker: View {
                     path.addLine(to: .init(x: xOffset, y: timeTickerLabelsHeight/2))
                 }
             }
-            .stroke(Color.gray, lineWidth: 1)
+            .stroke(strokeColor, lineWidth: 1)
             .frame(
                 width: ttGraphSize.width + timeTickerLabelsWidth,
                 height: ttGraphSize.height + timeTickerLabelsHeight
@@ -323,14 +355,13 @@ private struct TimeTicker: View {
         }
         .overlay(alignment: .topLeading) {
             ZStack(alignment: .bottomLeading) {
-                let label = if minutes == 0 { "now" } else { "\(minutes)m" }
-
-                Text(label)
+                Text(isNow ? "now" : "\(minutes)m")
                     .font(.caption)
                     .offset(x: xOffset, y: yOffset)
             }
             .padding(3)
             .frame(height: timeTickerLabelsHeight)
         }
+        .opacity(isNow ? 1 : 0.5)
     }
 }
