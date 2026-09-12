@@ -9,7 +9,7 @@ import Foundation
 
 /// A single row from the 2.4 BusStops endpoint: static information about a
 /// physical bus stop.
-struct LTABusStopInfo: Codable {
+struct LTABusStopInfo: Equatable, Codable {
     /// The bus stop code.
     let busStopCode: String
     /// The name of the road the stop is on.
