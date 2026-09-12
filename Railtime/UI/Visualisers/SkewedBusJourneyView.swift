@@ -209,6 +209,37 @@ struct SkewedBusJourneyView: View {
                     .padding(.top, -etaFromNow.seconds / 60 * verticalScale)
                 }
             }
+
+            // collapse indicator
+            if isCollapsed {
+                ZStack(alignment: .leading) {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("\(estimates.count-1) stops")
+                            .font(.caption)
+                            .padding(5)
+                            .background {
+                                RoundedRectangle(cornerRadius: 5)
+                                    .stroke(Color.gray, lineWidth: 1)
+                            }
+
+                        Text("\(Int((stopTimeRange.seconds / 60).rounded(.awayFromZero))) mins")
+                            .font(.caption)
+                            .padding(.horizontal, 5)
+                    }
+                    .padding(.leading, stopsHorizontalOffset + stopIndicatorDiameter/2 + 5)
+
+                    VStack(spacing: stopLineWidth/2) {
+                        ForEach(0..<3) { _ in
+                            Circle()
+                                .fill(Color.white)
+                                .frame(width: stopLineWidth/2, height: stopLineWidth/2)
+                        }
+                    }
+                    .padding(.leading, stopsHorizontalOffset - stopLineWidth/4)
+                }
+                .frame(height: collapsedVerticalDistance)
+                .padding(.top, firstStopVerticalOffset)
+            }
         }
         .background(alignment: .topLeading) {
             Color.white
