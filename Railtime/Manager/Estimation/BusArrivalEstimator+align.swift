@@ -93,9 +93,8 @@ extension BusArrivalEstimator {
             }
         }
 
-        // literally just append the raw window to whats known, this is only for testing
         known.append(thisStop)
-        return (known, bestDrift, firstBusNumForThisStop + rawWindow.estimates.count - 1)
+        return (known, bestDrift, firstBusNumForThisStop + rawWindow.estimates.count)
     }
 
     private static func getBestAlignment(

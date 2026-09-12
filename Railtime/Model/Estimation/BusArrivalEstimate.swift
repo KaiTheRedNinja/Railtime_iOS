@@ -8,7 +8,7 @@
 import Foundation
 
 /// An estimate for when a bus, with a given ID, will arrive at a given stop.
-struct BusArrivalEstimate {
+struct BusArrivalEstimate: Equatable {
     /// The ID of this bus.
     var busId: BusID
     /// The service number of this bus.

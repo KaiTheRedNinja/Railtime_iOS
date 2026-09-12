@@ -8,7 +8,7 @@
 import Foundation
 
 /// All the estimates for when busses will arrive at this stop.
-struct StopArrivalEstimates {
+struct StopArrivalEstimates: Equatable {
     /// The ID of this stop.
     var stopId: String
     /// The delta-time of this stop, relative to some downstream target, in

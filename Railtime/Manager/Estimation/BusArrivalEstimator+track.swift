@@ -15,6 +15,7 @@ extension BusArrivalEstimator {
     ///   - stopIdsOfInterest: The IDs of stops to estimate arrivals at.
     ///   - serviceNo: The bus service to estimate.
     ///   - numTarget: The desired number of upcoming buses to track at each stop of interest
+    ///   - maxLookbackStops: The maximum number of stops, upstream of the most upstream stop, that `track` can poll.
     ///   - inDirection: If provided, restricts the route lookup to this
     ///     direction.
     /// - Returns: A list of `StopArrivalEstimates`, one for each stop along
@@ -25,6 +26,7 @@ extension BusArrivalEstimator {
         stopIdsOfInterest: [String],
         serviceNo: String,
         numTarget: Int = 5,
+        maxLookbackStops: Int = 5,
         inDirection: Int? = nil
     ) async throws -> [StopArrivalEstimates] {
         guard !stopIdsOfInterest.isEmpty else { return [] } // no stops, therefore no results
@@ -37,12 +39,13 @@ extension BusArrivalEstimator {
         guard missingStops.isEmpty else {
             throw BusArrivalEstimatorError.stopNotFound(stopCode: missingStops.first!, serviceNo: serviceNo)
         }
-        let lastTargetStopIdx: Int = stops.reversed().firstIndex(where: { stopIdsSet.contains($0.busStopCode) })!
+        let lastTargetStopIdx: Int = stops.lastIndex(where: { stopIdsSet.contains($0.busStopCode) })!
         let lastTargetStop = stops[lastTargetStopIdx]
         let currentDayType = dayType(for: now)
 
         // Confirmed arrivals directly at the target stop.
         let confirmed = try await confirmedArrivals(busStopCode: lastTargetStop.busStopCode, serviceNo: serviceNo)
+        stopIdsSet.remove(lastTargetStop.busStopCode)
 
         // estimates are from the target stop first, upstream stops later. The earliest
         // stop in a bus's route will be the last in the list for ease of appending.
@@ -73,13 +76,18 @@ extension BusArrivalEstimator {
         var busCount = confirmed.estimates.count
         // the number of busses we want to find. This increases as we discover more target stops.
         var movingTarget = numTarget
+        // the number of attempts we are allowed. This only matters after the last target stop.
+        var movingAttemptLimit = maxLookbackStops
 
         while stopOffset < lastTargetStopIdx {
-            print("Attempt #", attempted + 1, " — bus count:", busCount, "of", numTarget)
+            print("Attempt #", attempted + 1, "of", movingAttemptLimit, "— bus count:", busCount, "of", movingTarget)
 
             stopOffset += 1
-            // if we have found all stops and met the moving target, break
-            if stopIdsSet.isEmpty && busCount >= movingTarget { break }
+            // if we have found all stops and met the moving target or the attempt limit, break
+            if stopIdsSet.isEmpty, busCount >= movingTarget || attempted >= movingAttemptLimit {
+                print("Exhausted moving target!")
+                break
+            }
 
             let upstreamIdx = lastTargetStopIdx - stopOffset
             let upstreamRow = stops[wrapping: upstreamIdx]
@@ -157,6 +165,9 @@ extension BusArrivalEstimator {
             // calculate a new moving target
             if isOfInterest {
                 movingTarget = busCount + max(0, numTarget - mergeResult.known.last!.estimates.count)
+                movingAttemptLimit = attempted + maxLookbackStops
+                print("New moving target: ", movingTarget)
+                print("New attempt limit: ", movingAttemptLimit)
             }
 
             currentDelta = realDeltaTime

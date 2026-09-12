@@ -24,6 +24,7 @@ extension BusArrivalEstimator {
     ///   the route, in upstream-to-downstream order (so the first stop in
     ///   the list is the furthest upstream, and the last stop in the list
     ///   is the target stop).
+    @available(*, deprecated, renamed: "track", message: "Use `track` instead for more granular control of targets")
     func estimate(
         busStopCode: String,
         serviceNo: String,

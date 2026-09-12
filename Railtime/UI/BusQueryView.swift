@@ -23,7 +23,15 @@ struct BusQueryView: View {
     @State var queryStatus: BusQueryStatus = .none
     @State var stopLookup: [String: LTABusStopInfo] = [:]
 
-    enum BusQueryStatus {
+    @State var showSheet: Bool = false
+
+    enum BusQueryStatus: Equatable {
+        // NOTE: this cannot differentiate between certain values of `failed` and `success`,
+        // but can differentiate between cases.
+        static func == (lhs: BusQueryView.BusQueryStatus, rhs: BusQueryView.BusQueryStatus) -> Bool {
+            lhs.description == rhs.description
+        }
+
         /// No query has been made
         case none
         /// Query has been sent, awaiting response
@@ -32,6 +40,15 @@ struct BusQueryView: View {
         case failed(any Error)
         /// Query succeeded
         case success([StopArrivalEstimates])
+
+        var description: String {
+            switch self {
+            case .none: "none"
+            case .loading: "loading"
+            case .failed(let error): "failed(\(error.localizedDescription))"
+            case .success(let array): "success(\(array.count) elements)"
+            }
+        }
     }
 
     var body: some View {
@@ -51,9 +68,15 @@ struct BusQueryView: View {
             case .success(let array):
 //                BusTimingsView(estimates: array)
                 Text("Showing sheet...")
-                    .sheet(isPresented: .constant(true)) {
+                    .sheet(isPresented: $showSheet) {
                         SkewedBusJourneyView(estimates: array, stopLookup: stopLookup)
                     }
+            }
+        }
+        .onChange(of: queryStatus) { _, newValue in
+            switch newValue {
+            case .success: showSheet = true
+            default: showSheet = false
             }
         }
     }
@@ -127,16 +150,28 @@ struct BusQueryView: View {
             }
             Button {
                 estimator.now = .now
+                guard !startId.isEmpty, !endId.isEmpty else {
+                    print("Need both start and end to be defined!")
+                    return
+                }
+
                 Task {
                     queryStatus = .loading
                     print(estimator.data.cache.root)
                     do {
-                        let estimates = try await estimator.estimate(
-                            busStopCode: startId,
-                            serviceNo: serviceNo,
-                            numTarget: estimationCount
+                        let rawEstimates = try await estimator.track(
+                            stopIdsOfInterest: [startId, endId],
+                            serviceNo: serviceNo
                         )
-                        queryStatus = .success(estimates)
+                        guard let startIndex = rawEstimates.firstIndex(where: { $0.stopId == startId }),
+                              let endIndex = rawEstimates.lastIndex(where: { $0.stopId == endId }),
+                              startIndex < endIndex else {
+                            queryStatus = .failed(BusArrivalEstimatorError.stopNotFound(stopCode: startId, serviceNo: serviceNo))
+                            return
+                        }
+                        let estimates = rawEstimates[startIndex...endIndex]
+
+                        queryStatus = .success(Array(estimates))
 
                         for stop in estimates {
                             stopLookup[stop.stopId] = try await estimator.data.getStopInfo(busStopCode: stop.stopId)
