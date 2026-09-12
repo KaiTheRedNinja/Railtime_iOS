@@ -265,8 +265,12 @@ struct SkewedBusJourneyView: View {
             Rectangle()
                 .fill(Color.clear)
                 .frame(
-                    width: (arrivalTimeRange - stopTimeRange).seconds / 60 * horizontalScale
-                    + geometrySize.width - stopLineAndLabelsWidth - firstBusHorizontalOffset,
+                    width: (
+                        // the location of the last bus
+                        (estimates.first!.estimates.last!.eta.timeDelta(since: now).seconds / 60 * horizontalScale) + busHOffset
+                        // plus enough space that the last bus can be moved to the very left
+                        + geometrySize.width - stopLineAndLabelsWidth - firstBusHorizontalOffset,
+                    ),
                     height: 1
                 )
 
