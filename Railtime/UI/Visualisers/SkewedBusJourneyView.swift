@@ -227,6 +227,15 @@ struct SkewedBusJourneyView: View {
     func ttGraph(geometrySize: CGSize, stopTimeRange: TimeDelta, arrivalTimeRange: TimeDelta, busHOffset: CGFloat) -> some View {
         // tt graph
         ZStack(alignment: .topLeading) {
+            // make sure there is enough space to actually see everything
+            Rectangle()
+                .fill(Color.clear)
+                .frame(
+                    width: (arrivalTimeRange - stopTimeRange).seconds / 60 * horizontalScale
+                    + geometrySize.width - stopLineAndLabelsWidth - firstBusHorizontalOffset,
+                    height: 1
+                )
+
             ForEach(
                 isCollapsed ? [estimates.first!, estimates.last!] : estimates,
                 id: \.stopId
@@ -277,15 +286,6 @@ struct SkewedBusJourneyView: View {
                                 .padding(.leading, horizontalOffset)
                         }
                     }
-
-                    // make sure there is enough space to actually see everything
-                    Rectangle()
-                        .fill(Color.clear)
-                        .frame(
-                            width: (arrivalTimeRange - stopTimeRange).seconds / 60 * horizontalScale
-                            + geometrySize.width - stopLineAndLabelsWidth - firstBusHorizontalOffset,
-                            height: 1
-                        )
                 }
                 .frame(height: firstStopVerticalOffset * 2)
                 .padding(
