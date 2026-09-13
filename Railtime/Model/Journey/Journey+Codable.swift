@@ -67,6 +67,7 @@ extension Journey: Codable {
 extension JourneyContext: Codable {
     enum CodingKeys: CodingKey {
         case nodeContext
+        case intermediateNodeContext
         case edgeContext
     }
 
@@ -77,6 +78,10 @@ extension JourneyContext: Codable {
             forKey: .nodeContext
         )
         try container.encode(
+            intermediateNodeContext.mapValues { try JourneyNodeContextCodingBox(node: $0)},
+            forKey: .intermediateNodeContext
+        )
+        try container.encode(
             edgeContext.mapValues { try JourneyLegContextCodingBox(leg: $0)},
             forKey: .edgeContext
         )
@@ -84,14 +89,18 @@ extension JourneyContext: Codable {
 
     init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.nodeContext = try container.decode(
+        self.nodeContext = try container.decodeIfPresent(
             [UUID: JourneyNodeContextCodingBox].self,
             forKey: .nodeContext
-        ).mapValues { $0.existential }
-        self.edgeContext = try container.decode(
+        )?.mapValues { $0.existential } ?? [:]
+        self.intermediateNodeContext = try container.decodeIfPresent(
+            [String: JourneyNodeContextCodingBox].self,
+            forKey: .intermediateNodeContext
+        )?.mapValues { $0.existential } ?? [:]
+        self.edgeContext = try container.decodeIfPresent(
             [UUID: JourneyLegContextCodingBox].self,
             forKey: .edgeContext
-        ).mapValues { $0.existential }
+        )?.mapValues { $0.existential } ?? [:]
     }
 
     fileprivate enum JourneyNodeContextCodingBox: Codable {

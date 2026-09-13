@@ -74,10 +74,12 @@ struct AnyJourneyLeg: Identifiable {
 struct JourneyContext {
     /// The context for the nodes of the journey
     var nodeContext: [UUID: any JourneyNodeContext]
+    /// The context for intermediate nodes of the journey, that are a part of the context and not the journey
+    var intermediateNodeContext: [String: any JourneyNodeContext]
     /// The context for the edges of the journey
     var edgeContext: [UUID: any JourneyLegContext]
 
-    static var empty: JourneyContext = .init(nodeContext: [:], edgeContext: [:])
+    static var empty: JourneyContext = .init(nodeContext: [:], intermediateNodeContext: [:], edgeContext: [:])
 }
 
 /// An array type which lazily maps elements into a mutable, random access, range replaceable collection.

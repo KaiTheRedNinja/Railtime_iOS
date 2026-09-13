@@ -47,6 +47,7 @@ class JourneyManager: ObservableObject {
         async let stopContextTask: () = updateStopContext()
 
         // estimate each leg in parallel
+        var stopCodes: [String] = []
         try await withThrowingTaskGroup(of: JourneyBusLegContextWithId.self, returning: Void.self) { taskGroup in
             for (index, leg) in journey.legs.enumerated() {
                 // make sure it is a suported format
@@ -92,6 +93,25 @@ class JourneyManager: ObservableObject {
 
             for try await result in taskGroup {
                 context.edgeContext[result.id] = result.context
+                stopCodes.append(contentsOf: result.context.stopEstimations.map { $0.stopId })
+            }
+        }
+
+        // get details for each stop in parallel
+        try await withThrowingTaskGroup(of: JourneyIntermediateBusNodeContextWithId?.self, returning: Void.self) { taskGroup in
+            for stopCode in stopCodes {
+                taskGroup.addTask {
+                    if let stopInfo = try await self.estimator.data.getStopInfo(busStopCode: stopCode) {
+                        return .init(id: stopCode, context: stopInfo)
+                    } else {
+                        return nil
+                    }
+                }
+            }
+
+            for try await result in taskGroup {
+                guard let result else { continue }
+                context.intermediateNodeContext[result.id] = result.context
             }
         }
 
@@ -101,6 +121,11 @@ class JourneyManager: ObservableObject {
     private struct JourneyBusLegContextWithId {
         var id: JourneyBusLeg.ID
         var context: JourneyBusLeg.Context
+    }
+
+    private struct JourneyIntermediateBusNodeContextWithId {
+        var id: String
+        var context: JourneyBusStopNode.Context
     }
 }
 
