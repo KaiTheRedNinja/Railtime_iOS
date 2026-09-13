@@ -49,7 +49,7 @@ protocol JourneyNode: Equatable, Identifiable, Codable where Self.ID == UUID {
     associatedtype Context: JourneyNodeContext
 }
 /// The context for a node in the journey
-protocol JourneyNodeContext: Equatable { }
+protocol JourneyNodeContext: Equatable, Codable { }
 /// A wrapper for `any JourneyNode`
 struct AnyJourneyNode: Identifiable {
     var id: UUID { value.id }
@@ -63,11 +63,21 @@ protocol JourneyLeg: Equatable, Identifiable, Codable where Self.ID == UUID {
     var destination: any JourneyNode { get }
 }
 /// The context for a leg of a journey
-protocol JourneyLegContext: Equatable { }
+protocol JourneyLegContext: Equatable, Codable { }
 /// A wrapper for `any JourneyLeg`
 struct AnyJourneyLeg: Identifiable {
     var id: UUID { value.id }
     var value: any JourneyLeg
+}
+
+/// A structure containing context for a `Journey`
+struct JourneyContext {
+    /// The context for the nodes of the journey
+    var nodeContext: [UUID: any JourneyNodeContext]
+    /// The context for the edges of the journey
+    var edgeContext: [UUID: any JourneyLegContext]
+
+    static var empty: JourneyContext = .init(nodeContext: [:], edgeContext: [:])
 }
 
 /// An array type which lazily maps elements into a mutable, random access, range replaceable collection.

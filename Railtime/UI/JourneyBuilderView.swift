@@ -14,7 +14,6 @@ struct JourneyBuilderView: View {
     @FocusState var focusedNode: UUID?
 
     @State var updateTask: Task<Void, any Error>?
-
     @State var showJourneyView: Bool = false
 
     var body: some View {
@@ -27,7 +26,7 @@ struct JourneyBuilderView: View {
                         ZStack(alignment: .trailing) {
                             let nodeId = $startNode.wrappedValue.id
 
-                            Text((manager.nodeContext[nodeId] as? JourneyBusStopNode.Context)?.description ?? "")
+                            Text((manager.context.nodeContext[nodeId] as? JourneyBusStopNode.Context)?.description ?? "")
                                 .multilineTextAlignment(.trailing)
                                 .opacity(focusedNode == nodeId ? 0.001 : 1)
                                 .onTapGesture { focusedNode = nodeId }
@@ -52,7 +51,7 @@ struct JourneyBuilderView: View {
 
                             ZStack(alignment: .trailing) {
                                 let nodeId = $busLeg.wrappedValue.destinationBusStop.id
-                                Text((manager.nodeContext[nodeId] as? JourneyBusStopNode.Context)?.description ?? "")
+                                Text((manager.context.nodeContext[nodeId] as? JourneyBusStopNode.Context)?.description ?? "")
                                     .multilineTextAlignment(.trailing)
                                     .opacity(focusedNode == nodeId ? 0.001 : 1)
                                     .onTapGesture { focusedNode = nodeId }
@@ -89,6 +88,16 @@ struct JourneyBuilderView: View {
                     .buttonStyle(.borderedProminent)
 
                     Button("Sample") {
+                        guard let sample = manager.estimator.data.cache.read(
+                            category: "user_input",
+                            key: "sampleNodeContext",
+                            as: JourneyContextSample.self
+                        ) else {
+                            print("No sample found")
+                            return
+                        }
+                        manager.estimator.now = sample.saveDate
+                        manager.context = sample.context
                     }
                     .buttonStyle(.bordered)
                 }
@@ -96,7 +105,7 @@ struct JourneyBuilderView: View {
                 .listRowBackground(Color.clear)
             }
 
-            if !manager.nodeContext.isEmpty {
+            if !manager.context.nodeContext.isEmpty {
                 Section {
                     Button("Show sheet") {
                         showJourneyView = true
@@ -104,6 +113,14 @@ struct JourneyBuilderView: View {
                     .sheet(isPresented: $showJourneyView) {
                         // TODO: adapt skewed journey view to new formats
                         Text("Journey view")
+                    }
+                    Button("Save as sample") {
+                        // save the leg context
+                        manager.estimator.data.cache.write(
+                            category: "user_input",
+                            key: "sampleNodeContext",
+                            data: JourneyContextSample(saveDate: .now, context: manager.context)
+                        )
                     }
                 }
                 .onAppear {
@@ -126,6 +143,11 @@ struct JourneyBuilderView: View {
             print("Saved to cache")
         }
     }
+}
+
+struct JourneyContextSample: Codable {
+    var saveDate: Date
+    var context: JourneyContext
 }
 
 extension Binding where Value == any JourneyNode {

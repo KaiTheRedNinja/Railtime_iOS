@@ -8,7 +8,7 @@
 import Foundation
 
 /// The difference between two times of day
-nonisolated struct TimeDelta: AdditiveArithmetic, Equatable, Comparable, Sendable {
+nonisolated struct TimeDelta: AdditiveArithmetic, Equatable, Comparable, Sendable, Codable {
     /// A time delta representing no difference in time of day
     static var zero: TimeDelta = .zero
 

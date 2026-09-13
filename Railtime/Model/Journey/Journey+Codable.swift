@@ -64,6 +64,72 @@ extension Journey: Codable {
     }
 }
 
+extension JourneyContext: Codable {
+    enum CodingKeys: CodingKey {
+        case nodeContext
+        case edgeContext
+    }
+
+    func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(
+            nodeContext.mapValues { try JourneyNodeContextCodingBox(node: $0)},
+            forKey: .nodeContext
+        )
+        try container.encode(
+            edgeContext.mapValues { try JourneyLegContextCodingBox(leg: $0)},
+            forKey: .edgeContext
+        )
+    }
+
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.nodeContext = try container.decode(
+            [UUID: JourneyNodeContextCodingBox].self,
+            forKey: .nodeContext
+        ).mapValues { $0.existential }
+        self.edgeContext = try container.decode(
+            [UUID: JourneyLegContextCodingBox].self,
+            forKey: .edgeContext
+        ).mapValues { $0.existential }
+    }
+
+    fileprivate enum JourneyNodeContextCodingBox: Codable {
+        case busStop(JourneyBusStopNode.Context)
+
+        init(node: any JourneyNodeContext) throws {
+            if let node = node as? JourneyBusStopNode.Context {
+                self = .busStop(node)
+            } else {
+                throw JourneyCodingError.invalidType
+            }
+        }
+
+        var existential: any JourneyNodeContext {
+            switch self {
+            case .busStop(let journeyBusStopNode): journeyBusStopNode
+            }
+        }
+    }
+    fileprivate enum JourneyLegContextCodingBox: Codable {
+        case bus(JourneyBusLeg.Context)
+
+        init(leg: any JourneyLegContext) throws {
+            if let leg = leg as? JourneyBusLeg.Context {
+                self = .bus(leg)
+            } else {
+                throw JourneyCodingError.invalidType
+            }
+        }
+
+        var existential: any JourneyLegContext {
+            switch self {
+            case .bus(let journeyBusLeg): journeyBusLeg
+            }
+        }
+    }
+}
+
 enum JourneyCodingError: Error {
     /// An invalid type was passed in
     case invalidType

@@ -8,7 +8,7 @@
 import Foundation
 
 /// An estimate for when a bus, with a given ID, will arrive at a given stop.
-struct BusArrivalEstimate: Equatable {
+struct BusArrivalEstimate: Equatable, Codable {
     /// The ID of this bus.
     var busId: BusID
     /// The service number of this bus.
@@ -29,7 +29,7 @@ struct BusArrivalEstimate: Equatable {
     var busType: LTANextBusInfo.BusVariant?
 
     /// The ID of a bus
-    enum BusID: Equatable {
+    enum BusID: Equatable, Codable {
         /// The ID of this bus is yet to be assigned
         case unassigned
         /// A sequential ID for this bus
@@ -51,7 +51,7 @@ struct BusArrivalEstimate: Equatable {
     }
 
     /// Where the information for a bus' arrival comes from
-    enum DataSource {
+    enum DataSource: Codable {
         /// The data was obtained directly from the LTA Live Bus API
         case live
         /// The data was projected from an up/downstream `live` bus
