@@ -13,9 +13,10 @@ Railtime uses a MVVM architecture:
 - `Manager`: The Manager folder contains any classes that do logic on data and (optionally) hold state. Equivalent to "ViewModel" but I don't like that name.
 - `View`: UI
 
-## Layers
+## Packages
 
-The processing side consists of three layers:
+`RailtimeKit` contains three packages:
+
 - `API`: LTAClient wraps LTA DataMall's REST API
-- `Estimation`: A (mostly) stateless manager that can estimate bus timings given the LTA API, but only on a single route
+- `BusEstimation`: A (mostly) stateless manager that can estimate bus timings given the LTA API, but only on a single route
 - `Journey`: A stateful manager that holds the journey, and also "context" which is derived from Estimation.
