@@ -155,19 +155,26 @@ struct JourneyDebugTimingsView: View {
     @State var selectedLeg: UUID?
 
     var body: some View {
-        VStack {
-            Picker("", selection: $selectedLeg) {
-                ForEach(manager.journey.legsErased, id: \AnyJourneyLeg.id) { leg in
-                    if let leg = leg.value as? JourneyBusLeg {
-                        Text(leg.serviceNo)
-                            .tag(leg.id)
-                    }
+        NavigationStack {
+            Group {
+                if let selectedLeg, let legContext = manager.context.edgeContext[selectedLeg] as? JourneyBusLeg.Context {
+                    BusTimingsView(estimates: legContext.stopEstimations)
+                } else {
+                    Text("Please select a leg")
                 }
             }
-            .pickerStyle(.segmented)
-
-            if let selectedLeg, let legContext = manager.context.edgeContext[selectedLeg] as? JourneyBusLeg.Context {
-                BusTimingsView(estimates: legContext.stopEstimations)
+            .navigationTitle("DEBUG VISUALISER")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                Picker("", selection: $selectedLeg) {
+                    ForEach(manager.journey.legsErased, id: \AnyJourneyLeg.id) { leg in
+                        if let leg = leg.value as? JourneyBusLeg {
+                            Text(leg.serviceNo)
+                                .tag(leg.id)
+                        }
+                    }
+                }
+                .pickerStyle(.segmented)
             }
         }
     }
