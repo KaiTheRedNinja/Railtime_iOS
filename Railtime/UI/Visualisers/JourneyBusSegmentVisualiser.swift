@@ -130,10 +130,24 @@ struct JourneyBusSegmentVisualiser: View {
                 treatAsCollapsed ? [estimates.first!, estimates.last!] : busContext.stopEstimations,
                 id: \.stopId
             ) { stopEstimate in
+                let isStartOrEnd = stopEstimate.stopId == busContext.startCode || stopEstimate.stopId == busContext.endCode
+                let indicatorDiameter = if isStartOrEnd {
+                    Sizing.busIndicatorDiameter
+                } else {
+                    Sizing.stopIndicatorDiameter
+                }
+
                 HStack(alignment: .center, spacing: 5) {
                     Circle()
                         .fill(Color.green)
-                        .frame(width: Sizing.stopIndicatorDiameter, height: Sizing.stopIndicatorDiameter)
+                        .frame(width: indicatorDiameter, height: indicatorDiameter)
+                        .overlay {
+                            if isStartOrEnd {
+                                Circle()
+                                    .fill(Color.white)
+                                    .frame(width: Sizing.stopIndicatorDiameter, height: Sizing.stopIndicatorDiameter)
+                            }
+                        }
 
                     Text(
                         (stopLookup[stopEstimate.stopId] as? JourneyBusStopNode.Context)?
@@ -144,7 +158,7 @@ struct JourneyBusSegmentVisualiser: View {
                     .lineLimit(1)
                 }
                 .frame(height: Sizing.firstStopVerticalOffset * 2)
-                .padding(.leading, -Sizing.stopIndicatorDiameter/2 + Sizing.stopsHorizontalOffset)
+                .padding(.leading, -indicatorDiameter/2 + Sizing.stopsHorizontalOffset)
                 .padding(
                     .top,
                     treatAsCollapsed
@@ -157,29 +171,33 @@ struct JourneyBusSegmentVisualiser: View {
             if !treatAsCollapsed {
                 ForEach(estimates.first!.estimates.enumerated(), id: \.offset) { (_, busEstimate) in
                     let etaFromNow = busEstimate.eta.timeDelta(since: now)
-                    HStack(alignment: .center, spacing: 5) {
-                        Image(systemName: "bus")
-                            .resizable()
-                            .scaledToFit()
-                            .foregroundStyle(Color.blue)
-                            .padding(2)
-                            .background {
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: 5)
-                                        .fill(Color.white)
-                                    RoundedRectangle(cornerRadius: 5)
-                                        .stroke(Color.gray, lineWidth: 1)
-                                }
-                            }
-                            .frame(width: Sizing.busIndicatorDiameter, height: Sizing.busIndicatorDiameter)
 
-                        Rectangle()
-                            .fill(Color.accentColor)
-                            .frame(height: 1)
+                    // only show it if it would show up on the stopline
+                    if etaFromNow < .zero && etaFromNow > stopTimeRange.scale(by: -1) {
+                        HStack(alignment: .center, spacing: 5) {
+                            Image(systemName: "bus")
+                                .resizable()
+                                .scaledToFit()
+                                .foregroundStyle(Color.blue)
+                                .padding(2)
+                                .background {
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: 5)
+                                            .fill(Color.white)
+                                        RoundedRectangle(cornerRadius: 5)
+                                            .stroke(Color.gray, lineWidth: 1)
+                                    }
+                                }
+                                .frame(width: Sizing.busIndicatorDiameter, height: Sizing.busIndicatorDiameter)
+
+                            Rectangle()
+                                .fill(Color.accentColor)
+                                .frame(height: 1)
+                        }
+                        .frame(height: Sizing.firstStopVerticalOffset * 2)
+                        .padding(.leading, -Sizing.busIndicatorDiameter/2 + Sizing.stopsHorizontalOffset)
+                        .padding(.top, -etaFromNow.seconds / 60 * verticalScale)
                     }
-                    .frame(height: Sizing.firstStopVerticalOffset * 2)
-                    .padding(.leading, -Sizing.busIndicatorDiameter/2 + Sizing.stopsHorizontalOffset)
-                    .padding(.top, -etaFromNow.seconds / 60 * verticalScale)
                 }
             }
 
@@ -342,7 +360,9 @@ struct JourneyBusSegmentVisualiser: View {
                 .padding(.leading, horizontalOffset)
                 .padding(.top, Sizing.firstStopVerticalOffset)
 
-                if !treatAsCollapsed, horizontalOffset > 0 {
+                if !treatAsCollapsed, horizontalOffset > 0,
+                   etaFromNow < .zero && etaFromNow > stopTimeRange.scale(by: -1) {
+                    // only show the stop line connector if it would show up on the stopline
                     Rectangle()
                         .fill(Color.blue)
                         .frame(width: horizontalOffset, height: 1)
