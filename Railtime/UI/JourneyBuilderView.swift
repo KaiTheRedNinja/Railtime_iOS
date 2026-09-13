@@ -117,7 +117,7 @@ struct JourneyBuilderView: View {
                         showJourneyView = true
                     }
                     .sheet(isPresented: $showJourneyView) {
-                        // TODO: adapt skewed journey view to new formats
+//                        JourneyDebugTimingsView(manager: manager, now: manager.estimator.now)
                         JourneyVisualiser(journey: manager.journey, context: manager.context, now: manager.estimator.now)
                     }
                     Button("Save as sample") {
@@ -156,11 +156,13 @@ struct JourneyDebugTimingsView: View {
 
     @State var selectedLeg: UUID?
 
+    var now: Date
+
     var body: some View {
         NavigationStack {
             Group {
                 if let selectedLeg, let legContext = manager.context.edgeContext[selectedLeg] as? JourneyBusLeg.Context {
-                    BusTimingsView(estimates: legContext.stopEstimations)
+                    BusTimingsView(estimates: legContext.stopEstimations, now: now)
                 } else {
                     Text("Please select a leg")
                 }

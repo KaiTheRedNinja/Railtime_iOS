@@ -17,6 +17,8 @@ struct BusTimingsView: View {
 
     var scale: CGFloat = 10 // 10 points of spacing per minute
 
+    var now: Date
+
     var body: some View {
         // first we need to determine how large (horizontally and vertically) we need to be.
         // width  = scale * time delta between the latest and earliest bus stops
@@ -24,7 +26,7 @@ struct BusTimingsView: View {
 
         let estTimeRange = estimates.last!.deltaTime - estimates.first!.deltaTime
         let width = estTimeRange.seconds / 60 * scale
-        let estTimeDomain = estimates.last!.estimates.last!.eta.timeDelta(since: .now)
+        let estTimeDomain = estimates.last!.estimates.last!.eta.timeDelta(since: now)
         let height = estTimeDomain.seconds / 60 * scale
 
         // we have tickers in 5 minute intervals
@@ -119,7 +121,7 @@ struct BusTimingsView: View {
             // bus lines. We use the earliest estimation for each bus.
             let busEarliestTimes = getBusEarliestTimes()
             ForEach(busEarliestTimes.enumerated(), id: \.offset) { (_, earliestTiming) in
-                let offset = earliestTiming.eta.timeDelta(since: .now)
+                let offset = earliestTiming.eta.timeDelta(since: now)
 
                 if offset > .zero {
                     DiagonalLine()
@@ -135,7 +137,7 @@ struct BusTimingsView: View {
             ForEach(allBusses.enumerated(), id: \.offset) { (_, bus) in
                 ForEach(estimates.enumerated(), id: \.offset) { (_, stopEstimate) in
                     if let busEstimate = stopEstimate.estimates.first(where: { $0.busId == .ordered(index: bus) }) {
-                        let etaDelta = busEstimate.eta.timeDelta(since: .now)
+                        let etaDelta = busEstimate.eta.timeDelta(since: now)
                         let yOffset = etaDelta.seconds / 60 * scale
                         let shapeFillColor = if etaDelta > .zero { Color.blue } else { Color.green }
 
