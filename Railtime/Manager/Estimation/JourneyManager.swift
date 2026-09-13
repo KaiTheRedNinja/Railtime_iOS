@@ -6,15 +6,15 @@
 //
 
 import Foundation
-import Observation
+import SwiftUI
+import Combine
 
-@Observable
-class JourneyManager {
-    var journey: Journey
+class JourneyManager: ObservableObject {
+    @Published var journey: Journey
     var estimator: BusArrivalEstimator
 
-    var nodeContext: [UUID: any JourneyNodeContext]
-    var edgeContext: [UUID: any JourneyLegContext]
+    @Published var nodeContext: [UUID: any JourneyNodeContext]
+    @Published var edgeContext: [UUID: any JourneyLegContext]
 
     init(apiKey: String = UserDefaults.standard.string(forKey: "LTA_API_KEY") ?? "") throws {
         let journey = Journey.emptyBusJourney()
