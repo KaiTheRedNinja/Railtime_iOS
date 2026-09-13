@@ -79,7 +79,11 @@ struct JourneyBuilderView: View {
                     Button {
                         updateTask?.cancel()
                         updateTask = Task {
-                            try await manager.calculateJourney()
+                            do {
+                                try await manager.calculateJourney()
+                            } catch {
+                                print("Could not calculate journey: \(error)")
+                            }
                         }
                     } label: {
                         Text("GO!")
@@ -105,14 +109,14 @@ struct JourneyBuilderView: View {
                 .listRowBackground(Color.clear)
             }
 
-            if !manager.context.nodeContext.isEmpty {
+            if !manager.context.edgeContext.isEmpty {
                 Section {
                     Button("Show sheet") {
                         showJourneyView = true
                     }
                     .sheet(isPresented: $showJourneyView) {
                         // TODO: adapt skewed journey view to new formats
-                        Text("Journey view")
+                        JourneyDebugTimingsView(manager: manager)
                     }
                     Button("Save as sample") {
                         // save the leg context
@@ -141,6 +145,30 @@ struct JourneyBuilderView: View {
                 try await manager.updateStopContext()
             }
             print("Saved to cache")
+        }
+    }
+}
+
+struct JourneyDebugTimingsView: View {
+    @ObservedObject var manager: JourneyManager
+
+    @State var selectedLeg: UUID?
+
+    var body: some View {
+        VStack {
+            Picker("", selection: $selectedLeg) {
+                ForEach(manager.journey.legsErased, id: \AnyJourneyLeg.id) { leg in
+                    if let leg = leg.value as? JourneyBusLeg {
+                        Text(leg.serviceNo)
+                            .tag(leg.id)
+                    }
+                }
+            }
+            .pickerStyle(.segmented)
+
+            if let selectedLeg, let legContext = manager.context.edgeContext[selectedLeg] as? JourneyBusLeg.Context {
+                BusTimingsView(estimates: legContext.stopEstimations)
+            }
         }
     }
 }
