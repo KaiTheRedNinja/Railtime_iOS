@@ -5,6 +5,7 @@
 //  Created by Kai Quan Tay on 11/9/26.
 //
 
+/*
 import SwiftUI
 import Combine
 
@@ -530,3 +531,4 @@ private struct TimeTicker: View {
         .opacity(isNow ? 1 : 0.5)
     }
 }
+*/
