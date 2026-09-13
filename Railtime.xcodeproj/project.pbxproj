@@ -6,7 +6,16 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		9342B67A3056EC5500EE1DFA /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 9342B6793056EC5500EE1DFA /* README.md */; };
+		9342B69E3056F51800EE1DFA /* BusEstimation in Frameworks */ = {isa = PBXBuildFile; productRef = 9342B69D3056F51800EE1DFA /* BusEstimation */; };
+		9342B6A03056F51800EE1DFA /* Journey in Frameworks */ = {isa = PBXBuildFile; productRef = 9342B69F3056F51800EE1DFA /* Journey */; };
+		9342B6A23056F51800EE1DFA /* LTAAPI in Frameworks */ = {isa = PBXBuildFile; productRef = 9342B6A13056F51800EE1DFA /* LTAAPI */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
+		9342B6793056EC5500EE1DFA /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		9342B67C3056F05A00EE1DFA /* RaltimeKit */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = RaltimeKit; sourceTree = "<group>"; };
 		93705EF9304BC50700ACF000 /* Railtime.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Railtime.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -23,16 +32,29 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9342B69E3056F51800EE1DFA /* BusEstimation in Frameworks */,
+				9342B6A03056F51800EE1DFA /* Journey in Frameworks */,
+				9342B6A23056F51800EE1DFA /* LTAAPI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		9342B69C3056F51800EE1DFA /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		93705EF0304BC50600ACF000 = {
 			isa = PBXGroup;
 			children = (
+				9342B67C3056F05A00EE1DFA /* RaltimeKit */,
+				9342B6793056EC5500EE1DFA /* README.md */,
 				93705EFB304BC50700ACF000 /* Railtime */,
+				9342B69C3056F51800EE1DFA /* Frameworks */,
 				93705EFA304BC50700ACF000 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -65,6 +87,9 @@
 			);
 			name = Railtime;
 			packageProductDependencies = (
+				9342B69D3056F51800EE1DFA /* BusEstimation */,
+				9342B69F3056F51800EE1DFA /* Journey */,
+				9342B6A13056F51800EE1DFA /* LTAAPI */,
 			);
 			productName = Railtime;
 			productReference = 93705EF9304BC50700ACF000 /* Railtime.app */;
@@ -109,6 +134,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9342B67A3056EC5500EE1DFA /* README.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -334,6 +360,21 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		9342B69D3056F51800EE1DFA /* BusEstimation */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = BusEstimation;
+		};
+		9342B69F3056F51800EE1DFA /* Journey */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Journey;
+		};
+		9342B6A13056F51800EE1DFA /* LTAAPI */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = LTAAPI;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 93705EF1304BC50600ACF000 /* Project object */;
 }

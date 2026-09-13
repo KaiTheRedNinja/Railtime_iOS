@@ -6,6 +6,9 @@
 //
 
 import SwiftUI
+import Journey
+import BusEstimation
+import LTAAPI
 
 /// The visualiser responsible for drawing the stop line and vertical view
 struct JourneyBusSegmentVisualiser: View {

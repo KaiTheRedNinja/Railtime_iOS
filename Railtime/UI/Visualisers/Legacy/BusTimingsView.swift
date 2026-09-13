@@ -6,6 +6,9 @@
 //
 
 import SwiftUI
+import Journey
+import BusEstimation
+import LTAAPI
 
 let leadingWidth: CGFloat = 40
 let topHeight: CGFloat = 40

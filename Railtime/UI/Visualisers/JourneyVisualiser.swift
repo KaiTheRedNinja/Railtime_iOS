@@ -8,6 +8,10 @@
 import SwiftUI
 import Combine
 
+import Journey
+import BusEstimation
+import LTAAPI
+
 /// A namespace containing sizing information for the journey visualiser
 enum Sizing {
     /// The width of the vertical line showing the stops
