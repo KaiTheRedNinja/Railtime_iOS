@@ -69,7 +69,7 @@ struct BusQueryView: View {
 //                BusTimingsView(estimates: array)
                 Text("Showing sheet...")
                     .sheet(isPresented: $showSheet) {
-                        SkewedBusJourneyView(estimates: array, stopLookup: stopLookup)
+                        SkewedBusSegmentView(estimates: array, stopLookup: stopLookup)
                     }
             }
         }

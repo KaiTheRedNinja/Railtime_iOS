@@ -1,5 +1,5 @@
 //
-//  BusJourneyView.swift
+//  BusSegmentView.swift
 //  Railtime
 //
 //  Created by Kai Quan Tay on 10/9/26.
@@ -13,7 +13,7 @@ private let stopIndicatorDiameter: CGFloat = 10
 private let busIndicatorDiameter: CGFloat = 20
 private let ttGraphLeadingPadding: CGFloat = 20
 
-struct BusJourneyView: View {
+struct BusSegmentView: View {
     var estimates: [StopArrivalEstimates]
     var stopLookup: [String: LTABusStopInfo] = [:]
 

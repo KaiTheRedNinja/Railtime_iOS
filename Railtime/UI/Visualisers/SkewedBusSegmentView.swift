@@ -1,5 +1,5 @@
 //
-//  SkewedBusJourneyView.swift
+//  SkewedBusSegmentView.swift
 //  Railtime
 //
 //  Created by Kai Quan Tay on 11/9/26.
@@ -32,7 +32,7 @@ private let firstBusHorizontalOffset: CGFloat = 30
 // the collapsed distance between the center of the first and last stops
 private let collapsedVerticalDistance: CGFloat = 80
 
-struct SkewedBusJourneyView: View {
+struct SkewedBusSegmentView: View {
     var estimates: [StopArrivalEstimates]
     var stopLookup: [String: LTABusStopInfo] = [:]
 
