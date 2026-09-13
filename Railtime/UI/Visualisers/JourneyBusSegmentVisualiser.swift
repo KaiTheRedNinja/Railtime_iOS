@@ -172,13 +172,16 @@ struct JourneyBusSegmentVisualiser: View {
                 ForEach(estimates.first!.estimates.enumerated(), id: \.offset) { (_, busEstimate) in
                     let etaFromNow = busEstimate.eta.timeDelta(since: now)
 
+                    let isSelected = selectedBusId != nil && selectedBusId == busEstimate.busId.index
+                    let fillColor: Color = isSelected ? Color.accentColor : Color.gray
+
                     // only show it if it would show up on the stopline
                     if etaFromNow < .zero && etaFromNow > stopTimeRange.scale(by: -1) {
                         HStack(alignment: .center, spacing: 5) {
                             Image(systemName: "bus")
                                 .resizable()
                                 .scaledToFit()
-                                .foregroundStyle(Color.blue)
+                                .foregroundStyle(fillColor)
                                 .padding(2)
                                 .background {
                                     ZStack {
@@ -191,7 +194,7 @@ struct JourneyBusSegmentVisualiser: View {
                                 .frame(width: Sizing.busIndicatorDiameter, height: Sizing.busIndicatorDiameter)
 
                             Rectangle()
-                                .fill(Color.accentColor)
+                                .fill(fillColor)
                                 .frame(height: 1)
                         }
                         .frame(height: Sizing.firstStopVerticalOffset * 2)
@@ -283,13 +286,16 @@ struct JourneyBusSegmentVisualiser: View {
                     ForEach(stopEstimate.estimates.enumerated(), id: \.offset) { (_, busEstimate) in
                         let etaFromNow = busEstimate.eta.timeDelta(since: now)
 
+                        let isSelected = selectedBusId != nil && selectedBusId == busEstimate.busId.index
+                        let fillColor: Color = isSelected ? Color.accentColor : Color.gray
+
                         let horizontalOffset = ( // 1st is regular time offset, 2nd is to actually skew the time, 3rd to align
                             (etaFromNow.seconds / 60 * horizontalScale) -
                             ((stopTimeRange + stopEstimate.deltaTime).seconds / 60 * horizontalScale) +
                             busHOffset
                         )
 
-                        if horizontalOffset >= 0 {
+                        if horizontalOffset >= 0, isSelected {
                             Text(TimeOfDay(date: busEstimate.eta).hhmm)
                                 .font(.caption)
                                 .foregroundStyle(etaFromNow > .zero ? Color.primary : Color.gray)
@@ -316,8 +322,9 @@ struct JourneyBusSegmentVisualiser: View {
                             Image(systemName: indicatorShape)
                                 .resizable()
                                 .scaledToFit()
-                                .foregroundStyle(etaFromNow > .zero ? Color.blue : Color.gray)
+                                .foregroundStyle(etaFromNow > .zero ? fillColor : Color.gray)
                                 .opacity(etaFromNow > .zero ? 1 : 0.5)
+                                .opacity(isSelected ? 1 : 0.5)
                                 .frame(width: Sizing.stopIndicatorDiameter, height: Sizing.stopIndicatorDiameter)
                                 .padding(.leading, -Sizing.stopIndicatorDiameter/2)
                                 .padding(.leading, horizontalOffset)
@@ -341,6 +348,9 @@ struct JourneyBusSegmentVisualiser: View {
                     busHOffset
                 )
 
+                let isSelected = selectedBusId != nil && selectedBusId == busEstimate.busId.index
+                let fillColor: Color = isSelected ? Color.accentColor : Color.gray
+
                 VStack(alignment: .leading, spacing: 0) {
                     if etaFromNow < .zero && !treatAsCollapsed {
                         Rectangle()
@@ -350,9 +360,10 @@ struct JourneyBusSegmentVisualiser: View {
                     }
 
                     Rectangle()
-                        .fill(Color.blue)
+                        .fill(fillColor)
                         .frame(minHeight: 0)
                 }
+                .opacity(isSelected ? 1 : 0.5)
                 .frame(
                     width: 1,
                     height: treatAsCollapsed ? Sizing.collapsedVerticalDistance : stopTimeRange.seconds / 60 * verticalScale
@@ -364,7 +375,7 @@ struct JourneyBusSegmentVisualiser: View {
                    etaFromNow < .zero && etaFromNow > stopTimeRange.scale(by: -1) {
                     // only show the stop line connector if it would show up on the stopline
                     Rectangle()
-                        .fill(Color.blue)
+                        .fill(fillColor)
                         .frame(width: horizontalOffset, height: 1)
                         .padding(.top, Sizing.firstStopVerticalOffset - etaFromNow.seconds / 60 * verticalScale)
                 }
@@ -377,13 +388,21 @@ struct JourneyBusSegmentVisualiser: View {
                     .padding(3)
                     .background {
                         RoundedRectangle(cornerRadius: 5)
-                            .fill(Color.accentColor)
+                            .fill(fillColor)
                     }
+                    .opacity(isSelected ? 1 : 0.5)
                     .matchedGeometryEffect(id: "\(busEstimate.busServiceNo)\(busEstimate.busId.description)", in: namespace)
                     .frame(
                         width: Sizing.firstBusHorizontalOffset * 2,
                         height: treatAsCollapsed ? nil : Sizing.firstStopVerticalOffset * 2
                     ) // horizontally (and vertically center, if not collapsed)
+                    .onTapGesture {
+                        if isSelected {
+                            selectedBusId = nil
+                        } else {
+                            selectedBusId = busEstimate.busId.index
+                        }
+                    }
                     .padding(.leading, horizontalOffset - Sizing.firstBusHorizontalOffset) // position
                     .padding(
                         .top,
