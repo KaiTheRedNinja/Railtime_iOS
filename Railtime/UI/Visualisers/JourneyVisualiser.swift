@@ -1,8 +1,8 @@
 //
-//  SkewedBusSegmentView.swift
+//  JourneyVisualiser.swift
 //  Railtime
 //
-//  Created by Kai Quan Tay on 11/9/26.
+//  Created by Kai Quan Tay on 13/9/26.
 //
 
 import SwiftUI
@@ -32,7 +32,7 @@ private let firstBusHorizontalOffset: CGFloat = 30
 // the collapsed distance between the center of the first and last stops
 private let collapsedVerticalDistance: CGFloat = 80
 
-struct SkewedBusSegmentView: View {
+struct JourneyVisualiser: View {
     var estimates: [StopArrivalEstimates]
     var stopLookup: [String: LTABusStopInfo] = [:]
 
@@ -48,113 +48,108 @@ struct SkewedBusSegmentView: View {
     // the current scroll position from the scroll view
     @State var scrollPosition: CGPoint = .zero
 
+    // whether or not each segment is collapsed
+    @State var isCollapsed: [UUID: Bool] = [:]
+
+    @Namespace var namespace
+
+    @ViewBuilder
+    var body: some View {
+    }
+}
+
+/// The visualiser responsible for drawing the stop line and vertical view
+struct JourneyBusSegmentVisualiser: View {
+    var busContext: JourneyBusLeg.Context
+    var stopLookup: [String: any JourneyNodeContext] = [:]
+
+    // the current size of the viewport, which includes the stop line and tt graph, but
+    // excludes the time tickers
+    var geometrySize: CGSize = .zero
+    // the current scroll position from the scroll view.
+    // we can operate on the assumption that this segment is located at (0, 0) - the caller
+    // will adjust scrollPosition as required.
+    var scrollPosition: CGPoint = .zero
+    // the current date/time
+    var now: Date
+
+    // Number of points of spacing per minute, vertically
+    var verticalScale: CGFloat
+    // Number of points of spacing per minute, horizontally
+    var horizontalScale: CGFloat
+
+    // The horizontal offset to allow the first bus to be at firstBusHorizontalOffset.
+    // By first bus, this refers to the first bus *of the first leg*, therefore this is
+    // a parameter and not calculated by the view
+    var busHOffset: CGFloat
+
+    // whether or not the view is collapsed, binding to an external source
+    @Binding var isCollapsedExt: Bool
+
+    var treatAsCollapsed: Bool {
+        isCollapsedExt || busContext.stopEstimations.isEmpty
+    }
+
     // the currently selected bus
     @State var busId: Int?
 
-    // whether or not the view is collapsed
-    @State var isCollapsed: Bool = false
-
-    @Namespace var namespace
+    // the namespace
+    var namespace: Namespace.ID
 
     var body: some View {
         // first we need to determine how large (horizontally and vertically) we need to be.
 
         // the time difference between the first and last stop time delta (ie. distance)
-        let stopTimeRange = estimates.last!.deltaTime - estimates.first!.deltaTime
-
-        let busHOffset = busHorizontalOffset()
-
-        NavigationStack {
-            VStack(alignment: .leading, spacing: 0) {
-                // stop line and tt graph
-                GeometryReader { geometry in
-                    ScrollView([.horizontal, .vertical], showsIndicators: false) {
-                        VStack {
-                            HStack(alignment: .top, spacing: 0) {
-                                stopLine(stopTimeRange: stopTimeRange)
-                                ttGraph(
-                                    geometrySize: geometry.size,
-                                    stopTimeRange: stopTimeRange,
-                                    busHOffset: busHOffset
-                                )
-                            }
-                            .frame(minHeight: geometry.size.height, alignment: .top)
-                        }
-                    }
-                    .onScrollGeometryChange(for: CGPoint.self) { geo in
-                        geo.contentOffset
-                    } action: { oldValue, newValue in
-                        scrollPosition = newValue
-                    }
-                    .background(alignment: .bottomLeading) {
-
-                        // lowerbound
-                        let lowerbound = (min(.zero, estimates.first!.estimates.first!.eta.timeDelta(since: now)).seconds / 60 / 5).rounded(.awayFromZero)
-                        let upperbound = ((
-                            estimates.last!.estimates.last!.eta.timeDelta(since: now) +
-                                .mins((geometry.size.width - stopLineAndLabelsWidth) / horizontalScale) // the scroll allowance
-                        ).seconds / 60 / 5).rounded(.awayFromZero)
-
-                        timeTickers(
-                            lowerbound: Int(lowerbound),
-                            upperbound: Int(upperbound),
-                            step: 5,
-                            geometrySize: geometry.size,
-                            busHOffset: busHOffset,
-                            stopTimeRange: stopTimeRange
-                        )
-                    }
-                }
-                .overlay(alignment: .trailing) { HStack { Divider() } }
-                .overlay(alignment: .top) { VStack { Divider() } }
-                .padding(.trailing, timeTickerLabelsWidth) // space for horizontal time tickers
-                .padding(.top, timeTickerLabelsHeight) // space for top time tickers
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .navigationTitle("Bus 154")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItemGroup(placement: .primaryAction) {
-                    Button {
-                        now = now.addingTimeInterval(-30)
-                    } label: {
-                        Image(systemName: "minus")
-                    }
-                    Button {
-                        now = .now
-                    } label: {
-                        Image(systemName: "equal")
-                    }
-                    Button {
-                        now = now.addingTimeInterval(30)
-                    } label: {
-                        Image(systemName: "plus")
-                    }
-                }
-            }
+        // we default to the collapsed height if no data is provided
+        let stopTimeRange = if let lastEst = busContext.stopEstimations.last,
+                               let firstEst = busContext.stopEstimations.first {
+            lastEst.deltaTime - firstEst.deltaTime
+        } else {
+            TimeDelta.mins(collapsedVerticalDistance / verticalScale)
         }
-        .onReceive(nowRefreshTimer) { _ in
-            now = now.addingTimeInterval(0.1)
+
+        let estimates = if busContext.stopEstimations.isEmpty {
+            [
+                busContext.stopEstimations.first ?? StopArrivalEstimates(
+                    stopId: busContext.startCode,
+                    deltaTime: TimeDelta.mins(-collapsedVerticalDistance / verticalScale),
+                    deltaError: .zero,
+                    estimates: []
+                ),
+                busContext.stopEstimations.last ?? StopArrivalEstimates(
+                    stopId: busContext.endCode,
+                    deltaTime: .zero,
+                    deltaError: .zero,
+                    estimates: []
+                )
+            ]
+        } else {
+            busContext.stopEstimations
+        }
+
+        HStack(alignment: .top, spacing: 0) {
+            stopLine(stopTimeRange: stopTimeRange, estimates: estimates)
+            ttGraph(stopTimeRange: stopTimeRange, estimates: estimates)
         }
     }
 
-    func stopLine(stopTimeRange: TimeDelta) -> some View {
+    func stopLine(stopTimeRange: TimeDelta, estimates: [StopArrivalEstimates]) -> some View {
         ZStack(alignment: .topLeading) {
             // stop line
             Capsule()
                 .fill(Color.green)
                 .frame(
                     width: stopLineWidth,
-                    height: isCollapsed
-                        ? (collapsedVerticalDistance + stopLineWidth)
-                        : (stopTimeRange.seconds / 60 * verticalScale + stopLineWidth)
+                    height: treatAsCollapsed
+                    ? (collapsedVerticalDistance + stopLineWidth)
+                    : (stopTimeRange.seconds / 60 * verticalScale + stopLineWidth)
                 )
                 .padding(.top, -stopLineWidth/2 + firstStopVerticalOffset)
                 .padding(.leading, -stopLineWidth/2 + stopsHorizontalOffset)
 
             // stop indicators
             ForEach(
-                isCollapsed ? [estimates.first!, estimates.last!] : estimates,
+                treatAsCollapsed ? [estimates.first!, estimates.last!] : busContext.stopEstimations,
                 id: \.stopId
             ) { stopEstimate in
                 HStack(alignment: .center, spacing: 5) {
@@ -162,22 +157,26 @@ struct SkewedBusSegmentView: View {
                         .fill(Color.green)
                         .frame(width: stopIndicatorDiameter, height: stopIndicatorDiameter)
 
-                    Text(stopLookup[stopEstimate.stopId]?.description ?? stopEstimate.stopId)
-                        .font(.caption)
-                        .truncationMode(.middle)
-                        .lineLimit(1)
+                    Text(
+                        (stopLookup[stopEstimate.stopId] as? JourneyBusStopNode.Context)?
+                            .description ?? stopEstimate.stopId
+                    )
+                    .font(.caption)
+                    .truncationMode(.middle)
+                    .lineLimit(1)
                 }
                 .frame(height: firstStopVerticalOffset * 2)
                 .padding(.leading, -stopIndicatorDiameter/2 + stopsHorizontalOffset)
                 .padding(
                     .top,
-                    isCollapsed ? (stopEstimate.stopId == estimates.first!.stopId ? 0 : collapsedVerticalDistance)
-                                : ((stopTimeRange + stopEstimate.deltaTime).seconds / 60 * verticalScale)
+                    treatAsCollapsed
+                        ? (stopEstimate.stopId == estimates.first!.stopId ? 0 : collapsedVerticalDistance)
+                        : ((stopTimeRange + stopEstimate.deltaTime).seconds / 60 * verticalScale)
                 )
             }
 
             // bus location indicator
-            if !isCollapsed {
+            if !treatAsCollapsed {
                 ForEach(estimates.first!.estimates.enumerated(), id: \.offset) { (_, busEstimate) in
                     let etaFromNow = busEstimate.eta.timeDelta(since: now)
                     HStack(alignment: .center, spacing: 5) {
@@ -206,8 +205,8 @@ struct SkewedBusSegmentView: View {
                 }
             }
 
-            // collapse indicator
-            if isCollapsed {
+            // collapse indicator, ONLY FOR ACTUAL COLLAPSES!
+            if isCollapsedExt, !busContext.stopEstimations.isEmpty {
                 ZStack(alignment: .leading) {
                     VStack(alignment: .leading, spacing: 5) {
                         Text("\(estimates.count-1) stops")
@@ -237,17 +236,12 @@ struct SkewedBusSegmentView: View {
                 .padding(.top, firstStopVerticalOffset)
             }
         }
-        .background(alignment: .topLeading) {
-            Color.white
-                .frame(width: stopLineAndLabelsWidth)
-                .ignoresSafeArea()
-                .overlay(alignment: .trailing) { Divider() }
-                .offset(y: scrollPosition.y)
-        }
         .frame(width: stopLineAndLabelsWidth, alignment: .leading)
         .onTapGesture {
             withAnimation {
-                isCollapsed.toggle()
+                if !busContext.stopEstimations.isEmpty {
+                    isCollapsedExt.toggle()
+                }
             }
         }
         .offset(x: scrollPosition.x)
@@ -255,7 +249,7 @@ struct SkewedBusSegmentView: View {
     }
 
     @ViewBuilder
-    func ttGraph(geometrySize: CGSize, stopTimeRange: TimeDelta, busHOffset: CGFloat) -> some View {
+    func ttGraph(stopTimeRange: TimeDelta, estimates: [StopArrivalEstimates]) -> some View {
         // tt graph
         ZStack(alignment: .topLeading) {
             // make sure there is enough space to actually see everything
@@ -263,8 +257,9 @@ struct SkewedBusSegmentView: View {
                 .fill(Color.clear)
                 .frame(
                     width: (
-                        // the location of the last bus
-                        (estimates.first!.estimates.last!.eta.timeDelta(since: now).seconds / 60 * horizontalScale) + busHOffset
+                        // the location of the last bus, if any (treat as 0 if we have none)
+                        ((estimates.first?.estimates.last?.eta.timeDelta(since: now).seconds ?? 0)
+                            / 60 * horizontalScale) + busHOffset
                         // plus enough space that the last bus can be moved to the very left
                         + geometrySize.width - stopLineAndLabelsWidth - firstBusHorizontalOffset,
                     ),
@@ -272,7 +267,7 @@ struct SkewedBusSegmentView: View {
                 )
 
             ForEach(
-                isCollapsed ? [estimates.first!, estimates.last!] : estimates,
+                treatAsCollapsed ? [estimates.first!, estimates.last!] : estimates,
                 id: \.stopId
             ) { stopEstimate in
                 ZStack(alignment: .leading) {
@@ -333,8 +328,9 @@ struct SkewedBusSegmentView: View {
                 .frame(height: firstStopVerticalOffset * 2)
                 .padding(
                     .top,
-                    isCollapsed ? (stopEstimate.stopId == estimates.first!.stopId ? 0 : collapsedVerticalDistance)
-                                : ((stopTimeRange + stopEstimate.deltaTime).seconds / 60 * verticalScale)
+                    treatAsCollapsed
+                        ? (stopEstimate.stopId == estimates.first!.stopId ? 0 : collapsedVerticalDistance)
+                        : ((stopTimeRange + stopEstimate.deltaTime).seconds / 60 * verticalScale)
                 )
             }
 
@@ -347,7 +343,7 @@ struct SkewedBusSegmentView: View {
                 )
 
                 VStack(alignment: .leading, spacing: 0) {
-                    if etaFromNow < .zero && !isCollapsed {
+                    if etaFromNow < .zero && !treatAsCollapsed {
                         Rectangle()
                             .fill(Color.gray) // TODO: consider if we want to do a sort of incremental fade for collapsed??
                             .frame(height: etaFromNow.seconds / 60 * verticalScale * -1)
@@ -360,12 +356,12 @@ struct SkewedBusSegmentView: View {
                 }
                 .frame(
                     width: 1,
-                    height: isCollapsed ? collapsedVerticalDistance : stopTimeRange.seconds / 60 * verticalScale
+                    height: treatAsCollapsed ? collapsedVerticalDistance : stopTimeRange.seconds / 60 * verticalScale
                 )
                 .padding(.leading, horizontalOffset)
                 .padding(.top, firstStopVerticalOffset)
 
-                if !isCollapsed {
+                if !treatAsCollapsed {
                     Rectangle()
                         .fill(Color.blue)
                         .frame(width: horizontalOffset, height: 1)
@@ -385,86 +381,16 @@ struct SkewedBusSegmentView: View {
                     .matchedGeometryEffect(id: "\(busEstimate.busServiceNo)\(busEstimate.busId.description)", in: namespace)
                     .frame(
                         width: firstBusHorizontalOffset * 2,
-                        height: isCollapsed ? nil : firstStopVerticalOffset * 2
+                        height: treatAsCollapsed ? nil : firstStopVerticalOffset * 2
                     ) // horizontally (and vertically center, if not collapsed)
                     .padding(.leading, horizontalOffset - firstBusHorizontalOffset) // position
                     .padding(
                         .top,
-                        isCollapsed ? (firstStopVerticalOffset + stopIndicatorDiameter)
-                        : min(stopTimeRange.seconds / 60 * verticalScale, max(0, scrollPosition.y))
+                        treatAsCollapsed ? (firstStopVerticalOffset + stopIndicatorDiameter)
+                                         : min(stopTimeRange.seconds / 60 * verticalScale, max(0, scrollPosition.y))
                     ) // move with scroll, but only on the line
             }
         }
-    }
-
-    func timeTickers(
-        lowerbound: Int,
-        upperbound: Int,
-        step: Int,
-        geometrySize: CGSize,
-        busHOffset: CGFloat,
-        stopTimeRange: TimeDelta
-    ) -> some View {
-        ZStack(alignment: .bottomLeading) {
-            ForEach(lowerbound..<(upperbound + 1), id: \.self) { tickerIndex in
-                TimeTicker(
-                    verticalScale: verticalScale,
-                    horizontalScale: horizontalScale,
-                    ttGraphSize: .init(
-                        width: geometrySize.width - stopLineAndLabelsWidth,
-                        height: geometrySize.height
-                    ),
-                    scrollPosition: .init(
-                        x: scrollPosition.x - busHOffset,
-                        y: scrollPosition.y - firstStopVerticalOffset
-                    ),
-                    minutes: tickerIndex * step
-                )
-                .padding(.leading, stopLineAndLabelsWidth)
-                .mask(alignment: .top) {
-                    if isCollapsed {
-                        Rectangle()
-                            .frame(height: max(0, timeTickerLabelsHeight + firstStopVerticalOffset - scrollPosition.y))
-                    } else {
-                        Rectangle()
-                    }
-                }
-                .padding(.trailing, -timeTickerLabelsWidth) // reverse later padding
-                .padding(.top, -timeTickerLabelsHeight) // reverse later padding
-            }
-
-            if isCollapsed {
-                ForEach(lowerbound..<(upperbound + 1), id: \.self) { tickerIndex in
-                    TimeTicker(
-                        verticalScale: verticalScale,
-                        horizontalScale: horizontalScale,
-                        ttGraphSize: .init(
-                            width: geometrySize.width - stopLineAndLabelsWidth,
-                            height: geometrySize.height - max(0, collapsedVerticalDistance - scrollPosition.y)
-                        ),
-                        scrollPosition: .init(
-                            x: scrollPosition.x - busHOffset + (stopTimeRange.seconds / 60 * horizontalScale),
-                            y: scrollPosition.y - firstStopVerticalOffset
-                        ),
-                        minutes: tickerIndex * step
-                    )
-                    .padding(.leading, stopLineAndLabelsWidth)
-                    .padding(.trailing, -timeTickerLabelsWidth) // reverse later padding
-                    .padding(.top, -timeTickerLabelsHeight) // reverse later padding
-                }
-            }
-        }
-    }
-
-    // calculates the horizontal offset (to the right) to transform all time-dependent objects by
-    // such that the first bus is located at firstBusHorizontalOffset
-    func busHorizontalOffset() -> CGFloat {
-        guard let firstBus = estimates.first?.estimates.first else { return .zero }
-
-        // leftwards adjustment such that the bus is located at the very left of the graph
-        let leftwardsTare = firstBus.eta.timeDelta(since: now).seconds / 60 * horizontalScale
-        // then adjust rightwards to be at the correct offset
-        return -leftwardsTare + firstBusHorizontalOffset
     }
 }
 
@@ -494,8 +420,8 @@ private struct TimeTicker: View {
             .stroke(
                 strokeColor,
                 style: isNow
-                    ? .init(lineWidth: 2, lineCap: .round, lineJoin: .round, miterLimit: 0)
-                    : .init(lineWidth: 1, lineCap: .round, lineJoin: .round, miterLimit: 0, dash: [5, 5], dashPhase: 0)
+                ? .init(lineWidth: 2, lineCap: .round, lineJoin: .round, miterLimit: 0)
+                : .init(lineWidth: 1, lineCap: .round, lineJoin: .round, miterLimit: 0, dash: [5, 5], dashPhase: 0)
             )
             .frame(width: ttGraphSize.width, height: ttGraphSize.height)
             .mask {
@@ -516,7 +442,7 @@ private struct TimeTicker: View {
                 width: ttGraphSize.width + timeTickerLabelsWidth,
                 height: ttGraphSize.height + timeTickerLabelsHeight
             )
-//            .clipShape(Rectangle())
+            //            .clipShape(Rectangle())
         }
         .overlay(alignment: .topLeading) {
             ZStack(alignment: .bottomLeading) {
