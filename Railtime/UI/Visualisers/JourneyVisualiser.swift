@@ -33,68 +33,277 @@ private let firstBusHorizontalOffset: CGFloat = 30
 private let collapsedVerticalDistance: CGFloat = 80
 
 struct JourneyVisualiser: View {
-    var estimates: [StopArrivalEstimates]
-    var stopLookup: [String: LTABusStopInfo] = [:]
+    /// The journey that this view is for
+    var journey: Journey
+    /// The context for the journey
+    var context: JourneyContext
 
-    // Number of points of spacing per minute, vertically
+    /// Number of points of spacing per minute, vertically
     var verticalScale: CGFloat = 40
-    // Number of points of spacing per minute, horizontally. This value should never be larger than verticalScale
+    /// Number of points of spacing per minute, horizontally. This value should never be larger than verticalScale
     var horizontalScale: CGFloat = 10
 
-    // the current time
-    @State var now: Date = .now
+    /// the current time
+    @State var now: Date
     @State var nowRefreshTimer = Timer.publish(every: 0.1, on: .main, in: .default).autoconnect()
 
-    // the current scroll position from the scroll view
+    /// the current scroll position from the scroll view
     @State var scrollPosition: CGPoint = .zero
 
-    // whether or not each segment is collapsed
+    /// whether or not each segment is collapsed
     @State var isCollapsed: [UUID: Bool] = [:]
 
+    /// The animation namespace
     @Namespace var namespace
+
+    init(
+        journey: Journey,
+        context: JourneyContext,
+        now: Date
+    ) {
+        self.journey = journey
+        self.context = context
+        self.now = now
+    }
 
     @ViewBuilder
     var body: some View {
+        let pageDescription: String = [
+            (context.nodeContext[journey.startNode.id] as? JourneyBusStopNode.Context)?.description ?? "?",
+            " to ",
+            (context.nodeContext[journey.endNode.id] as? JourneyBusStopNode.Context)?.description ?? "?",
+        ].joined(separator: "")
+
+        let (yOffsetLegMap, timeDeltaTranslation, totalHeight) = yOffsetForLegs()
+
+        let busHOffset = busHorizontalOffset()
+
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 0) {
+                // stop line and tt graph
+                GeometryReader { geometry in
+                    ScrollView([.horizontal, .vertical], showsIndicators: false) {
+                        ZStack(alignment: .topLeading) {
+                            // make sure there is enough space to actually see everything
+                            Rectangle()
+                                .fill(Color.clear)
+                                .frame(
+                                    width: 1,
+                                    height: totalHeight + geometry.size.height
+                                )
+
+                            ForEach(journey.legsErased, id: \.id) { leg in
+                                if let busLeg = leg.value as? JourneyBusLeg,
+                                   let busContext = context.edgeContext[busLeg.id] as? JourneyBusLeg.Context {
+                                    let yOffset = yOffsetLegMap[busLeg.id] ?? 0
+                                    let xOffset = (timeDeltaTranslation[busLeg.id] ?? .zero).seconds / 60 * horizontalScale
+
+                                    JourneyBusSegmentVisualiser(
+                                        busContext: busContext,
+                                        stopLookup: context.intermediateNodeContext,
+                                        geometrySize: geometry.size,
+                                        scrollPosition: .init(
+                                            x: scrollPosition.x,
+                                            y: scrollPosition.y - yOffset
+                                        ),
+                                        now: now,
+                                        verticalScale: verticalScale,
+                                        horizontalScale: horizontalScale,
+                                        busHOffset: busHOffset - xOffset,
+                                        isCollapsedExt: .init(get: {
+                                            isCollapsed[busLeg.id] ?? true
+                                        }, set: { newCollapsedState in
+                                            isCollapsed[busLeg.id] = newCollapsedState
+                                        }),
+                                        namespace: namespace
+                                    )
+                                    .padding(.top, yOffset)
+                                }
+                            }
+                        }
+                        .frame(minHeight: geometry.size.height, alignment: .top)
+                    }
+                    .onScrollGeometryChange(for: CGPoint.self) { geo in
+                        geo.contentOffset
+                    } action: { oldValue, newValue in
+                        scrollPosition = newValue
+                    }
+                    .background(alignment: .topLeading) {
+                        Color.white
+                            .frame(width: stopLineAndLabelsWidth)
+                            .ignoresSafeArea(.all, edges: [.bottom, .leading])
+                            .overlay(alignment: .trailing) { HStack { Divider() } }
+                            .offset(y: scrollPosition.y)
+                    }
+//                    .background(alignment: .bottomLeading) {
+//
+//                        // lowerbound
+//                        let lowerbound = (min(.zero, estimates.first!.estimates.first!.eta.timeDelta(since: now)).seconds / 60 / 5).rounded(.awayFromZero)
+//                        let upperbound = ((
+//                            estimates.last!.estimates.last!.eta.timeDelta(since: now) +
+//                                .mins((geometry.size.width - stopLineAndLabelsWidth) / horizontalScale) // the scroll allowance
+//                        ).seconds / 60 / 5).rounded(.awayFromZero)
+//
+//                        timeTickers(
+//                            lowerbound: Int(lowerbound),
+//                            upperbound: Int(upperbound),
+//                            step: 5,
+//                            geometrySize: geometry.size,
+//                            busHOffset: busHOffset,
+//                            stopTimeRange: stopTimeRange
+//                        )
+//                    }
+                }
+                .overlay(alignment: .trailing) { HStack { Divider() } }
+                .overlay(alignment: .top) { VStack { Divider() } }
+                .padding(.trailing, timeTickerLabelsWidth) // space for horizontal time tickers
+                .padding(.top, timeTickerLabelsHeight) // space for top time tickers
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .navigationTitle(pageDescription)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItemGroup(placement: .primaryAction) {
+                    Button {
+                        now = now.addingTimeInterval(-30)
+                    } label: {
+                        Image(systemName: "minus")
+                    }
+                    Button {
+                        now = now.addingTimeInterval(30)
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                }
+            }
+        }
+        .onReceive(nowRefreshTimer) { _ in
+            now = now.addingTimeInterval(0.1)
+        }
+    }
+
+    /// Calculates the vertical offset (down), along with the time delta translation (back in
+    /// time), for each leg of the journey
+    func yOffsetForLegs() -> (
+        yOffsetLegMap: [UUID: CGFloat],
+        timeDeltaTranslation: [UUID: TimeDelta],
+        totalHeight: CGFloat
+    ) {
+        var yOffsetSoFar: CGFloat = 0
+        var timeDeltaSoFar: TimeDelta = .zero
+        var yOffsetLegMap: [UUID: CGFloat] = [:]
+        var timeDeltaTranslation: [UUID: TimeDelta] = [:]
+
+        for leg in journey.legs {
+            // the offset for this item is just the value so far
+            yOffsetLegMap[leg.id] = yOffsetSoFar
+            timeDeltaTranslation[leg.id] = timeDeltaSoFar
+
+            // calculate height of this leg
+            if let context = context.edgeContext[leg.id] as? JourneyBusLeg.Context, // get context
+               !context.stopEstimations.isEmpty { // ensure that it actually has items
+
+                // use the time difference
+                let timeDifference = context.stopEstimations.last!.deltaTime - context.stopEstimations.first!.deltaTime
+                if isCollapsed[leg.id] == false { // if NOT collapsed, use delta-time
+                    yOffsetSoFar += timeDifference.seconds / 60 * verticalScale
+                } else { // if collapsed, time delta remains the same but y offset is the collapsed vertical distance
+                    yOffsetSoFar += collapsedVerticalDistance
+                }
+                timeDeltaSoFar += timeDifference
+                continue
+            }
+
+            // unavailable data, use collapsed height
+            yOffsetSoFar += collapsedVerticalDistance
+            timeDeltaSoFar += .mins(collapsedVerticalDistance / verticalScale)
+        }
+
+        return (yOffsetLegMap, timeDeltaTranslation, yOffsetSoFar)
+    }
+
+    /// Calculates the horizontal offset (to the right) to transform all time-dependent objects by
+    /// such that the first bus, of the first stop, of the first leg, is located at `firstBusHorizontalOffset`
+    func busHorizontalOffset() -> CGFloat {
+        guard let firstLegId = journey.legs.first?.id,
+              let firstLegContext = context.edgeContext[firstLegId] as? JourneyBusLeg.Context,
+              let firstStop = firstLegContext.stopEstimations.first,
+              let firstBus = firstStop.estimates.first
+        else { return 0 }
+
+        // leftwards adjustment such that the bus is located at the very left of the graph
+        let leftwardsTare = firstBus.eta.timeDelta(since: now).seconds / 60 * horizontalScale
+        // then adjust rightwards to be at the correct offset
+        return -leftwardsTare + firstBusHorizontalOffset
     }
 }
 
 /// The visualiser responsible for drawing the stop line and vertical view
 struct JourneyBusSegmentVisualiser: View {
+    /// The context for this bus leg
     var busContext: JourneyBusLeg.Context
+    /// The lookup dictionary for stops
     var stopLookup: [String: any JourneyNodeContext] = [:]
 
-    // the current size of the viewport, which includes the stop line and tt graph, but
-    // excludes the time tickers
-    var geometrySize: CGSize = .zero
-    // the current scroll position from the scroll view.
-    // we can operate on the assumption that this segment is located at (0, 0) - the caller
-    // will adjust scrollPosition as required.
-    var scrollPosition: CGPoint = .zero
-    // the current date/time
+    /// The current size of the viewport, which includes the stop line and tt graph, but
+    /// excludes the time tickers
+    var geometrySize: CGSize
+    /// The current scroll position from the scroll view. We can operate on the assumption that this segment is
+    /// located at (0, 0) - the caller will adjust `scrollPosition` as required.
+    var scrollPosition: CGPoint
+    /// the current date/time
     var now: Date
 
-    // Number of points of spacing per minute, vertically
+    /// Number of points of spacing per minute, vertically
     var verticalScale: CGFloat
-    // Number of points of spacing per minute, horizontally
+    /// Number of points of spacing per minute, horizontally
     var horizontalScale: CGFloat
 
-    // The horizontal offset to allow the first bus to be at firstBusHorizontalOffset.
-    // By first bus, this refers to the first bus *of the first leg*, therefore this is
-    // a parameter and not calculated by the view
+    /// The horizontal offset to allow the first bus to be at firstBusHorizontalOffset.
+    /// By first bus, this refers to the first bus *of the first leg*, therefore this is
+    /// a parameter and not calculated by the view
     var busHOffset: CGFloat
 
-    // whether or not the view is collapsed, binding to an external source
+    /// Whether or not the view is collapsed, binding to an external source
     @Binding var isCollapsedExt: Bool
 
+    /// Whether or not we render this segment as "effectively collapsed", either because it is collapsed
+    /// or because no data is available.
     var treatAsCollapsed: Bool {
         isCollapsedExt || busContext.stopEstimations.isEmpty
     }
 
-    // the currently selected bus
-    @State var busId: Int?
+    /// The currently selected bus
+    @State var selectedBusId: Int?
 
-    // the namespace
+    /// The animation namespace
     var namespace: Namespace.ID
+
+    init(
+        busContext: JourneyBusLeg.Context,
+        stopLookup: [String : any JourneyNodeContext],
+        geometrySize: CGSize,
+        scrollPosition: CGPoint,
+        now: Date,
+        verticalScale: CGFloat,
+        horizontalScale: CGFloat,
+        busHOffset: CGFloat,
+        isCollapsedExt: Binding<Bool>,
+        selectedBusId: Int? = nil,
+        namespace: Namespace.ID
+    ) {
+        self.busContext = busContext
+        self.stopLookup = stopLookup
+        self.geometrySize = geometrySize
+        self.scrollPosition = scrollPosition
+        self.now = now
+        self.verticalScale = verticalScale
+        self.horizontalScale = horizontalScale
+        self.busHOffset = busHOffset
+        self._isCollapsedExt = isCollapsedExt
+        self.selectedBusId = selectedBusId
+        self.namespace = namespace
+    }
 
     var body: some View {
         // first we need to determine how large (horizontally and vertically) we need to be.
@@ -237,6 +446,9 @@ struct JourneyBusSegmentVisualiser: View {
             }
         }
         .frame(width: stopLineAndLabelsWidth, alignment: .leading)
+        .background {
+            Color.white.opacity(0.001) // for the hitbox
+        }
         .onTapGesture {
             withAnimation {
                 if !busContext.stopEstimations.isEmpty {
@@ -361,7 +573,7 @@ struct JourneyBusSegmentVisualiser: View {
                 .padding(.leading, horizontalOffset)
                 .padding(.top, firstStopVerticalOffset)
 
-                if !treatAsCollapsed {
+                if !treatAsCollapsed, horizontalOffset > 0 {
                     Rectangle()
                         .fill(Color.blue)
                         .frame(width: horizontalOffset, height: 1)
@@ -386,10 +598,20 @@ struct JourneyBusSegmentVisualiser: View {
                     .padding(.leading, horizontalOffset - firstBusHorizontalOffset) // position
                     .padding(
                         .top,
-                        treatAsCollapsed ? (firstStopVerticalOffset + stopIndicatorDiameter)
-                                         : min(stopTimeRange.seconds / 60 * verticalScale, max(0, scrollPosition.y))
+                        treatAsCollapsed
+                            ? (firstStopVerticalOffset + stopIndicatorDiameter)
+                            : min(
+                                stopTimeRange.seconds / 60 * verticalScale,
+                                max(0,
+                                    scrollPosition.y
+                                )
+                            )
                     ) // move with scroll, but only on the line
             }
+        }
+        .mask {
+            Rectangle()
+                .offset(x: scrollPosition.x)
         }
     }
 }

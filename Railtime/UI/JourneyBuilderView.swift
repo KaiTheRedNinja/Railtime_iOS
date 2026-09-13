@@ -102,6 +102,8 @@ struct JourneyBuilderView: View {
                         }
                         manager.estimator.now = sample.saveDate
                         manager.context = sample.context
+
+                        print("Loaded sample saved at \(manager.estimator.now)")
                     }
                     .buttonStyle(.bordered)
                 }
@@ -116,26 +118,7 @@ struct JourneyBuilderView: View {
                     }
                     .sheet(isPresented: $showJourneyView) {
                         // TODO: adapt skewed journey view to new formats
-                        JourneyDebugTimingsView(manager: manager)
-//                        if let first = manager.journey.legs.first,
-//                           let edgeContext = manager.context.edgeContext[first.id] as? JourneyBusLeg.Context {
-//                            SkewedBusSegmentView(
-//                                estimates: edgeContext.stopEstimations,
-//                                stopLookup: .init(
-//                                    manager.context.nodeContext.compactMap {
-//                                        if let item = $0.value as? JourneyBusStopNode.Context {
-//                                            (item.busStopCode, item)
-//                                        } else {
-//                                            nil
-//                                        }
-//                                    },
-//                                    uniquingKeysWith: { lhs, _ in lhs }
-//                                ),
-//                                now: manager.estimator.now
-//                            )
-//                        } else {
-//                            Text("No legs or no journey found")
-//                        }
+                        JourneyVisualiser(journey: manager.journey, context: manager.context, now: manager.estimator.now)
                     }
                     Button("Save as sample") {
                         // save the leg context
