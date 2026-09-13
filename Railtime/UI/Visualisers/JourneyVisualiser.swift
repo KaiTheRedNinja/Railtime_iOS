@@ -136,26 +136,20 @@ struct JourneyVisualiser: View {
                             .frame(width: Sizing.stopLineAndLabelsWidth)
                             .ignoresSafeArea(.all, edges: [.bottom, .leading])
                             .overlay(alignment: .trailing) { HStack { Divider() } }
-                            .offset(y: scrollPosition.y)
                     }
-//                    .background(alignment: .bottomLeading) {
-//
-//                        // lowerbound
-//                        let lowerbound = (min(.zero, estimates.first!.estimates.first!.eta.timeDelta(since: now)).seconds / 60 / 5).rounded(.awayFromZero)
-//                        let upperbound = ((
-//                            estimates.last!.estimates.last!.eta.timeDelta(since: now) +
-//                                .mins((geometry.size.width - stopLineAndLabelsWidth) / horizontalScale) // the scroll allowance
-//                        ).seconds / 60 / 5).rounded(.awayFromZero)
-//
-//                        timeTickers(
-//                            lowerbound: Int(lowerbound),
-//                            upperbound: Int(upperbound),
-//                            step: 5,
-//                            geometrySize: geometry.size,
-//                            busHOffset: busHOffset,
-//                            stopTimeRange: stopTimeRange
-//                        )
-//                    }
+                    .background(alignment: .bottomLeading) {
+                        let tickerGroups = timeTickerGroups(
+                            yOffsetLegMap: yOffsetLegMap,
+                            timeDeltaTranslation: timeDeltaTranslation,
+                            totalHeight: totalHeight
+                        )
+
+                        timeTickers(
+                            groups: tickerGroups,
+                            busHOffset: busHOffset,
+                            geometrySize: geometry.size
+                        )
+                    }
                 }
                 .overlay(alignment: .trailing) { HStack { Divider() } }
                 .overlay(alignment: .top) { VStack { Divider() } }
@@ -185,8 +179,46 @@ struct JourneyVisualiser: View {
         }
     }
 
+    func timeTickers(
+        groups: [TickerGroup],
+        busHOffset: CGFloat,
+        geometrySize: CGSize
+    ) -> some View {
+        ZStack(alignment: .bottomLeading) {
+            ForEach(groups.enumerated(), id: \.offset) { (_, group) in
+                ForEach(group.lowerbound..<(group.upperbound + 1), id: \.self) { tickerIndex in
+                    TimeTicker(
+                        verticalScale: verticalScale,
+                        horizontalScale: horizontalScale,
+                        ttGraphSize: .init(
+                            width: geometrySize.width - Sizing.stopLineAndLabelsWidth,
+                            height: max(0, geometrySize.height - max(0, group.startingHeight - scrollPosition.y))
+                        ),
+                        scrollPosition: .init(
+                            x: scrollPosition.x - busHOffset + (group.timeOffset.seconds / 60 * horizontalScale),
+                            y: max(0, scrollPosition.y - group.startingHeight) - Sizing.firstStopVerticalOffset
+                        ),
+                        minutes: tickerIndex * group.step
+                    )
+                    .frame(
+                        width: max(0, geometrySize.width - Sizing.stopLineAndLabelsWidth + Sizing.timeTickerLabelsWidth),
+                        height: max(0, geometrySize.height + Sizing.timeTickerLabelsHeight),
+                        alignment: .bottomLeading
+                    )
+                }
+                .padding(.leading, Sizing.stopLineAndLabelsWidth)
+                .mask(alignment: .top) {
+                    Rectangle()
+                        .frame(height: max(0, Sizing.timeTickerLabelsHeight + Sizing.firstStopVerticalOffset + group.endingHeight - scrollPosition.y))
+                }
+            }
+        }
+        .padding(.trailing, -Sizing.timeTickerLabelsWidth) // reverse later padding
+        .padding(.top, -Sizing.timeTickerLabelsHeight) // reverse later padding
+    }
+
     /// Calculates the vertical offset (down), along with the time delta translation (back in
-    /// time), for each leg of the journey
+    /// time), for each leg of the journey.
     func yOffsetForLegs() -> (
         yOffsetLegMap: [UUID: CGFloat],
         timeDeltaTranslation: [UUID: TimeDelta],
@@ -239,4 +271,102 @@ struct JourneyVisualiser: View {
         // then adjust rightwards to be at the correct offset
         return -leftwardsTare + Sizing.firstBusHorizontalOffset
     }
+
+    /// Calculates where the time tickers should be located
+    func timeTickerGroups(
+        yOffsetLegMap: [UUID: CGFloat],
+        timeDeltaTranslation: [UUID: TimeDelta],
+        totalHeight: CGFloat
+    ) -> [TickerGroup] {
+        guard !journey.legs.isEmpty else { return [] }
+
+        var currentTickerGroup: TickerGroup = .init(
+            lowerbound: 0,
+            upperbound: 0,
+            step: 5,
+            startingHeight: 0,
+            endingHeight: -1, // will be set later
+            timeOffset: .zero
+        )
+        var tickerGroups: [TickerGroup] = []
+
+        for leg in journey.legs {
+            // we ignore this leg if it is not a bus leg, or has no data
+            guard let leg = leg as? JourneyBusLeg,
+                  let legContext = context.edgeContext[leg.id] as? JourneyBusLeg.Context,
+                  let firstStop = legContext.stopEstimations.first, // TODO: fallback for empty estimations
+                  let lastStop = legContext.stopEstimations.last,
+                  !firstStop.estimates.isEmpty, !lastStop.estimates.isEmpty
+            else { continue }
+
+            let timeOffset = timeDeltaTranslation[leg.id] ?? .zero
+            let yOffset = yOffsetLegMap[leg.id] ?? 0
+
+            // update the lowerbound and upperbound of the current ticker group to ensure that it can contain the
+            // FIRST stops of this leg
+            let firstStopLowerbound = ( // we add time delta because there is no need to add "now" to everything
+                (firstStop.estimates.first!.eta.timeDelta(since: now) + timeOffset).seconds / 60 / 5
+            ).rounded(.awayFromZero)
+            let firstStopUpperbound = (
+                (firstStop.estimates.last!.eta.timeDelta(since: now)).seconds / 60 / 5
+                // TODO: add scroll allowance
+            ).rounded(.awayFromZero)
+            let lastStopLowerbound = (
+                (lastStop.estimates.first!.eta.timeDelta(since: now) + timeOffset).seconds / 60 / 5
+            ).rounded(.awayFromZero)
+            let lastStopUpperbound = (
+                (lastStop.estimates.last!.eta.timeDelta(since: now)).seconds / 60 / 5
+                // TODO: add scroll allowance
+            ).rounded(.awayFromZero)
+
+            currentTickerGroup.lowerbound = min(currentTickerGroup.lowerbound, Int(firstStopLowerbound))
+            currentTickerGroup.upperbound = max(currentTickerGroup.upperbound, Int(firstStopLowerbound), Int(firstStopUpperbound))
+
+            // we cut off the ticker group if this is collapsed
+            if isCollapsed[leg.id] == false {
+                // increase upperbound to include the *LAST* bus.
+                currentTickerGroup.upperbound = max(currentTickerGroup.upperbound, Int(lastStopLowerbound))
+                // and then just go to the next leg
+                continue
+            }
+
+            // add the current group, basically to mark the end of it
+            currentTickerGroup.endingHeight = yOffset
+            tickerGroups.append(currentTickerGroup)
+
+            // create a new ticker group, positioned at the bottom of this leg (ie. top + collapse vertical distance)
+            let stopTimeRange = lastStop.deltaTime - firstStop.deltaTime
+            currentTickerGroup = .init(
+                lowerbound: Int(lastStopLowerbound),
+                upperbound: Int(lastStopUpperbound),
+                step: 5,
+                startingHeight: yOffset + Sizing.collapsedVerticalDistance,
+                endingHeight: 0,
+                timeOffset: timeOffset + stopTimeRange
+            )
+        }
+
+        // add the incomplete ticker group
+        currentTickerGroup.endingHeight = totalHeight
+        tickerGroups.append(currentTickerGroup)
+        return tickerGroups
+    }
+}
+
+/// Specifications about tickers in a group
+struct TickerGroup {
+    /// The lowerbound for tickers in this group. This means that the earliest time ticker will be `lowerbound * step` minutes
+    var lowerbound: Int
+    /// The upperbound for tickers in this group. This means that the latest time ticker will be `upperbound * step` minutes
+    var upperbound: Int
+    /// The number of minutes per step
+    var step: Int
+
+    /// The height that this group starts with. This means that this ticker group will start `startingHeight` px from the top.
+    var startingHeight: CGFloat
+    /// The height that this group ends at. This means that this ticker group will be cut off `endingHeight` px from the top.
+    var endingHeight: CGFloat
+
+    /// The time offset. This means that this ticker group will start `timeOffset` seconds in the future.
+    var timeOffset: TimeDelta
 }
