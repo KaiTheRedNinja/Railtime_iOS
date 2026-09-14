@@ -27,21 +27,24 @@ public class JourneyManager: ObservableObject {
 
     /// Updates the context for stops found in the `journey`
     public func updateStopContext() async throws {
-        if let startNode = journey.startNode as? JourneyBusStopNode, startNode.busStopCode.count == 5 {
-            context.nodeContext[startNode.id] = try await estimator.data.getStopInfo(busStopCode: startNode.busStopCode)
+        if let startNode = journey.startNode(as: JourneyBusStopNode.self), startNode.busStopCode.count == 5 {
+            context.nodeContext[startNode.contextId] = try await estimator.data.getStopInfo(busStopCode: startNode.busStopCode)
         } else {
-            context.nodeContext.removeValue(forKey: journey.startNode.id)
+            context.nodeContext.removeValue(forKey: journey.startNode.contextId)
         }
 
-        for leg in journey.legs {
-            guard let leg = leg as? JourneyBusLeg, leg.destinationBusStop.busStopCode.count == 5 else {
-                context.nodeContext.removeValue(forKey: leg.destination.id)
+        for legId in journey.path {
+            guard let destNode = journey.endNode(for: legId, as: JourneyBusStopNode.self),
+                  destNode.busStopCode.count == 5 else {
+                if let legUntyped = journey.legs[legId],
+                   let destNodeUntyped = journey.nodes[legUntyped.destinationId] {
+                    context.nodeContext.removeValue(forKey: destNodeUntyped.contextId)
+                }
                 continue
             }
-            let legNode = leg.destinationBusStop
 
-            context.nodeContext[legNode.id] = try await estimator.data.getStopInfo(
-                busStopCode: legNode.busStopCode
+            context.nodeContext[destNode.contextId] = try await estimator.data.getStopInfo(
+                busStopCode: destNode.busStopCode
             )
         }
     }
@@ -53,21 +56,26 @@ public class JourneyManager: ObservableObject {
         // estimate each leg in parallel
         var stopCodes: [String] = []
         try await withThrowingTaskGroup(of: JourneyBusLegContextWithId.self, returning: Void.self) { taskGroup in
-            for (index, leg) in journey.legs.enumerated() {
+            for (index, legId) in journey.path.enumerated() {
                 // make sure it is a suported format
-                guard let leg = leg as? JourneyBusLeg else {
+                guard let (leg, legEndNode) = journey.legAndEndNode(
+                    for: legId,
+                    legAs: JourneyBusLeg.self,
+                    nodeAs: JourneyBusStopNode.self
+                ) else {
                     throw JourneyManagerError.unsupportedNodeOrEdgeType
                 }
 
                 // get the start node
-                let legStartNode = index == 0 ? journey.startNode : journey.legs[index-1].destination
-                let legEndNode = leg.destinationBusStop
-                guard let legStartNode = legStartNode as? JourneyBusStopNode else {
+                guard let legStartNode = (index == 0 ? journey.startNode(as: JourneyBusStopNode.self) : journey.endNode(
+                    for: journey.path[index-1],
+                    as: JourneyBusStopNode.self
+                )) else {
                     throw JourneyManagerError.journeyNodeEdgeTypeMismatch
                 }
 
                 // add a temporary empty context
-                context.edgeContext[leg.id] = JourneyBusLeg.Context(
+                context.edgeContext[leg.contextId] = JourneyBusLeg.Context(
                     startCode: legStartNode.busStopCode,
                     endCode: legEndNode.busStopCode,
                     stopEstimations: []
@@ -85,7 +93,7 @@ public class JourneyManager: ObservableObject {
                     }
                     let estimates = rawEstimates[startIndex...endIndex]
                     return .init(
-                        id: leg.id,
+                        contextId: leg.contextId,
                         context: JourneyBusLeg.Context(
                             startCode: legStartNode.busStopCode,
                             endCode: legEndNode.busStopCode,
@@ -96,7 +104,7 @@ public class JourneyManager: ObservableObject {
             }
 
             for try await result in taskGroup {
-                context.edgeContext[result.id] = result.context
+                context.edgeContext[result.contextId] = result.context
                 stopCodes.append(contentsOf: result.context.stopEstimations.map { $0.stopId })
             }
         }
@@ -106,7 +114,7 @@ public class JourneyManager: ObservableObject {
             for stopCode in stopCodes {
                 taskGroup.addTask {
                     if let stopInfo = try await self.estimator.data.getStopInfo(busStopCode: stopCode) {
-                        return .init(id: stopCode, context: stopInfo)
+                        return .init(contextId: stopCode, context: stopInfo)
                     } else {
                         return nil
                     }
@@ -115,7 +123,7 @@ public class JourneyManager: ObservableObject {
 
             for try await result in taskGroup {
                 guard let result else { continue }
-                context.intermediateNodeContext[result.id] = result.context
+                context.nodeContext[result.contextId] = result.context
             }
         }
 
@@ -123,12 +131,12 @@ public class JourneyManager: ObservableObject {
     }
 
     private struct JourneyBusLegContextWithId {
-        var id: JourneyBusLeg.ID
+        var contextId: JourneyLegContextID
         var context: JourneyBusLeg.Context
     }
 
     private struct JourneyIntermediateBusNodeContextWithId {
-        var id: String
+        var contextId: JourneyNodeContextID
         var context: JourneyBusStopNode.Context
     }
 }

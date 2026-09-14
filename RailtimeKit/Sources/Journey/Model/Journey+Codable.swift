@@ -12,22 +12,28 @@ import LTAAPI
 extension Journey: Codable {
     public enum CodingKeys: CodingKey {
         case id
-        case startNode
+        case startNodeId
+        case nodes
         case legs
+        case path
     }
 
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
-        try container.encode(try JourneyNodeCodingBox(node: startNode), forKey: .startNode)
-        try container.encode(legs.map { try JourneyLegCodingBox(leg: $0) }, forKey: .legs)
+        try container.encode(startNodeId, forKey: .startNodeId)
+        try container.encode(nodes.mapValues { try JourneyNodeCodingBox(node: $0) }, forKey: .nodes)
+        try container.encode(legs.mapValues { try JourneyLegCodingBox(leg: $0) }, forKey: .legs)
+        try container.encode(path, forKey: .path)
     }
 
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = try container.decode(UUID.self, forKey: .id)
-        self.startNode = try container.decode(JourneyNodeCodingBox.self, forKey: .startNode).existential
-        self.legs = try container.decode([JourneyLegCodingBox].self, forKey: .legs).map { $0.existential }
+        self.id = try container.decode(Journey.ID.self, forKey: .id)
+        self.startNodeId = try container.decode(JourneyNodeID.self, forKey: .startNodeId)
+        self.nodes = try container.decode([JourneyNodeID: JourneyNodeCodingBox].self, forKey: .nodes).mapValues { $0.existential }
+        self.legs = try container.decode([JourneyLegID: JourneyLegCodingBox].self, forKey: .legs).mapValues { $0.existential }
+        self.path = try container.decode([JourneyLegID].self, forKey: .path)
     }
 
     fileprivate enum JourneyNodeCodingBox: Codable {
@@ -69,7 +75,6 @@ extension Journey: Codable {
 extension JourneyContext: Codable {
     public enum CodingKeys: CodingKey {
         case nodeContext
-        case intermediateNodeContext
         case edgeContext
     }
 
@@ -80,10 +85,6 @@ extension JourneyContext: Codable {
             forKey: .nodeContext
         )
         try container.encode(
-            intermediateNodeContext.mapValues { try JourneyNodeContextCodingBox(node: $0)},
-            forKey: .intermediateNodeContext
-        )
-        try container.encode(
             edgeContext.mapValues { try JourneyLegContextCodingBox(leg: $0)},
             forKey: .edgeContext
         )
@@ -92,15 +93,11 @@ extension JourneyContext: Codable {
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.nodeContext = try container.decodeIfPresent(
-            [UUID: JourneyNodeContextCodingBox].self,
+            [JourneyNodeContextID: JourneyNodeContextCodingBox].self,
             forKey: .nodeContext
         )?.mapValues { $0.existential } ?? [:]
-        self.intermediateNodeContext = try container.decodeIfPresent(
-            [String: JourneyNodeContextCodingBox].self,
-            forKey: .intermediateNodeContext
-        )?.mapValues { $0.existential } ?? [:]
         self.edgeContext = try container.decodeIfPresent(
-            [UUID: JourneyLegContextCodingBox].self,
+            [JourneyLegContextID: JourneyLegContextCodingBox].self,
             forKey: .edgeContext
         )?.mapValues { $0.existential } ?? [:]
     }

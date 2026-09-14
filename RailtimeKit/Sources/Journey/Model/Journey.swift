@@ -13,119 +13,131 @@ public struct Journey: Identifiable {
     /// The ID of this journey
     public var id: UUID = .init()
 
-    /// The node that this journey starts from
-    public var startNode: any JourneyNode
+    /// The ID of the starting node
+    public var startNodeId: JourneyNodeID
+    /// The nodes of this journey
+    public var nodes: [JourneyNodeID: any JourneyNode]
     /// The legs of this journey
-    public var legs: [any JourneyLeg]
+    public var legs: [JourneyLegID: any JourneyLeg]
+    /// The path that this journey will take starting from the start node
+    public var path: [JourneyLegID]
 
-    public init(id: UUID = .init(), startNode: any JourneyNode, legs: [any JourneyLeg]) {
+    /// The starting node
+    public var startNode: any JourneyNode {
+        get { nodes[startNodeId]! }
+        set { nodes[startNodeId] = newValue }
+    }
+
+    public init(
+        id: UUID = .init(),
+        startNodeId: JourneyNodeID,
+        nodes: [JourneyNodeID: any JourneyNode],
+        legs: [JourneyLegID: any JourneyLeg],
+        path: [JourneyLegID]
+    ) {
+        assert(nodes[startNodeId] != nil, "`nodes` must contain a node with starting ID \(startNodeId)")
+
         self.id = id
-        self.startNode = startNode
+        self.startNodeId = startNodeId
+        self.nodes = nodes
         self.legs = legs
-    }
-
-    /// A SwiftUI-safe type-erased wrapper for `legs`. This is lazily mapped.
-    public var legsErased: MappedArray<any JourneyLeg, AnyJourneyLeg> {
-        get { MappedArray(base: legs, toU: { AnyJourneyLeg(value: $0) }, toT: { $0.value }) }
-        set { legs = newValue.base }
-        _modify {
-            var wrapper = MappedArray(base: legs, toU: { AnyJourneyLeg(value: $0) }, toT: { $0.value })
-            legs = []
-            defer { legs = wrapper.base }
-            yield &wrapper
-        }
-    }
-
-    /// The node that this journey ends with. If `legs` is empty, this is equal to `startNode`.
-    public var endNode: any JourneyNode {
-        legs.last?.destination ?? startNode
+        self.path = path
     }
 
     /// Creates a new `Journey` consisting of an undefined bus route
     public static func emptyBusJourney() -> Journey {
-        .init(
-            startNode: JourneyBusStopNode(busStopCode: ""),
-            legs: [JourneyBusLeg(serviceNo: "", destinationBusStop: JourneyBusStopNode(busStopCode: ""))]
+        var startNode = JourneyBusStopNode(busStopCode: "", nextLegIds: [])
+        let nextNode = JourneyBusStopNode(busStopCode: "", nextLegIds: [])
+        let firstLeg = JourneyBusLeg(serviceNo: "", destinationId: nextNode.id)
+        startNode.nextLegIds = [firstLeg.id]
+        return .init(
+            startNodeId: startNode.id,
+            nodes: [startNode.id: startNode, nextNode.id: nextNode],
+            legs: [firstLeg.id: firstLeg],
+            path: [firstLeg.id]
         )
     }
-}
 
-/// A node in a journey
-public protocol JourneyNode: Equatable, Identifiable, Codable where Self.ID == UUID {
-    associatedtype Context: JourneyNodeContext
-}
-/// The context for a node in the journey
-public protocol JourneyNodeContext: Equatable, Codable { }
-/// A wrapper for `any JourneyNode`
-public struct AnyJourneyNode: Identifiable {
-    public var id: UUID { value.id }
-    public var value: any JourneyNode
-}
-
-/// A travel method from one node to another
-public protocol JourneyLeg: Equatable, Identifiable, Codable where Self.ID == UUID {
-    associatedtype Context: JourneyLegContext
-
-    var destination: any JourneyNode { get }
-}
-/// The context for a leg of a journey
-public protocol JourneyLegContext: Equatable, Codable { }
-/// A wrapper for `any JourneyLeg`
-public struct AnyJourneyLeg: Identifiable {
-    public var id: UUID { value.id }
-    public var value: any JourneyLeg
-}
-
-/// A structure containing context for a `Journey`
-public struct JourneyContext {
-    /// The context for the nodes of the journey
-    public var nodeContext: [UUID: any JourneyNodeContext]
-    /// The context for intermediate nodes of the journey, that are a part of the context and not the journey
-    public var intermediateNodeContext: [String: any JourneyNodeContext]
-    /// The context for the edges of the journey
-    public var edgeContext: [UUID: any JourneyLegContext]
-
-    public static var empty: JourneyContext = .init(nodeContext: [:], intermediateNodeContext: [:], edgeContext: [:])
-}
-
-/// An array type which lazily maps elements into a mutable, random access, range replaceable collection.
-public struct MappedArray<T, U>: RandomAccessCollection, MutableCollection, RangeReplaceableCollection {
-    var base: [T]
-    let toU: (T) -> U
-    let toT: (U) -> T
-
-    // RandomAccessCollection / MutableCollection conformance
-    public var startIndex: Int { base.startIndex }
-    public var endIndex: Int { base.endIndex }
-    public func index(after i: Int) -> Int { base.index(after: i) }
-    public func index(before i: Int) -> Int { base.index(before: i) }
-
-    public subscript(position: Int) -> U {
-        get { toU(base[position]) }
-        set { base[position] = toT(newValue) }
+    /// Obtains the start node, given the expected type
+    public func startNode<N>(
+        as _: N.Type
+    ) -> N? where N: JourneyNode {
+        nodes[startNodeId] as? N
     }
 
-    // RangeReplaceableCollection conformance
-    public init() {
-        // Only reachable if you have default T/U mappings; see note below.
-        fatalError("MappedArray requires toU/toT — use init(base:toU:toT:) instead")
+    /// Obtains the leg and the node that it leads to, given the expected type for both the leg and the node
+    public func legAndEndNode<L, N>(
+        for legId: JourneyLegID,
+        legAs _: L.Type,
+        nodeAs _: N.Type
+    ) -> (leg: L, endNode: N)? where L: JourneyLeg, N: JourneyNode {
+        guard let leg = legs[legId] as? L,
+              let node = nodes[leg.destinationId] as? N
+        else { return nil }
+        return (leg, node)
     }
 
-    public init(base: [T], toU: @escaping (T) -> U, toT: @escaping (U) -> T) {
-        self.base = base
-        self.toU = toU
-        self.toT = toT
+    /// Obtains the leg and the node that it leads to, given the expected type for the leg but not the node
+    public func legAndEndNode<L>(
+        for legId: JourneyLegID,
+        legAs _: L.Type
+    ) -> (leg: L, endNode: any JourneyNode)? where L: JourneyLeg {
+        guard let leg = legs[legId] as? L,
+              let node = nodes[leg.destinationId]
+        else { return nil }
+        return (leg, node)
     }
 
-    public mutating func replaceSubrange<C: Collection>(
-        _ subrange: Range<Int>, with newElements: C
-    ) where C.Element == U {
-        base.replaceSubrange(subrange, with: newElements.lazy.map(toT))
+    /// Obtains the leg, given the expected type for the leg
+    public func leg<L>(
+        for legId: JourneyLegID,
+        as _: L.Type
+    ) -> L? where L: JourneyLeg {
+        return legs[legId] as? L
     }
 
-    // Optional but worth overriding for efficiency — the default
-    // reserveCapacity(_:) is a no-op otherwise.
-    public mutating func reserveCapacity(_ n: Int) {
-        base.reserveCapacity(n)
+    /// Obtains the node that a leg leads to, given the expected type for the node
+    public func endNode<N>(
+        for legId: JourneyLegID,
+        as _: N.Type
+    ) -> N? where N: JourneyNode {
+        guard let leg = legs[legId],
+              let node = nodes[leg.destinationId] as? N
+        else { return nil }
+        return node
+    }
+
+    /// Removes nodes and edges that are not connected to the root node
+    public mutating func removeUnconnected() {
+        var queue = [startNode]
+        let oldNodes = nodes
+        let oldLegs = legs
+        var newNodes: [JourneyNodeID: any JourneyNode] = [:]
+        var newLegs: [JourneyLegID: any JourneyLeg] = [:]
+
+        while var item = queue.popLast() {
+            var validLegIds: [JourneyLegID] = []
+
+            // go through each leg that starts from this node
+            for nextLegId in item.nextLegIds {
+                if newLegs[nextLegId] == nil, // leg must not already be registered (single start)
+                   let nextLeg = oldLegs[nextLegId], // leg must connect to a node (single end)
+                   let nextEndNode = oldNodes[nextLeg.destinationId] // connected node must exist
+                {
+                    // register leg
+                    newLegs[nextLegId] = nextLeg
+                    // mark leg as valid
+                    validLegIds.append(nextLegId)
+                    // add end node to queue
+                    queue.append(nextEndNode)
+                }
+            }
+
+            item.nextLegIds = validLegIds
+            newNodes[item.id] = item
+        }
+
+        self.nodes = newNodes
+        self.legs = newLegs
     }
 }

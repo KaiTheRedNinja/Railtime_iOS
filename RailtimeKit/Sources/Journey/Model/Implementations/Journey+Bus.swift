@@ -13,13 +13,15 @@ import LTAAPI
 public struct JourneyBusStopNode: JourneyNode {
     public typealias Context = LTABusStopInfo
 
-    public var id: UUID = .init()
-
+    public var id: JourneyNodeID = .init()
     public var busStopCode: String
+    public var nextLegIds: [JourneyLegID]
+    public var contextId: JourneyNodeContextID { busStopCode }
 
-    public init(id: UUID = .init(), busStopCode: String) {
+    public init(id: JourneyNodeID = .init(), busStopCode: String, nextLegIds: [JourneyLegID]) {
         self.id = id
         self.busStopCode = busStopCode
+        self.nextLegIds = nextLegIds
     }
 }
 
@@ -38,16 +40,14 @@ public struct JourneyBusLeg: JourneyLeg {
         public var stopEstimations: [StopArrivalEstimates]
     }
 
-    public var id: UUID = .init()
-
+    public var id: JourneyLegID = .init()
     public var serviceNo: String
-    public var destinationBusStop: JourneyBusStopNode
+    public var destinationId: JourneyNodeID
+    public var contextId: JourneyLegContextID { id.uuidString }
 
-    public var destination: any JourneyNode { destinationBusStop }
-
-    public init(id: UUID = .init(), serviceNo: String, destinationBusStop: JourneyBusStopNode) {
+    public init(id: JourneyLegID = .init(), serviceNo: String, destinationId: JourneyNodeID) {
         self.id = id
         self.serviceNo = serviceNo
-        self.destinationBusStop = destinationBusStop
+        self.destinationId = destinationId
     }
 }
