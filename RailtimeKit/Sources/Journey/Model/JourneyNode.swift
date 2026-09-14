@@ -26,4 +26,8 @@ public protocol JourneyNodeContext: Equatable, Codable {}
 public struct AnyJourneyNode: Identifiable {
     public var id: JourneyNodeID { value.id }
     public var value: any JourneyNode
+
+    public init(value: any JourneyNode) {
+        self.value = value
+    }
 }

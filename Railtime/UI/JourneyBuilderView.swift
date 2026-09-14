@@ -14,7 +14,7 @@ struct JourneyBuilderView: View {
     @ObservedObject var manager: JourneyManager = try! .init()
     @State var showSheet: Bool = false
 
-    @FocusState var focusedNode: UUID?
+    @FocusState var focusedNode: JourneyNodeID?
 
     @State var updateTask: Task<Void, any Error>?
     @State var showJourneyView: Bool = false
@@ -29,7 +29,7 @@ struct JourneyBuilderView: View {
                         ZStack(alignment: .trailing) {
                             let nodeId = $startNode.wrappedValue.id
 
-                            Text((manager.context.nodeContext[nodeId] as? JourneyBusStopNode.Context)?.description ?? "")
+                            Text(manager.context.context(forNode: $startNode.wrappedValue, type: JourneyBusStopNode.self)?.description ?? "")
                                 .multilineTextAlignment(.trailing)
                                 .opacity(focusedNode == nodeId ? 0.001 : 1)
                                 .onTapGesture { focusedNode = nodeId }
@@ -43,22 +43,26 @@ struct JourneyBuilderView: View {
                     Text("Could not convert first node")
                 }
 
-                ForEach($manager.journey.legsErased, id: \.id, editActions: .delete) { $leg in
-                    if let $busLeg = $leg.value.as(JourneyBusLeg.self) {
+                ForEach(manager.journey.path.enumerated(), id: \.offset) { (_, pathItem) in
+                    if let $legAndNode = $manager.journey.legAndEndNode(
+                        for: pathItem,
+                        legAs: JourneyBusLeg.self,
+                        nodeAs: JourneyBusStopNode.self
+                    ) {
                         HStack {
-                            TextField("Service no.", text: $busLeg.serviceNo)
+                            TextField("Service no.", text: $legAndNode.leg.serviceNo)
                                 .multilineTextAlignment(.leading)
                                 .frame(maxWidth: .infinity)
 
                             Text("to")
 
                             ZStack(alignment: .trailing) {
-                                let nodeId = $busLeg.wrappedValue.destinationBusStop.id
-                                Text((manager.context.nodeContext[nodeId] as? JourneyBusStopNode.Context)?.description ?? "")
+                                let nodeId = $legAndNode.wrappedValue.endNode.id
+                                Text(manager.context.context(forNode: $legAndNode.wrappedValue.endNode, type: JourneyBusStopNode.self)?.description ?? "")
                                     .multilineTextAlignment(.trailing)
                                     .opacity(focusedNode == nodeId ? 0.001 : 1)
                                     .onTapGesture { focusedNode = nodeId }
-                                TextField("Stop code", text: $busLeg.destinationBusStop.busStopCode)
+                                TextField("Stop code", text: $legAndNode.endNode.busStopCode)
                                     .multilineTextAlignment(.trailing)
                                     .focused($focusedNode, equals: nodeId)
                                     .opacity(focusedNode == nodeId ? 1 : 0.001)
@@ -71,7 +75,22 @@ struct JourneyBuilderView: View {
                 }
             } footer: {
                 Button {
-                    manager.journey.legs.append(JourneyBusLeg(serviceNo: "", destinationBusStop: .init(busStopCode: "")))
+                    // create the new end stop
+                    let newEndStop = JourneyBusStopNode(busStopCode: "", nextLegIds: [])
+                    let newLeg = JourneyBusLeg(serviceNo: "", destinationId: newEndStop.id)
+
+                    // link it to the current last item
+                    let lastNodeId = if let lastPathItem = manager.journey.path.last,
+                                        let lastLeg = manager.journey.legs[lastPathItem] {
+                        lastLeg.destinationId
+                    } else {
+                        manager.journey.startNodeId
+                    }
+                    manager.journey.nodes[lastNodeId]?.nextLegIds.append(newLeg.id)
+
+                    manager.journey.nodes[newEndStop.id] = newEndStop
+                    manager.journey.legs[newLeg.id] = newLeg
+                    manager.journey.removeUnconnected()
                 } label: {
                     Image(systemName: "plus")
                 }
@@ -121,7 +140,7 @@ struct JourneyBuilderView: View {
                     }
                     .sheet(isPresented: $showJourneyView) {
 //                        JourneyDebugTimingsView(manager: manager, now: manager.estimator.now)
-                        JourneyVisualiser(journey: manager.journey, context: manager.context, now: manager.estimator.now)
+                        JourneyVisualiser(manager: manager, now: manager.estimator.now)
                     }
                     Button("Save as sample") {
                         // save the leg context
@@ -157,14 +176,18 @@ struct JourneyBuilderView: View {
 struct JourneyDebugTimingsView: View {
     @ObservedObject var manager: JourneyManager
 
-    @State var selectedLeg: UUID?
+    @State var selectedLegContextId: JourneyLegContextID?
 
     var now: Date
 
     var body: some View {
         NavigationStack {
             Group {
-                if let selectedLeg, let legContext = manager.context.edgeContext[selectedLeg] as? JourneyBusLeg.Context {
+                if let selectedLegContextId,
+                   let legContext = manager.context.context(
+                       forLegContextId: selectedLegContextId,
+                       type: JourneyBusLeg.self
+                   ) {
                     BusTimingsView(estimates: legContext.stopEstimations, now: now)
                 } else {
                     Text("Please select a leg")
@@ -173,11 +196,11 @@ struct JourneyDebugTimingsView: View {
             .navigationTitle("DEBUG VISUALISER")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                Picker("", selection: $selectedLeg) {
-                    ForEach(manager.journey.legsErased, id: \AnyJourneyLeg.id) { leg in
+                Picker("", selection: $selectedLegContextId) {
+                    ForEach(manager.journey.legs.values.map { AnyJourneyLeg(value: $0) }, id: \.id) { leg in
                         if let leg = leg.value as? JourneyBusLeg {
                             Text(leg.serviceNo)
-                                .tag(leg.id)
+                                .tag(leg.contextId)
                         }
                     }
                 }

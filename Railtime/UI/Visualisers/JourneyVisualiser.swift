@@ -40,10 +40,8 @@ enum Sizing {
 }
 
 struct JourneyVisualiser: View {
-    /// The journey that this view is for
-    var journey: Journey
-    /// The context for the journey
-    var context: JourneyContext
+    /// The manager holding all of the data
+    @ObservedObject var manager: JourneyManager
 
     /// Number of points of spacing per minute, vertically
     var verticalScale: CGFloat = 40
@@ -64,21 +62,22 @@ struct JourneyVisualiser: View {
     @Namespace var namespace
 
     init(
-        journey: Journey,
-        context: JourneyContext,
+        manager: JourneyManager,
         now: Date
     ) {
-        self.journey = journey
-        self.context = context
+        self.manager = manager
         self.now = now
     }
 
     @ViewBuilder
     var body: some View {
+        let journey = manager.journey
+        let context = manager.context
+
         let pageDescription: String = [
-            (context.nodeContext[journey.startNode.id] as? JourneyBusStopNode.Context)?.description ?? "?",
+            context.context(forNode: journey.startNode, type: JourneyBusStopNode.self)?.description ?? "?",
             " to ",
-            (context.nodeContext[journey.endNode.id] as? JourneyBusStopNode.Context)?.description ?? "?",
+            manager.endNodeContext(forPathItem: journey.path.last!, as: JourneyBusStopNode.self)?.description ?? "?",
         ].joined(separator: "")
 
         let (yOffsetLegMap, timeDeltaTranslation, totalHeight) = yOffsetForLegs()

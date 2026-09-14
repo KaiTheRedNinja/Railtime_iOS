@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftUI
 
 /// A directed chain, consisting of a start (root) node and a series of travel legs. This outlines the modes
 /// of transportation to take from the start to end nodes.
@@ -139,5 +140,94 @@ public struct Journey: Identifiable {
 
         self.nodes = newNodes
         self.legs = newLegs
+    }
+}
+
+public extension Binding where Value == Journey {
+    /// Obtains the start node, given the expected type
+    func startNode<N>(
+        as _: N.Type
+    ) -> Binding<N>? where N: JourneyNode {
+        if let startNode = wrappedValue.startNode(as: N.self) {
+            return .init {
+                startNode
+            } set: { newValue in
+                wrappedValue.nodes[wrappedValue.startNodeId] = newValue
+            }
+        } else {
+            return nil
+        }
+    }
+
+    /// Obtains the leg and the node that it leads to, given the expected type for both the leg and the node
+    func legAndEndNode<L, N>(
+        for legId: JourneyLegID,
+        legAs _: L.Type,
+        nodeAs _: N.Type
+    ) -> Binding<(leg: L, endNode: N)>? where L: JourneyLeg, N: JourneyNode {
+        if let tuple = wrappedValue.legAndEndNode(for: legId, legAs: L.self, nodeAs: N.self) {
+            return .init {
+                tuple
+            } set: { newValue in
+                guard let leg = wrappedValue.legs[legId] else { fatalError("Attempted to use expired binding") }
+
+                wrappedValue.legs[legId] = newValue.leg
+                wrappedValue.nodes[leg.destinationId] = newValue.endNode
+            }
+        } else {
+            return nil
+        }
+    }
+
+    /// Obtains the leg and the node that it leads to, given the expected type for the leg but not the node
+    func legAndEndNode<L>(
+        for legId: JourneyLegID,
+        legAs _: L.Type
+    ) -> Binding<(leg: L, endNode: any JourneyNode)>? where L: JourneyLeg {
+        if let tuple = wrappedValue.legAndEndNode(for: legId, legAs: L.self) {
+            return .init {
+                tuple
+            } set: { newValue in
+                guard let leg = wrappedValue.legs[legId] else { fatalError("Attempted to use expired binding") }
+
+                wrappedValue.legs[legId] = newValue.leg
+                wrappedValue.nodes[leg.destinationId] = newValue.endNode
+            }
+        } else {
+            return nil
+        }
+    }
+
+    /// Obtains the leg, given the expected type for the leg
+    func leg<L>(
+        for legId: JourneyLegID,
+        as _: L.Type
+    ) -> Binding<L>? where L: JourneyLeg {
+        if let value = wrappedValue.leg(for: legId, as: L.self) {
+            return .init {
+                value
+            } set: { newValue in
+                wrappedValue.legs[legId] = newValue
+            }
+        } else {
+            return nil
+        }
+    }
+
+    /// Obtains the node that a leg leads to, given the expected type for the node
+    func endNode<N>(
+        for legId: JourneyLegID,
+        as _: N.Type
+    ) -> Binding<N>? where N: JourneyNode {
+        if let value = wrappedValue.endNode(for: legId, as: N.self) {
+            return .init {
+                value
+            } set: { newValue in
+                guard let leg = wrappedValue.legs[legId] else { fatalError("Attempted to use expired binding") }
+                wrappedValue.nodes[leg.destinationId] = newValue
+            }
+        } else {
+            return nil
+        }
     }
 }
