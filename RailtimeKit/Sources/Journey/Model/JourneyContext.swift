@@ -25,9 +25,29 @@ public struct JourneyContext {
         }
     }
 
+    /// Gets a typed node context for a given node context ID
+    public func context<N>(forNodeContextId id: JourneyNodeContextID, type _: N.Type) -> N.Context? where N: JourneyNode {
+        if let context = nodeContext[id],
+           let typedContext = context as? N.Context {
+            return typedContext
+        } else {
+            return nil
+        }
+    }
+
     /// Gets a typed edge context for a given edge
     public func context<L>(forLeg leg: L, type _: L.Type) -> L.Context? where L: JourneyLeg {
         if let context = edgeContext[leg.contextId],
+           let typedContext = context as? L.Context {
+            return typedContext
+        } else {
+            return nil
+        }
+    }
+
+    /// Gets a typed edge context for a given edge context ID
+    public func context<L>(forLegContextId id: JourneyNodeContextID, type _: L.Type) -> L.Context? where L: JourneyLeg {
+        if let context = edgeContext[id],
            let typedContext = context as? L.Context {
             return typedContext
         } else {
