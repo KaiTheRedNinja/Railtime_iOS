@@ -28,6 +28,7 @@ extension BusArrivalEstimator {
         serviceNo: String,
         numTarget: Int = 5,
         maxLookbackStops: Int = 5,
+        stopGapOption: StopGapOption = .enabledOutsideInterest,
         inDirection: Int? = nil
     ) async throws -> [StopArrivalEstimates] {
         guard !stopIdsOfInterest.isEmpty else { return [] } // no stops, therefore no results
@@ -110,7 +111,12 @@ extension BusArrivalEstimator {
             let estimatedDeltaTime = currentDelta + scheduleDeltaSinceLast
             // if it is a stop of interest, we always track it. If not, make sure it is past the stop gap.
             let isOfInterest = stopIdsSet.remove(upstreamCode) != nil
-            guard isOfInterest || scheduleDeltaSinceLast >= stopGap else {
+            let ignoreStopGap = switch stopGapOption {
+            case .disabled: true // always ignore stop gap when disabled
+            case .enabledEverywhere: isOfInterest // ignore stop gap if is of interest
+            case .enabledOutsideInterest: isOfInterest || !stopIdsSet.isEmpty // ignore stop gap if still in interest region
+            }
+            guard ignoreStopGap || scheduleDeltaSinceLast >= stopGap else {
                 print(
                     "Skipping upstream stop", upstreamCode,
                     "— projected delta", upstreamScheduleDelta,
@@ -191,5 +197,25 @@ extension BusArrivalEstimator {
 
         estimates.reverse() // invert the list so that the first stop is the furthest upstream, and the last stop is the target stop
         return estimates
+    }
+
+    /// How the stop gap should be enforced
+    ///
+    /// ```
+    /// Option                   | Stops of interest | Stops between interest  | Stops outside interest
+    /// -------------------------|-------------------|-------------------------|------------------------
+    /// `disabled`               | Always polled     | Always polled           | Always polled
+    /// `enabledEverywhere`      | Always polled     | Polled when appropriate | Polled when appropriate
+    /// `enabledOutsideInterest` | Always polled     | Always polled           | Polled when appropriate
+    /// ```
+    public enum StopGapOption {
+        /// Stop gaps are disabled in this estimation - every stop will be polled
+        case disabled
+        /// Stop gaps are enabled in this estimation - every stop of interest will be polled, but stops
+        /// in between or outside may not be.
+        case enabledEverywhere
+        /// Stop gaps are enabled in this estimation, but only outside the area of interest - every
+        /// stop of interest and stops in between will be polled, but stops before and after may not be
+        case enabledOutsideInterest
     }
 }

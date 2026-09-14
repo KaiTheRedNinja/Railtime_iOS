@@ -15,7 +15,7 @@ import LTAAPI
 /// large gaps between stations.
 ///
 /// A stop gap percentage of 0 disables the stop gap system.
-public let STOP_GAP_PERCENTAGE = 0.0 // 0.4
+public let STOP_GAP_PERCENTAGE = 0.4
 
 /// The largest stop gap allowed, expressed in seconds (equivalent to the
 /// Python `timedelta(minutes=15)`).
