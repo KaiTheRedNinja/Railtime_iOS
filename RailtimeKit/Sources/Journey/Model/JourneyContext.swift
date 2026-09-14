@@ -16,9 +16,19 @@ public struct JourneyContext {
     public static var empty: JourneyContext = .init(nodeContext: [:], edgeContext: [:])
 
     /// Gets a typed node context for a given node
-    public func context<N>(forNode node: any JourneyNode, type _: N.Type = N.self) -> N.Context? where N: JourneyNode {
+    public func context<N>(forNode node: any JourneyNode, type _: N.Type) -> N.Context? where N: JourneyNode {
         if (node as? N) != nil,
            let context = nodeContext[node.contextId],
+           let typedContext = context as? N.Context {
+            return typedContext
+        } else {
+            return nil
+        }
+    }
+
+    /// Gets a typed node context for a given node
+    public func context<N>(forNode node: N, type _: N.Type = N.self) -> N.Context? where N: JourneyNode {
+        if let context = nodeContext[node.contextId],
            let typedContext = context as? N.Context {
             return typedContext
         } else {
@@ -37,9 +47,19 @@ public struct JourneyContext {
     }
 
     /// Gets a typed edge context for a given edge
-    public func context<L>(forLeg leg: any JourneyLeg, type _: L.Type = L.self) -> L.Context? where L: JourneyLeg {
+    public func context<L>(forLeg leg: any JourneyLeg, type _: L.Type) -> L.Context? where L: JourneyLeg {
         if (leg as? L) != nil,
            let context = edgeContext[leg.contextId],
+           let typedContext = context as? L.Context {
+            return typedContext
+        } else {
+            return nil
+        }
+    }
+
+    /// Gets a typed edge context for a given edge
+    public func context<L>(forLeg leg: L, type _: L.Type = L.self) -> L.Context? where L: JourneyLeg {
+        if let context = edgeContext[leg.contextId],
            let typedContext = context as? L.Context {
             return typedContext
         } else {

@@ -56,7 +56,7 @@ struct JourneyVisualiser: View {
     @State var scrollPosition: CGPoint = .zero
 
     /// whether or not each segment is collapsed
-    @State var isCollapsed: [UUID: Bool] = [:]
+    @State var isCollapsed: [JourneyLegID: Bool] = [:]
 
     /// The animation namespace
     @Namespace var namespace
@@ -98,15 +98,15 @@ struct JourneyVisualiser: View {
                                     height: totalHeight + geometry.size.height
                                 )
 
-                            ForEach(journey.legsErased, id: \.id) { leg in
-                                if let busLeg = leg.value as? JourneyBusLeg,
-                                   let busContext = context.edgeContext[busLeg.id] as? JourneyBusLeg.Context {
+                            ForEach(journey.path.enumerated(), id: \.offset) { (_, pathItem) in
+                                if let busLeg = journey.leg(for: pathItem, as: JourneyBusLeg.self),
+                                   let busContext = context.context(forLeg: busLeg) {
                                     let yOffset = yOffsetLegMap[busLeg.id] ?? 0
                                     let xOffset = (timeDeltaTranslation[busLeg.id] ?? .zero).seconds / 60 * horizontalScale
 
                                     JourneyBusSegmentVisualiser(
                                         busContext: busContext,
-                                        stopLookup: context.intermediateNodeContext,
+                                        stopLookup: context.nodeContext,
                                         geometrySize: geometry.size,
                                         scrollPosition: .init(
                                             x: scrollPosition.x,
@@ -223,8 +223,8 @@ struct JourneyVisualiser: View {
     /// Calculates the vertical offset (down), along with the time delta translation (back in
     /// time), for each leg of the journey.
     func yOffsetForLegs() -> (
-        yOffsetLegMap: [UUID: CGFloat],
-        timeDeltaTranslation: [UUID: TimeDelta],
+        yOffsetLegMap: [JourneyLegID: CGFloat],
+        timeDeltaTranslation: [JourneyLegID: TimeDelta],
         totalHeight: CGFloat
     ) {
         var yOffsetSoFar: CGFloat = 0
@@ -232,18 +232,18 @@ struct JourneyVisualiser: View {
         var yOffsetLegMap: [UUID: CGFloat] = [:]
         var timeDeltaTranslation: [UUID: TimeDelta] = [:]
 
-        for leg in journey.legs {
+        for pathItem in manager.journey.path {
             // the offset for this item is just the value so far
-            yOffsetLegMap[leg.id] = yOffsetSoFar
-            timeDeltaTranslation[leg.id] = timeDeltaSoFar
+            yOffsetLegMap[pathItem] = yOffsetSoFar
+            timeDeltaTranslation[pathItem] = timeDeltaSoFar
 
             // calculate height of this leg
-            if let context = context.edgeContext[leg.id] as? JourneyBusLeg.Context, // get context
+            if let context = manager.legContext(forPathItem: pathItem, as: JourneyBusLeg.self), // get context
                !context.stopEstimations.isEmpty { // ensure that it actually has items
 
                 // use the time difference
                 let timeDifference = context.stopEstimations.last!.deltaTime - context.stopEstimations.first!.deltaTime
-                if isCollapsed[leg.id] == false { // if NOT collapsed, use delta-time
+                if isCollapsed[pathItem] == false { // if NOT collapsed, use delta-time
                     yOffsetSoFar += timeDifference.seconds / 60 * verticalScale
                 } else { // if collapsed, time delta remains the same but y offset is the collapsed vertical distance
                     yOffsetSoFar += Sizing.collapsedVerticalDistance
@@ -263,8 +263,8 @@ struct JourneyVisualiser: View {
     /// Calculates the horizontal offset (to the right) to transform all time-dependent objects by
     /// such that the first bus, of the first stop, of the first leg, is located at `firstBusHorizontalOffset`
     func busHorizontalOffset() -> CGFloat {
-        guard let firstLegId = journey.legs.first?.id,
-              let firstLegContext = context.edgeContext[firstLegId] as? JourneyBusLeg.Context,
+        guard let firstLegId = manager.journey.path.first,
+              let firstLegContext = manager.legContext(forPathItem: firstLegId, as: JourneyBusLeg.self),
               let firstStop = firstLegContext.stopEstimations.first,
               let firstBus = firstStop.estimates.first
         else { return 0 }
@@ -281,7 +281,7 @@ struct JourneyVisualiser: View {
         timeDeltaTranslation: [UUID: TimeDelta],
         totalHeight: CGFloat
     ) -> [TickerGroup] {
-        guard !journey.legs.isEmpty else { return [] }
+        guard !manager.journey.path.isEmpty else { return [] }
 
         var currentTickerGroup: TickerGroup = .init(
             lowerbound: 0,
@@ -293,10 +293,10 @@ struct JourneyVisualiser: View {
         )
         var tickerGroups: [TickerGroup] = []
 
-        for leg in journey.legs {
+        for pathItem in manager.journey.path {
             // we ignore this leg if it is not a bus leg, or has no data
-            guard let leg = leg as? JourneyBusLeg,
-                  let legContext = context.edgeContext[leg.id] as? JourneyBusLeg.Context,
+            guard let leg = manager.journey.leg(for: pathItem, as: JourneyBusLeg.self),
+                  let legContext = manager.context.context(forLeg: leg),
                   let firstStop = legContext.stopEstimations.first, // TODO: fallback for empty estimations
                   let lastStop = legContext.stopEstimations.last,
                   !firstStop.estimates.isEmpty, !lastStop.estimates.isEmpty
