@@ -37,6 +37,30 @@ public protocol JourneyLeg: Equatable, Identifiable, Codable where Self.ID == Jo
         nextContext: Context
     ) -> (Self, Context)?
 }
+
+extension JourneyLeg {
+    /// Attempt to merge this leg with the leg (of possibly a different type) after it. If the next leg is a different
+    /// type, it automatically returns `nil`.
+    /// - Parameters:
+    ///   - next: The next leg of the journey chain
+    ///   - selfContext: The context for this leg
+    ///   - nextContext: The context for the next leg
+    /// - Returns: A merged instance and context, or `nil` if a merge was not successful
+    func attemptMerge(
+        withAnyNextLeg next: any JourneyLeg,
+        selfContext: any JourneyLegContext,
+        nextContext: any JourneyLegContext
+    ) -> (any JourneyLeg, any JourneyLegContext)? {
+        if let next = next as? Self,
+           let selfContext = selfContext as? Self.Context,
+           let nextContext = nextContext as? Self.Context {
+            attemptMerge(withNextLeg: next, selfContext: selfContext, nextContext: nextContext)
+        } else {
+            nil
+        }
+    }
+}
+
 /// The context for a leg of a journey
 public protocol JourneyLegContext: Equatable, Codable {}
 /// A wrapper for `any JourneyLeg`

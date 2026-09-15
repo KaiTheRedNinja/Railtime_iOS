@@ -8,8 +8,8 @@
 import Foundation
 import SwiftUI
 
-/// A directed chain, consisting of a start (root) node and a series of travel legs. This outlines the modes
-/// of transportation to take from the start to end nodes.
+/// A directed, non-looping graph, consisting of a start (root) node and a graph of legs (edges). This outlines the possible modes
+/// of transportation to take from the start to any of the end (leaf) nodes.
 public struct Journey: Identifiable {
     /// The ID of this journey
     public var id: UUID = .init()
