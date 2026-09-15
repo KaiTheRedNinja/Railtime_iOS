@@ -50,4 +50,23 @@ public struct JourneyBusLeg: JourneyLeg {
         self.serviceNo = serviceNo
         self.destinationId = destinationId
     }
+
+    public func attemptMerge(withNextLeg next: JourneyBusLeg, selfContext: Context, nextContext: Context) -> (JourneyBusLeg, Context)? {
+        guard self.serviceNo == next.serviceNo, // must have the same service
+              selfContext.stopEstimations.last == nextContext.stopEstimations.first // must overlap estimations
+        else { return nil }
+
+        // build the new leg
+        let newLeg = JourneyBusLeg(
+            serviceNo: serviceNo,
+            destinationId: next.destinationId
+        )
+        // build the new context
+        let newContext = Context(
+            startCode: selfContext.startCode,
+            endCode: nextContext.endCode,
+            stopEstimations: selfContext.stopEstimations + nextContext.stopEstimations.dropFirst()
+        )
+        return (newLeg, newContext)
+    }
 }

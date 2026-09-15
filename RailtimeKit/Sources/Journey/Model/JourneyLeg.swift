@@ -19,6 +19,14 @@ public protocol JourneyLeg: Equatable, Identifiable, Codable where Self.ID == Jo
     var destinationId: JourneyNodeID { get set }
     /// The ID to retrieve a context from
     var contextId: JourneyLegContextID { get }
+
+    /// Attempt to merge this leg with the leg (of the same type) after it.
+    /// - Parameters:
+    ///   - next: The next leg of the journey chain
+    ///   - selfContext: The context for this leg
+    ///   - nextContext: The context for the next leg
+    /// - Returns: A merged instance and context, or `nil` if a merge was not successful
+    func attemptMerge(withNextLeg next: Self, selfContext: Context, nextContext: Context) -> (Self, Context)?
 }
 /// The context for a leg of a journey
 public protocol JourneyLegContext: Equatable, Codable {}
