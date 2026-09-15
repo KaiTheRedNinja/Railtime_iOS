@@ -51,6 +51,9 @@ public struct JourneyMRTLeg: JourneyLeg {
         self.destinationId = destinationId
     }
 
+    public static func canStartWith<N>(node: N) -> Bool where N: JourneyNode { N.self is JourneyMRTStopNode.Type }
+    public static func canEndWith<N>(node: N) -> Bool where N: JourneyNode { N.self is JourneyMRTStopNode.Type }
+
     public func attemptMerge(
         withNextLeg next: JourneyMRTLeg,
         selfContext: Context,

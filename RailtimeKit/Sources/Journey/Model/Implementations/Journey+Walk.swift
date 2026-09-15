@@ -47,6 +47,10 @@ public struct JourneyWalkLeg: JourneyLeg {
         self.destinationId = destinationId
     }
 
+    // a walk can start and end anywhere
+    public static func canStartWith<N>(node: N) -> Bool where N: JourneyNode { true }
+    public static func canEndWith<N>(node: N) -> Bool where N: JourneyNode { true }
+
     public func attemptMerge(
         withNextLeg next: JourneyWalkLeg,
         selfContext: Context,

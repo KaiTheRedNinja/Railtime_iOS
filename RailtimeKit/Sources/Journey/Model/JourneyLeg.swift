@@ -20,6 +20,11 @@ public protocol JourneyLeg: Equatable, Identifiable, Codable where Self.ID == Jo
     /// The ID to retrieve a context from
     var contextId: JourneyLegContextID { get }
 
+    /// Determines whether a leg of this type can start with a given starting node
+    static func canStartWith<N>(node: N) -> Bool where N: JourneyNode
+    /// Determines whether a leg of this type can end with a given ending node
+    static func canEndWith<N>(node: N) -> Bool where N: JourneyNode
+
     /// Attempt to merge this leg with the leg (of the same type) after it.
     /// - Parameters:
     ///   - next: The next leg of the journey chain
