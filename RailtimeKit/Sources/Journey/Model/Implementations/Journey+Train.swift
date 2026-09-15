@@ -1,17 +1,17 @@
 //
-//  Journey+Bus.swift
-//  Railtime
+//  Journey+Train.swift
+//  RailtimeKit
 //
-//  Created by Kai Quan Tay on 12/9/26.
+//  Created by Kai Quan Tay on 15/9/26.
 //
 
 import Foundation
-import BusEstimation
 import LTAAPI
 
 /// A node representing a bus stop
-public struct JourneyBusStopNode: JourneyNode {
-    public typealias Context = LTABusStopInfo
+public struct JourneyMRTStopNode: JourneyNode {
+    // TODO: replace with the type we implement for MRT Context
+    public typealias Context = JourneyArbitraryLocationNode.Context
 
     public var id: JourneyNodeID = .init()
     public var busStopCode: String
@@ -25,19 +25,19 @@ public struct JourneyBusStopNode: JourneyNode {
     }
 }
 
-extension LTABusStopInfo: JourneyNodeContext {}
-
-/// A node representing a bus journey
-public struct JourneyBusLeg: JourneyLeg {
+/// A node representing an MRT journey
+public struct JourneyMRTLeg: JourneyLeg {
     /// The estimations for a segment of a bus route
     public struct Context: JourneyLegContext {
-        /// The code for the stop that this segment starts with - i.e. the stop that the user would enter the bus
+        /// The code for the stop that this segment starts with - i.e. the stop that the user would enter the MRT
         public var startCode: String
-        /// The code for the stop that this segment ends with - i.e. the stop that the user would exit the bus
+        /// The code for the stop that this segment ends with - i.e. the stop that the user would exit the MRT
         public var endCode: String
 
-        /// The estimations, where the first item is for the start bus stop, and the last is for the end bus stop.
-        public var stopEstimations: [StopArrivalEstimates]
+        /// The period between when trains arrive at the starting MRT stop.
+        ///
+        /// Because LTA does not provide us with exact MRT position estimates, this is the best we can do.
+        public var periodBetweenMRTs: TimeDelta
     }
 
     public var id: JourneyLegID = .init()
@@ -52,16 +52,15 @@ public struct JourneyBusLeg: JourneyLeg {
     }
 
     public func attemptMerge(
-        withNextLeg next: JourneyBusLeg,
+        withNextLeg next: JourneyMRTLeg,
         selfContext: Context,
         nextContext: Context
-    ) -> (JourneyBusLeg, Context)? {
-        guard self.serviceNo == next.serviceNo, // must have the same service
-              selfContext.stopEstimations.last == nextContext.stopEstimations.first // must overlap estimations
+    ) -> (JourneyMRTLeg, Context)? {
+        guard self.serviceNo == next.serviceNo // must have the same service
         else { return nil }
 
         // build the new leg
-        let newLeg = JourneyBusLeg(
+        let newLeg = JourneyMRTLeg(
             serviceNo: serviceNo,
             destinationId: next.destinationId
         )
@@ -69,7 +68,7 @@ public struct JourneyBusLeg: JourneyLeg {
         let newContext = Context(
             startCode: selfContext.startCode,
             endCode: nextContext.endCode,
-            stopEstimations: selfContext.stopEstimations + nextContext.stopEstimations.dropFirst()
+            periodBetweenMRTs: selfContext.periodBetweenMRTs
         )
         return (newLeg, newContext)
     }

@@ -21,7 +21,12 @@ public protocol JourneyNode: Equatable, Identifiable, Codable where Self.ID == J
     var contextId: JourneyNodeContextID { get }
 }
 /// The context for a node in the journey
-public protocol JourneyNodeContext: Equatable, Codable {}
+public protocol JourneyNodeContext: Equatable, Codable {
+    /// The location's latitude, in degrees.
+    var latitude: Double { get }
+    /// The location's longitude, in degrees.
+    var longitude: Double { get }
+}
 /// A wrapper for `any JourneyNode`
 public struct AnyJourneyNode: Identifiable {
     public var id: JourneyNodeID { value.id }
