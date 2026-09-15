@@ -90,6 +90,7 @@ struct JourneyBuilderView: View {
 
                     manager.journey.nodes[newEndStop.id] = newEndStop
                     manager.journey.legs[newLeg.id] = newLeg
+                    manager.journey.path.append(newLeg.id)
                     manager.journey.removeUnconnected()
                 } label: {
                     Image(systemName: "plus")

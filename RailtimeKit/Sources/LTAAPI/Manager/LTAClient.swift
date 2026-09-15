@@ -17,6 +17,9 @@ public enum LTAClientError: Error {
 
 /// Low-level client for the LTA DataMall API.
 public final class LTAClient {
+    /// The actor responsible for rate limiting API requests. Maximum RPS is 40, we use 20 as a safety margin.
+    private let rateLimiter = RateLimiter(requestsPerSecond: 20)
+
     /// The LTA DataMall AccountKey used to authenticate every request.
     public let accountKey: String
     /// The URLSession used to issue HTTP requests.
@@ -62,6 +65,9 @@ public final class LTAClient {
         request.setValue(accountKey, forHTTPHeaderField: "AccountKey")
         request.setValue("application/json", forHTTPHeaderField: "accept")
         request.timeoutInterval = 15
+
+        // ensure we are not rate limited by waiting as required
+        await rateLimiter.acquire()
 
         let (data, response) = try await session.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse else {
