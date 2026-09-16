@@ -25,6 +25,13 @@ public protocol JourneyLeg: Equatable, Identifiable, Codable where Self.ID == Jo
     /// Determines whether a leg of this type can end with a given ending node
     static func canEndWith<N>(node: N) -> Bool where N: JourneyNode
 
+    /// Determines whether this leg can be merged with the leg (of the same type) after it. Should be O(1) if possible.
+    func canBeMerged(
+        withNextLeg next: Self,
+        selfContext: Context,
+        nextContext: Context
+    ) -> Bool
+
     /// Attempt to merge this leg with the leg (of the same type) after it.
     /// - Parameters:
     ///   - next: The next leg of the journey chain
@@ -39,6 +46,22 @@ public protocol JourneyLeg: Equatable, Identifiable, Codable where Self.ID == Jo
 }
 
 extension JourneyLeg {
+    /// Determines whether this leg can be merged with the leg (of possibly a different type) after it. If the next leg is a different
+    /// type, it automatically returns `false`.
+    func canBeMerged(
+        withAnyNextLeg next: any JourneyLeg,
+        selfContext: any JourneyLegContext,
+        nextContext: any JourneyLegContext
+    ) -> Bool {
+        if let next = next as? Self,
+           let selfContext = selfContext as? Self.Context,
+           let nextContext = nextContext as? Self.Context {
+            canBeMerged(withNextLeg: next, selfContext: selfContext, nextContext: nextContext)
+        } else {
+            false
+        }
+    }
+
     /// Attempt to merge this leg with the leg (of possibly a different type) after it. If the next leg is a different
     /// type, it automatically returns `nil`.
     /// - Parameters:

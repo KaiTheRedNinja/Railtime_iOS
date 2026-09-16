@@ -51,6 +51,16 @@ public struct JourneyWalkLeg: JourneyLeg {
     public static func canStartWith<N>(node: N) -> Bool where N: JourneyNode { true }
     public static func canEndWith<N>(node: N) -> Bool where N: JourneyNode { true }
 
+    public func canBeMerged(
+        withNextLeg next: JourneyWalkLeg,
+        selfContext: Context,
+        nextContext: Context
+    ) -> Bool {
+        // walks cannot be merged, as two walks being merged would violate the triangle property
+        // where dist(A -> C) <= dist(A -> B -> C)
+        false
+    }
+
     public func attemptMerge(
         withNextLeg next: JourneyWalkLeg,
         selfContext: Context,
