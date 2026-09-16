@@ -61,26 +61,4 @@ public struct JourneyMRTLeg: JourneyLeg {
     ) -> Bool {
         self.serviceNo == next.serviceNo // must have the same service
     }
-
-    public func attemptMerge(
-        withNextLeg next: JourneyMRTLeg,
-        selfContext: Context,
-        nextContext: Context
-    ) -> (JourneyMRTLeg, Context)? {
-        guard self.serviceNo == next.serviceNo // must have the same service
-        else { return nil }
-
-        // build the new leg
-        let newLeg = JourneyMRTLeg(
-            serviceNo: serviceNo,
-            destinationId: next.destinationId
-        )
-        // build the new context
-        let newContext = Context(
-            startCode: selfContext.startCode,
-            endCode: nextContext.endCode,
-            periodBetweenMRTs: selfContext.periodBetweenMRTs
-        )
-        return (newLeg, newContext)
-    }
 }

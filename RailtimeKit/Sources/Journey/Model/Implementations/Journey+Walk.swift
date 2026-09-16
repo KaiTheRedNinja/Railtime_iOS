@@ -60,14 +60,4 @@ public struct JourneyWalkLeg: JourneyLeg {
         // where dist(A -> C) <= dist(A -> B -> C)
         false
     }
-
-    public func attemptMerge(
-        withNextLeg next: JourneyWalkLeg,
-        selfContext: Context,
-        nextContext: Context
-    ) -> (JourneyWalkLeg, Context)? {
-        // walks cannot be merged, as two walks being merged would violate the triangle property
-        // where dist(A -> C) <= dist(A -> B -> C)
-        return nil
-    }
 }
