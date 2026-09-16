@@ -37,7 +37,7 @@ private let firstBusHorizontalOffset: CGFloat = 30
 private let collapsedVerticalDistance: CGFloat = 80
 
 struct SkewedBusSegmentView: View {
-    var estimates: [StopArrivalEstimates]
+    var estimates: [BusStopArrivalEstimates]
     var stopLookup: [String: LTABusStopInfo] = [:]
 
     // Number of points of spacing per minute, vertically

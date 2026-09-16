@@ -117,7 +117,7 @@ extension BusArrivalEstimator {
 
     /// Fetches confirmed (i.e. live, at the exact target stop) arrivals for
     /// `serviceNo` at `busStopCode`.
-    internal func confirmedArrivals(busStopCode: String, serviceNo: String) async throws -> StopArrivalEstimates {
+    internal func confirmedArrivals(busStopCode: String, serviceNo: String) async throws -> BusStopArrivalEstimates {
         let arrival = try await data.getBusArrival(busStopCode: busStopCode, serviceNo: serviceNo)
         guard let svc = arrival.services.first else {
             throw BusArrivalEstimatorError.stopNotFound(stopCode: busStopCode, serviceNo: serviceNo)
@@ -138,6 +138,6 @@ extension BusArrivalEstimator {
                 busType: nextBus.type
             ))
         }
-        return StopArrivalEstimates(stopId: busStopCode, deltaTime: .zero, deltaError: .zero, estimates: out)
+        return BusStopArrivalEstimates(stopId: busStopCode, deltaTime: .zero, deltaError: .zero, estimates: out)
     }
 }

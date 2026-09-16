@@ -91,13 +91,13 @@ struct JourneyBusSegmentVisualiser: View {
 
         let estimates = if busContext.stopEstimations.isEmpty {
             [
-                busContext.stopEstimations.first ?? StopArrivalEstimates(
+                busContext.stopEstimations.first ?? BusStopArrivalEstimates(
                     stopId: busContext.startCode,
                     deltaTime: TimeDelta.mins(-Sizing.collapsedVerticalDistance / verticalScale),
                     deltaError: .zero,
                     estimates: []
                 ),
-                busContext.stopEstimations.last ?? StopArrivalEstimates(
+                busContext.stopEstimations.last ?? BusStopArrivalEstimates(
                     stopId: busContext.endCode,
                     deltaTime: .zero,
                     deltaError: .zero,
@@ -114,7 +114,7 @@ struct JourneyBusSegmentVisualiser: View {
         }
     }
 
-    func stopLine(stopTimeRange: TimeDelta, estimates: [StopArrivalEstimates]) -> some View {
+    func stopLine(stopTimeRange: TimeDelta, estimates: [BusStopArrivalEstimates]) -> some View {
         ZStack(alignment: .topLeading) {
             // stop line
             Capsule()
@@ -175,7 +175,7 @@ struct JourneyBusSegmentVisualiser: View {
                 ForEach(estimates.first!.estimates.enumerated(), id: \.offset) { (_, busEstimate) in
                     let etaFromNow = busEstimate.eta.timeDelta(since: now)
 
-                    let isSelected = selectedBusId != nil && selectedBusId == busEstimate.busId.index
+                    let isSelected = selectedBusId != nil && selectedBusId == busEstimate.id.index
                     let fillColor: Color = isSelected ? Color.accentColor : Color.gray
 
                     // only show it if it would show up on the stopline
@@ -254,7 +254,7 @@ struct JourneyBusSegmentVisualiser: View {
     }
 
     @ViewBuilder
-    func ttGraph(stopTimeRange: TimeDelta, estimates: [StopArrivalEstimates]) -> some View {
+    func ttGraph(stopTimeRange: TimeDelta, estimates: [BusStopArrivalEstimates]) -> some View {
         // tt graph
         ZStack(alignment: .topLeading) {
             // make sure there is enough space to actually see everything
@@ -289,7 +289,7 @@ struct JourneyBusSegmentVisualiser: View {
                     ForEach(stopEstimate.estimates.enumerated(), id: \.offset) { (_, busEstimate) in
                         let etaFromNow = busEstimate.eta.timeDelta(since: now)
 
-                        let isSelected = selectedBusId != nil && selectedBusId == busEstimate.busId.index
+                        let isSelected = selectedBusId != nil && selectedBusId == busEstimate.id.index
                         let fillColor: Color = isSelected ? Color.accentColor : Color.gray
 
                         let horizontalOffset = ( // 1st is regular time offset, 2nd is to actually skew the time, 3rd to align
@@ -351,7 +351,7 @@ struct JourneyBusSegmentVisualiser: View {
                     busHOffset
                 )
 
-                let isSelected = selectedBusId != nil && selectedBusId == busEstimate.busId.index
+                let isSelected = selectedBusId != nil && selectedBusId == busEstimate.id.index
                 let fillColor: Color = isSelected ? Color.accentColor : Color.gray
 
                 VStack(alignment: .leading, spacing: 0) {
@@ -394,7 +394,7 @@ struct JourneyBusSegmentVisualiser: View {
                             .fill(fillColor)
                     }
                     .opacity(isSelected ? 1 : 0.5)
-                    .matchedGeometryEffect(id: "\(busEstimate.busServiceNo)\(busEstimate.busId.description)", in: namespace)
+                    .matchedGeometryEffect(id: "\(busEstimate.busServiceNo)\(busEstimate.id.description)", in: namespace)
                     .frame(
                         width: Sizing.firstBusHorizontalOffset * 2,
                         height: treatAsCollapsed ? nil : Sizing.firstStopVerticalOffset * 2
@@ -403,7 +403,7 @@ struct JourneyBusSegmentVisualiser: View {
                         if isSelected {
                             selectedBusId = nil
                         } else {
-                            selectedBusId = busEstimate.busId.index
+                            selectedBusId = busEstimate.id.index
                         }
                     }
                     .padding(.leading, horizontalOffset - Sizing.firstBusHorizontalOffset) // position

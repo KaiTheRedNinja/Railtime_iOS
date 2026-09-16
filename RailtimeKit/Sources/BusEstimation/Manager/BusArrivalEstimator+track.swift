@@ -19,7 +19,7 @@ extension BusArrivalEstimator {
     ///   - maxLookbackStops: The maximum number of stops, upstream of the most upstream stop, that `track` can poll.
     ///   - inDirection: If provided, restricts the route lookup to this
     ///     direction.
-    /// - Returns: A list of `StopArrivalEstimates`, one for each stop along
+    /// - Returns: A list of `BusStopArrivalEstimates`, one for each stop along
     ///   the route, in upstream-to-downstream order (so the first stop in
     ///   the list is the furthest upstream, and the last stop in the list
     ///   is the most downstream stop of interest).
@@ -30,7 +30,7 @@ extension BusArrivalEstimator {
         maxLookbackStops: Int = 5,
         stopGapOption: StopGapOption = .enabledOutsideInterest,
         inDirection: Int? = nil
-    ) async throws -> [StopArrivalEstimates] {
+    ) async throws -> [BusStopArrivalEstimates] {
         guard !stopIdsOfInterest.isEmpty else { return [] } // no stops, therefore no results
         var stopIdsSet = Set(stopIdsOfInterest) // stop IDs will be removed as they are processed
 
@@ -52,7 +52,7 @@ extension BusArrivalEstimator {
         // estimates are from the target stop first, upstream stops later. The earliest
         // stop in a bus's route will be the last in the list for ease of appending.
         // this will be inverted at the bottom.
-        var estimates: [StopArrivalEstimates] = [confirmed]
+        var estimates: [BusStopArrivalEstimates] = [confirmed]
 
         var stopGap: TimeDelta = .zero
         if !confirmed.estimates.isEmpty {
@@ -143,7 +143,7 @@ extension BusArrivalEstimator {
             var rawWindow = try await confirmedArrivals(busStopCode: upstreamCode, serviceNo: serviceNo)
             rawWindow.deltaTime = estimatedDeltaTime
             rawWindow.deltaError = .zero
-            rawWindow.estimates.modify { $0.busId = .unassigned }
+            rawWindow.estimates.modify { $0.id = .unassigned }
 
             // align the estimates for this stop with existing estimates
             let mergeResult = BusArrivalEstimator.alignMergeAndProjectWindow(

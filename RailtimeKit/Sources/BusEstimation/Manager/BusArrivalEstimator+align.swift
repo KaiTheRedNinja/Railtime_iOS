@@ -33,10 +33,10 @@ extension BusArrivalEstimator {
     /// - Returns: The updated `known` list, the drift applied to align
     ///   `rawWindow`, and the new total number of distinct buses found.
     static internal func alignMergeAndProjectWindow(
-        known: [StopArrivalEstimates],
-        rawWindow: StopArrivalEstimates,
+        known: [BusStopArrivalEstimates],
+        rawWindow: BusStopArrivalEstimates,
         currentBusCount: Int
-    ) -> (known: [StopArrivalEstimates], drift: TimeDelta, busCount: Int) {
+    ) -> (known: [BusStopArrivalEstimates], drift: TimeDelta, busCount: Int) {
         var known = known
 
         guard !rawWindow.estimates.isEmpty else {
@@ -63,13 +63,13 @@ extension BusArrivalEstimator {
 
         let overlapLen = min(rawWindow.estimates.count, tail.estimates.count - resolvedBestOffset)
 
-        let lastKnownBusIdNum: Int = tail.estimates.compactMap { $0.busId.index }.max() ?? known.count * 3
+        let lastKnownBusIdNum: Int = tail.estimates.compactMap { $0.id.index }.max() ?? known.count * 3
         let firstBusNumForThisStop = lastKnownBusIdNum - tail.estimates.count + resolvedBestOffset + 1
         var rawWindowEstimates = rawWindow.estimates
         for i in rawWindowEstimates.indices {
-            rawWindowEstimates[i].busId = .ordered(index: firstBusNumForThisStop + i)
+            rawWindowEstimates[i].id = .ordered(index: firstBusNumForThisStop + i)
         }
-        let thisStop = StopArrivalEstimates(
+        let thisStop = BusStopArrivalEstimates(
             stopId: rawWindow.stopId,
             deltaTime: rawWindow.deltaTime + bestDrift,
             deltaError: rawWindow.deltaError + resolvedBestError,
@@ -82,14 +82,14 @@ extension BusArrivalEstimator {
             for i in known.indices {
                 let projectedETA = estimate.eta.incrementingBy(timeDelta: thisStop.deltaTime - known[i].deltaTime)
                 known[i].estimates.append(BusArrivalEstimate(
-                    busId: estimate.busId,
+                    busId: estimate.id,
                     busServiceNo: estimate.busServiceNo,
                     eta: projectedETA,
                     source: .projected,
                     projectedFromStop: thisStop.stopId,
-                    load: estimate.load,
-                    feature: estimate.feature,
-                    busType: estimate.busType
+                    load: estimate.metadata.load,
+                    feature: estimate.metadata.feature,
+                    busType: estimate.metadata.busType
                 ))
             }
         }
@@ -99,8 +99,8 @@ extension BusArrivalEstimator {
     }
 
     private static func getBestAlignment(
-        tail: StopArrivalEstimates,
-        rawWindow: StopArrivalEstimates,
+        tail: BusStopArrivalEstimates,
+        rawWindow: BusStopArrivalEstimates,
     ) -> (
         bestOffset: Int,
         bestError: TimeDelta,

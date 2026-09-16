@@ -16,7 +16,7 @@ let trailingWidth: CGFloat = 100
 let bottomHeight: CGFloat = 100
 
 struct BusTimingsView: View {
-    var estimates: [StopArrivalEstimates]
+    var estimates: [BusStopArrivalEstimates]
 
     var scale: CGFloat = 10 // 10 points of spacing per minute
 
@@ -139,7 +139,7 @@ struct BusTimingsView: View {
             let allBusses = getAllBusses()
             ForEach(allBusses.enumerated(), id: \.offset) { (_, bus) in
                 ForEach(estimates.enumerated(), id: \.offset) { (_, stopEstimate) in
-                    if let busEstimate = stopEstimate.estimates.first(where: { $0.busId == .ordered(index: bus) }) {
+                    if let busEstimate = stopEstimate.estimates.first(where: { $0.id == .ordered(index: bus) }) {
                         let etaDelta = busEstimate.eta.timeDelta(since: now)
                         let yOffset = etaDelta.seconds / 60 * scale
                         let shapeFillColor = if etaDelta > .zero { Color.blue } else { Color.green }
@@ -189,7 +189,7 @@ struct BusTimingsView: View {
         var allBusses: [Int] = []
         for stopEstimate in estimates {
             for busEstimate in stopEstimate.estimates {
-                guard case let .ordered(index) = busEstimate.busId, uniqueBusses.insert(index).inserted else { continue }
+                guard case let .ordered(index) = busEstimate.id, uniqueBusses.insert(index).inserted else { continue }
                 allBusses.append(index)
             }
         }
@@ -202,7 +202,7 @@ struct BusTimingsView: View {
         var etaKeyedByBusId: [(Int, Date)] = []
         for stopEstimate in estimates {
             for busEstimate in stopEstimate.estimates {
-                guard case let .ordered(index) = busEstimate.busId else { continue }
+                guard case let .ordered(index) = busEstimate.id else { continue }
                 // translate this to an ETA from the target stop
                 etaKeyedByBusId.append((index, busEstimate.eta.incrementingBy(timeDelta: stopEstimate.deltaTime.scale(by: -1))))
             }

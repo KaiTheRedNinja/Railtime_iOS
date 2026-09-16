@@ -32,7 +32,7 @@ extension BusArrivalEstimator {
         numTarget: Int = 5,
         maxLookbackStops: Int = 12,
         inDirection: Int? = nil
-    ) async throws -> [StopArrivalEstimates] {
+    ) async throws -> [BusStopArrivalEstimates] {
         let (stops, targetIdx) = try await routeFor(serviceNo: serviceNo, busStopCode: busStopCode, inDirection: inDirection)
         let targetRow = stops[targetIdx]
         let currentDayType = dayType(for: now)
@@ -43,7 +43,7 @@ extension BusArrivalEstimator {
         // estimates are from the target stop first, upstream stops later. The earliest
         // stop in a bus's route will be the last in the list for ease of appending.
         // this will be inverted at the bottom.
-        var estimates: [StopArrivalEstimates] = [confirmed]
+        var estimates: [BusStopArrivalEstimates] = [confirmed]
         if confirmed.estimates.count >= numTarget { return estimates }
 
         var stopGap: TimeDelta = .zero
@@ -121,7 +121,7 @@ extension BusArrivalEstimator {
             var rawWindow = try await confirmedArrivals(busStopCode: upstreamCode, serviceNo: serviceNo)
             rawWindow.deltaTime = estimatedDeltaTime
             rawWindow.deltaError = .zero
-            rawWindow.estimates.modify { $0.busId = .unassigned }
+            rawWindow.estimates.modify { $0.id = .unassigned }
 
             // align the estimates for this stop with existing estimates
             let mergeResult = BusArrivalEstimator.alignMergeAndProjectWindow(

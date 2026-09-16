@@ -17,7 +17,7 @@ private let busIndicatorDiameter: CGFloat = 20
 private let ttGraphLeadingPadding: CGFloat = 20
 
 struct BusSegmentView: View {
-    var estimates: [StopArrivalEstimates]
+    var estimates: [BusStopArrivalEstimates]
     var stopLookup: [String: LTABusStopInfo] = [:]
 
     // Number of points of spacing per minute, vertically
@@ -294,7 +294,7 @@ struct BusSegmentView: View {
         var etaKeyedByBusId: [(Int, Date)] = []
         for stopEstimate in estimates {
             for busEstimate in stopEstimate.estimates {
-                guard case let .ordered(index) = busEstimate.busId else { continue }
+                guard case let .ordered(index) = busEstimate.id else { continue }
                 // translate this to an ETA from the target stop
                 etaKeyedByBusId.append((index, busEstimate.eta.incrementingBy(timeDelta: stopEstimate.deltaTime.scale(by: -1))))
             }

@@ -37,7 +37,7 @@ public struct JourneyBusLeg: JourneyLeg {
         public var endCode: String
 
         /// The estimations, where the first item is for the start bus stop, and the last is for the end bus stop.
-        public var stopEstimations: [StopArrivalEstimates]
+        public var stopEstimations: [BusStopArrivalEstimates]
     }
 
     public var id: JourneyLegID = .init()

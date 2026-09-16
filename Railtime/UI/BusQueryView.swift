@@ -42,7 +42,7 @@ struct BusQueryView: View {
         /// Query has failed with an error message
         case failed(any Error)
         /// Query succeeded
-        case success([StopArrivalEstimates])
+        case success([BusStopArrivalEstimates])
 
         var description: String {
             switch self {
@@ -220,18 +220,18 @@ struct BusQueryView: View {
     }
 
     func loadSampleData(estimator: BusArrivalEstimator) {
-        let sampleData = StopArrivalEstimates.sampleData2
-        queryStatus = .success(sampleData)
-
-        Task {
-            do {
-                for stop in sampleData {
-                    stopLookup[stop.stopId] = try await estimator.data.getStopInfo(busStopCode: stop.stopId)
-                }
-            } catch {
-                print("Error loading sample data: \(sampleData)")
-            }
-        }
+//        let sampleData = BusStopArrivalEstimates.sampleData2
+//        queryStatus = .success(sampleData)
+//
+//        Task {
+//            do {
+//                for stop in sampleData {
+//                    stopLookup[stop.stopId] = try await estimator.data.getStopInfo(busStopCode: stop.stopId)
+//                }
+//            } catch {
+//                print("Error loading sample data: \(sampleData)")
+//            }
+//        }
     }
 }
 

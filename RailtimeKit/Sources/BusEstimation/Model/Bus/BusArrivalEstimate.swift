@@ -9,28 +9,38 @@ import Foundation
 import LTAAPI
 
 /// An estimate for when a bus, with a given ID, will arrive at a given stop.
-public struct BusArrivalEstimate: Equatable, Codable {
+public struct BusArrivalEstimate: VehicleArrivalEstimate {
     /// The ID of this bus.
-    public var busId: BusID
+    public var id: BusID
     /// The service number of this bus.
     public var busServiceNo: String
     /// The projected arrival time at the target stop.
     public var eta: Date
-
+    /// The error at the time of estimation.
+    public let error: LTAAPI.TimeDelta
     /// Where the information for the bus's arrival came from
     public var source: DataSource
-    /// The upstream stop code used for this projection.
-    public var projectedFromStop: String?
 
-    /// Optional metadata from the API.
-    public var load: LTANextBusInfo.Load?
-    /// Optional metadata from the API.
-    public var feature: String?
-    /// Optional metadata from the API.
-    public var busType: LTANextBusInfo.BusVariant?
+    // display info
+    public var displayText: String { busServiceNo }
+    public var displayColor: String { "#30D158" }
+
+    /// Metadata
+    public var metadata: Metadata
+
+    public struct Metadata: Equatable, Codable {
+        /// The upstream stop code used for this projection.
+        public var projectedFromStop: String?
+        /// Optional metadata from the API.
+        public var load: LTANextBusInfo.Load?
+        /// Optional metadata from the API.
+        public var feature: String?
+        /// Optional metadata from the API.
+        public var busType: LTANextBusInfo.BusVariant?
+    }
 
     /// The ID of a bus
-    public enum BusID: Equatable, Codable {
+    public enum BusID: Equatable, Hashable, Codable {
         /// The ID of this bus is yet to be assigned
         case unassigned
         /// A sequential ID for this bus
@@ -51,34 +61,28 @@ public struct BusArrivalEstimate: Equatable, Codable {
         }
     }
 
-    /// Where the information for a bus' arrival comes from
-    public enum DataSource: Codable {
-        /// The data was obtained directly from the LTA Live Bus API
-        case live
-        /// The data was projected from an up/downstream `live` bus
-        case projected
-        /// The data was extrapolated from the last known `live` or `projected` bus using known frequency data
-        case extrapolated
-    }
-
     public init(
         busId: BusID,
         busServiceNo: String,
         eta: Date,
+        error: TimeDelta = .zero,
         source: DataSource,
         projectedFromStop: String? = nil,
         load: LTANextBusInfo.Load? = nil,
         feature: String? = nil,
         busType: LTANextBusInfo.BusVariant? = nil
     ) {
-        self.busId = busId
+        self.id = busId
         self.busServiceNo = busServiceNo
         self.eta = eta
+        self.error = error
         self.source = source
-        self.projectedFromStop = projectedFromStop
-        self.load = load
-        self.feature = feature
-        self.busType = busType
+        self.metadata = .init(
+            projectedFromStop: projectedFromStop,
+            load: load,
+            feature: feature,
+            busType: busType
+        )
     }
 
     /// The time delta from `ref` until this bus's ETA.

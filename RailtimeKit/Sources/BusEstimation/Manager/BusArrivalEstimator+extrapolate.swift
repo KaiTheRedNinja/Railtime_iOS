@@ -21,8 +21,8 @@ extension BusArrivalEstimator {
     /// - Returns: `estimates`, with extrapolated buses appended where
     ///   needed.
     internal func extrapolateWithFrequency(
-        estimates: [StopArrivalEstimates], serviceNo: String, numTarget: Int, currentCount: Int
-    ) async throws -> [StopArrivalEstimates] {
+        estimates: [BusStopArrivalEstimates], serviceNo: String, numTarget: Int, currentCount: Int
+    ) async throws -> [BusStopArrivalEstimates] {
         guard let freq = try await serviceFreq(serviceNo: serviceNo) else {
             return estimates // nothing to extrapolate with
         }
@@ -81,7 +81,7 @@ extension BusArrivalEstimator {
             for i in estimates.indices where i != lastIndex {
                 let projectedETA = estimate.eta.incrementingBy(timeDelta: estimates[lastIndex].deltaTime - estimates[i].deltaTime)
                 estimates[i].estimates.append(BusArrivalEstimate(
-                    busId: estimate.busId,
+                    busId: estimate.id,
                     busServiceNo: estimate.busServiceNo,
                     eta: projectedETA,
                     source: .extrapolated,
