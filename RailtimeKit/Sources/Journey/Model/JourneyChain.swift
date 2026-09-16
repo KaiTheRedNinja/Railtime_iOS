@@ -21,23 +21,23 @@ public struct JourneyChain {
 
         var currentPathItem: JourneyPathItem?
         var currentTailNode = journey.startNode
-        guard var currentTailNodeContext = context.nodeContext[currentTailNode.contextId]
-        else { throw JourneyChainError.missingContext }
+        var currentTailNodeContext = context.nodeContext[currentTailNode.contextId]
 
         for pathId in journey.path {
             // get the current leg
             guard let newLeg = journey.legs[pathId] else { throw JourneyChainError.invalidPath }
             guard let newTailNode = journey.nodes[newLeg.destinationId] else { throw JourneyChainError.invalidGraph }
-            guard let newLegContext = context.edgeContext[newLeg.contextId],
-                  let newTailNodeContext = context.nodeContext[newTailNode.contextId]
-            else { throw JourneyChainError.missingContext }
+            let newLegContext = context.edgeContext[newLeg.contextId]
+            let newTailNodeContext = context.nodeContext[newTailNode.contextId]
 
             // attempt to merge with the current path item, if any
             if optimise,
                let curr = currentPathItem,
+               let currLegContext = curr.legContext,
+               let newLegContext,
                let (mergedLeg, mergedLegContext) = curr.leg.attemptMerge(
                 withAnyNextLeg: newLeg,
-                selfContext: curr.legContext,
+                selfContext: currLegContext,
                 nextContext: newLegContext
                ) {
                 currentPathItem?.id = mergedLeg.id
@@ -73,8 +73,6 @@ public enum JourneyChainError: Error {
     case invalidPath
     /// The graph is invalid, eg. referenced node or leg does not exist
     case invalidGraph
-    /// Missing context
-    case missingContext
 }
 
 public struct JourneyPathItem: Identifiable {
@@ -84,16 +82,16 @@ public struct JourneyPathItem: Identifiable {
     /// The leg for this path item
     public var leg: any JourneyLeg
     /// The context for the leg, if any
-    public var legContext: any JourneyLegContext
+    public var legContext: any JourneyLegContext?
 
     /// The node that this leg of the path starts with
     public var headNode: any JourneyNode
     /// The context for the start node, if any
-    public var headNodeContext: any JourneyNodeContext
+    public var headNodeContext: any JourneyNodeContext?
     /// The node that this leg of the path ends with
     public var tailNode: any JourneyNode
     /// The context for the end node, if any
-    public var tailNodeContext: any JourneyNodeContext
+    public var tailNodeContext: any JourneyNodeContext?
 
     /// Gets the leg and leg context, given the expected type
     public func legAndContext<L>(as _: L.Type) -> (L, L.Context?)? where L: JourneyLeg {
