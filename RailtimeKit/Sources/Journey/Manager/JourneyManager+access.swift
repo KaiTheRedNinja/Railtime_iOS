@@ -43,4 +43,43 @@ extension JourneyManager {
 
         return endNodeContext
     }
+
+    /// Determines whether the given path item can be an extension of the prior leg, or if
+    /// the next leg can be an extension of this leg.
+    ///
+    /// This function will return `false` when:
+    /// - The path item cannot be found or its context cannot be found (both return values will be `false`)
+    /// - There is no previous/next path item, or there is but the context could not be found (respective return value will be `false`)
+    /// - The previous/next path item cannot be merged with the given path item (respective return value will be `false`)
+    public func isExtension(
+        pathItem: JourneyLegID
+    ) -> (prev: Bool, next: Bool) {
+        // get the index of the path item, and also its context
+        guard let pathIndex = journey.path.firstIndex(of: pathItem),
+              let thisLeg = journey.legs[pathItem],
+              let thisLegContext = context.edgeContext[thisLeg.contextId]
+        else { return (false, false) }
+
+        let prev = if pathIndex - 1 >= 0,
+                      let prevLeg = journey.legs[journey.path[pathIndex - 1]],
+                      let prevLegContext = context.edgeContext[prevLeg.contextId] {
+            prevLeg.canBeMerged(
+                withAnyNextLeg: thisLeg,
+                selfContext: prevLegContext,
+                nextContext: thisLegContext
+            )
+        } else { false }
+
+        let next = if pathIndex + 1 < journey.path.count,
+                      let nextLeg = journey.legs[journey.path[pathIndex - 1]],
+                      let nextLegContext = context.edgeContext[nextLeg.contextId] {
+            thisLeg.canBeMerged(
+                withAnyNextLeg: nextLeg,
+                selfContext: thisLegContext,
+                nextContext: nextLegContext
+            )
+        } else { false }
+
+        return (prev, next)
+    }
 }
