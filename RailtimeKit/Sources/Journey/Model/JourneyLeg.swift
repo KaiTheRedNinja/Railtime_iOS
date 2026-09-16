@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import BusEstimation
 
 /// A unique ID for a leg of a journey
 public typealias JourneyLegID = UUID
@@ -53,6 +54,18 @@ extension JourneyLeg {
 
 /// The context for a leg of a journey
 public protocol JourneyLegContext: Equatable, Codable {}
+/// A refined version of `JourneyLegContext` which provides a list of stop estimations
+public protocol JourneyStopBasedLegContext: JourneyLegContext {
+    associatedtype ArrivalEstimate: VehicleArrivalEstimate
+
+    /// The code for the stop that this segment starts with - i.e. the stop that the user would enter the vehicle
+    var startCode: String { get }
+    /// The code for the stop that this segment ends with - i.e. the stop that the user would exit the vehicle
+    var endCode: String { get }
+
+    /// The estimations, where the first item is for the start bus stop, and the last is for the end bus stop.
+    var stopEstimations: [StopArrivalEstimates<ArrivalEstimate>] { get }
+}
 /// A wrapper for `any JourneyLeg`
 public struct AnyJourneyLeg: Identifiable {
     public var id: JourneyLegID { value.id }

@@ -12,6 +12,8 @@ import LTAAPI
 public struct JourneyArbitraryLocationNode: JourneyNode {
     /// A coordinate for an arbitrary location
     public struct Context: JourneyNodeContext {
+        /// Arbitrary locations have no description
+        public var description: String? { nil }
         /// The location's latitude, in degrees.
         public let latitude: Double
         /// The location's longitude, in degrees.

@@ -9,7 +9,7 @@ import Foundation
 import LTAAPI
 
 /// A structure containing information about a generic stop
-public struct StopArrivalEstimates<Estimate: VehicleArrivalEstimate>: Equatable, Identifiable, Codable {
+public struct StopArrivalEstimates<ArrivalEstimate: VehicleArrivalEstimate>: Equatable, Identifiable, Codable {
     public typealias ID = String
 
     /// The ID of this stop
@@ -27,9 +27,9 @@ public struct StopArrivalEstimates<Estimate: VehicleArrivalEstimate>: Equatable,
     public var deltaError: TimeDelta
 
     /// The arrival estimates, first being the earliest vehicle to arrive
-    public var estimates: [Estimate]
+    public var estimates: [ArrivalEstimate]
 
-    public init(stopId: String, deltaTime: TimeDelta, deltaError: TimeDelta, estimates: [Estimate]) {
+    public init(stopId: String, deltaTime: TimeDelta, deltaError: TimeDelta, estimates: [ArrivalEstimate]) {
         self.id = stopId
         self.deltaTime = deltaTime
         self.deltaError = deltaError

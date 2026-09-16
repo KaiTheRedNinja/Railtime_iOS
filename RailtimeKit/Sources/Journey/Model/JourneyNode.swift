@@ -22,6 +22,8 @@ public protocol JourneyNode: Equatable, Identifiable, Codable where Self.ID == J
 }
 /// The context for a node in the journey
 public protocol JourneyNodeContext: Equatable, Codable {
+    /// An optional description of the location
+    var description: String? { get }
     /// The location's latitude, in degrees.
     var latitude: Double { get }
     /// The location's longitude, in degrees.

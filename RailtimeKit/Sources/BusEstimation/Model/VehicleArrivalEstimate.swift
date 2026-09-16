@@ -29,6 +29,8 @@ public protocol VehicleArrivalEstimate: Equatable, Identifiable, Codable {
     ///
     /// This is expected to be an RGB hexadecimal string in the format `"#RRGGBB"` or `"RRGGBB"`.
     var displayColor: String { get }
+    /// The SF Symbol of the icon to display
+    var displaySymbol: String { get }
     /// The source of the data
     var source: DataSource { get }
 

@@ -24,6 +24,7 @@ public struct BusArrivalEstimate: VehicleArrivalEstimate {
     // display info
     public var displayText: String { busServiceNo }
     public var displayColor: String { "#30D158" }
+    public var displaySymbol: String { "bus" }
 
     /// Metadata
     public var metadata: Metadata
