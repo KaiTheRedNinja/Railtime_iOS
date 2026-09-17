@@ -10,7 +10,7 @@ import BusEstimation
 import LTAAPI
 
 /// A node representing a bus stop
-public struct JourneyMRTStopNode: JourneyNode {
+public struct JourneyTrainStopNode: JourneyNode {
     // TODO: replace with the type we implement for MRT Context
     public struct Context: JourneyNodeContext {
         /// The name of the stop
@@ -33,19 +33,19 @@ public struct JourneyMRTStopNode: JourneyNode {
     }
 
     public var id: JourneyNodeID = .init()
-    public var busStopCode: String
+    public var trainStopCode: String
     public var nextLegIds: [JourneyLegID]
-    public var contextId: JourneyNodeContextID { busStopCode }
+    public var contextId: JourneyNodeContextID { trainStopCode }
 
-    public init(id: JourneyNodeID = .init(), busStopCode: String, nextLegIds: [JourneyLegID]) {
+    public init(id: JourneyNodeID = .init(), trainStopCode: String, nextLegIds: [JourneyLegID]) {
         self.id = id
-        self.busStopCode = busStopCode
+        self.trainStopCode = trainStopCode
         self.nextLegIds = nextLegIds
     }
 }
 
 /// A node representing an MRT journey
-public struct JourneyMRTLeg: JourneyLeg {
+public struct JourneyTrainLeg: JourneyLeg {
     /// The estimations for a segment of a bus route
     public struct Context: JourneyLegContext {
         /// The code for the stop that this segment starts with - i.e. the stop that the user would enter the MRT
@@ -56,7 +56,7 @@ public struct JourneyMRTLeg: JourneyLeg {
         /// The estimates, starting from the start code and ending at the end code.
         ///
         /// Note that these are all projections, because LTA does not give us actual train timings.
-        public var estimates: [TrainStopArrivalEstimates]
+        public var stopEstimations: [TrainStopArrivalEstimates]
     }
 
     public var id: JourneyLegID = .init()
@@ -70,11 +70,11 @@ public struct JourneyMRTLeg: JourneyLeg {
         self.destinationId = destinationId
     }
 
-    public static func canStartWith<N>(node: N) -> Bool where N: JourneyNode { N.self is JourneyMRTStopNode.Type }
-    public static func canEndWith<N>(node: N) -> Bool where N: JourneyNode { N.self is JourneyMRTStopNode.Type }
+    public static func canStartWith<N>(node: N) -> Bool where N: JourneyNode { N.self is JourneyTrainStopNode.Type }
+    public static func canEndWith<N>(node: N) -> Bool where N: JourneyNode { N.self is JourneyTrainStopNode.Type }
 
     public func canBeMerged(
-        withNextLeg next: JourneyMRTLeg,
+        withNextLeg next: JourneyTrainLeg,
         selfContext: Context,
         nextContext: Context
     ) -> Bool {
