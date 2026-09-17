@@ -16,17 +16,35 @@ import LTAAPI
 public class JourneyManager: ObservableObject {
     @Published public var journey: Journey
     @Published public var context: JourneyContext
-    public var estimator: BusArrivalEstimator
+    public var estimator: BusArrivalEstimator?
 
-    public init(apiKey: String = UserDefaults.standard.string(forKey: "LTA_API_KEY") ?? "") throws {
+    public init(apiKey: String? = nil) {
         let journey = Journey.emptyBusJourney()
         self.journey = journey
-        self.estimator = .init(client: try! LTAClient(accountKey: apiKey))
         self.context = .empty
+        
+        let key = apiKey ??
+            UserDefaults.standard.string(forKey: "LTA_ACCOUNT_KEY") ??
+            UserDefaults.standard.string(forKey: "LTA_API_KEY")
+        if let client = try? LTAClient(accountKey: key) {
+            self.estimator = BusArrivalEstimator(client: client)
+        } else {
+            self.estimator = nil
+        }
+    }
+    
+    public func updateAPIKey(_ key: String) {
+        UserDefaults.standard.set(key, forKey: "LTA_ACCOUNT_KEY")
+        UserDefaults.standard.set(key, forKey: "LTA_API_KEY")
+        if let client = try? LTAClient(accountKey: key) {
+            self.estimator = BusArrivalEstimator(client: client)
+        }
     }
 
     /// Updates the context for stops found in the `journey`
     public func updateStopContext() async throws {
+        guard let estimator = estimator else { return }
+        
         if let startNode = journey.startNode(as: JourneyBusStopNode.self), startNode.busStopCode.count == 5 {
             context.nodeContext[startNode.contextId] = try await estimator.data.getStopInfo(busStopCode: startNode.busStopCode)
         } else {
@@ -51,6 +69,8 @@ public class JourneyManager: ObservableObject {
 
     /// Obtains the full edge context for the `journey`
     public func calculateJourney() async throws {
+        guard let estimator = estimator else { return }
+        
         async let stopContextTask: () = updateStopContext()
 
         // estimate each leg in parallel
@@ -77,7 +97,7 @@ public class JourneyManager: ObservableObject {
                         )
 
                         taskGroup.addTask {
-                            let rawEstimates = try await self.estimator.track(
+                            let rawEstimates = try await estimator.track(
                                 stopIdsOfInterest: [legStartNode.busStopCode, legEndNode.busStopCode],
                                 serviceNo: leg.serviceNo
                             )
@@ -113,7 +133,7 @@ public class JourneyManager: ObservableObject {
         try await withThrowingTaskGroup(of: JourneyIntermediateBusNodeContextWithId?.self, returning: Void.self) { taskGroup in
             for stopCode in stopCodes {
                 taskGroup.addTask {
-                    if let stopInfo = try await self.estimator.data.getStopInfo(busStopCode: stopCode) {
+                    if let stopInfo = try await estimator.data.getStopInfo(busStopCode: stopCode) {
                         return .init(contextId: stopCode, context: stopInfo)
                     } else {
                         return nil
