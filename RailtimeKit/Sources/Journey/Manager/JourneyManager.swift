@@ -49,87 +49,6 @@ public class JourneyManager: ObservableObject {
         }
     }
 
-    /// Obtains the full edge context for the `journey`
-    public func calculateJourney() async throws {
-        async let stopContextTask: () = updateStopContext()
-
-        // estimate each leg in parallel
-        var stopCodes: [String] = []
-        try await withThrowingTaskGroup(of: JourneyBusLegContextWithId.self, returning: Void.self) { taskGroup in
-            var nodesToExplore = [journey.startNode]
-
-            // explore the graph, depth-first search
-            while let legStartNode = nodesToExplore.popLast() {
-                // get each leg's end node
-                for nextLegId in legStartNode.nextLegIds {
-                    guard let leg = journey.legs[nextLegId],
-                          let legEndNode = journey.nodes[leg.destinationId]
-                    else { throw JourneyManagerError.brokenGraph }
-
-                    if let legStartNode = legStartNode as? JourneyBusStopNode,
-                       let leg = leg as? JourneyBusLeg,
-                       let legEndNode = legEndNode as? JourneyBusStopNode {
-                        // add a temporary empty context
-                        context.edgeContext[leg.contextId] = JourneyBusLeg.Context(
-                            startCode: legStartNode.busStopCode,
-                            endCode: legEndNode.busStopCode,
-                            stopEstimations: []
-                        )
-
-                        taskGroup.addTask {
-                            let rawEstimates = try await self.estimator.track(
-                                stopIdsOfInterest: [legStartNode.busStopCode, legEndNode.busStopCode],
-                                serviceNo: leg.serviceNo
-                            )
-                            guard let startIndex = rawEstimates.firstIndex(where: { $0.stopId == legStartNode.busStopCode }),
-                                  let endIndex = rawEstimates.lastIndex(where: { $0.stopId == legEndNode.busStopCode }),
-                                  startIndex < endIndex else {
-                                throw BusArrivalEstimatorError.stopNotFound(stopCode: legStartNode.busStopCode, serviceNo: leg.serviceNo)
-                            }
-                            let estimates = rawEstimates[startIndex...endIndex]
-                            return .init(
-                                contextId: leg.contextId,
-                                context: JourneyBusLeg.Context(
-                                    startCode: legStartNode.busStopCode,
-                                    endCode: legEndNode.busStopCode,
-                                    stopEstimations: Array(estimates)
-                                )
-                            )
-                        }
-                    }
-
-                    // add end node to nodes to explore
-                    nodesToExplore.append(legEndNode)
-                }
-            }
-
-            for try await result in taskGroup {
-                context.edgeContext[result.contextId] = result.context
-                stopCodes.append(contentsOf: result.context.stopEstimations.map { $0.stopId })
-            }
-        }
-
-        // get details for each stop in parallel
-        try await withThrowingTaskGroup(of: JourneyIntermediateBusNodeContextWithId?.self, returning: Void.self) { taskGroup in
-            for stopCode in stopCodes {
-                taskGroup.addTask {
-                    if let stopInfo = try await self.estimator.data.getStopInfo(busStopCode: stopCode) {
-                        return .init(contextId: stopCode, context: stopInfo)
-                    } else {
-                        return nil
-                    }
-                }
-            }
-
-            for try await result in taskGroup {
-                guard let result else { continue }
-                context.nodeContext[result.contextId] = result.context
-            }
-        }
-
-        _ = try await stopContextTask
-    }
-
     /// Changes a given path segment to another one. If the path item has other subsequent paths, it chooses the first one.
     public func changePath(atIndex index: Int, toPathItem pathItem: JourneyLegID) {
         // determine the path from pathItem
@@ -151,16 +70,6 @@ public class JourneyManager: ObservableObject {
         }
 
         journey.path = journey.path[0..<index] + newPath
-    }
-
-    private struct JourneyBusLegContextWithId {
-        var contextId: JourneyLegContextID
-        var context: JourneyBusLeg.Context
-    }
-
-    private struct JourneyIntermediateBusNodeContextWithId {
-        var contextId: JourneyNodeContextID
-        var context: JourneyBusStopNode.Context
     }
 }
 

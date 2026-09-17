@@ -9,6 +9,64 @@ import Foundation
 import LTAAPI
 
 extension BusArrivalEstimator {
+    /// Tracks the arrival times of a bus between a few given bus ranges, based on the
+    /// arrival times of that bus at other stops along its route. This wraps `track`, and splits up the results
+    /// into the corresponding sections.
+    ///
+    /// - Parameters:
+    ///   - stopRangesOfInterest: The ranges of stops to return estimates for
+    ///   - serviceNo: The bus service to estimate.
+    ///   - numTarget: The desired number of upcoming buses to track at each stop of interest
+    ///   - maxLookbackStops: The maximum number of stops, upstream of the most upstream stop, that `track` can poll.
+    ///   - inDirection: If provided, restricts the route lookup to this
+    ///     direction. Applies to all ranges.
+    /// - Returns: A list of lists of `BusStopArrivalEstimates`, one for each stop range of interest, in the order provided.
+    public func track(
+        stopRangesOfInterest: [(startCode: String, endCode: String)],
+        serviceNo: String,
+        numTarget: Int = 5,
+        maxLookbackStops: Int = 5,
+        stopGapOption: StopGapOption = .enabledOutsideInterest,
+        inDirection: Int? = nil
+    ) async throws -> [[BusStopArrivalEstimates]] {
+        let stopIdsOfInterest = stopRangesOfInterest.flatMap { [$0.startCode, $0.endCode] }
+        let estimates = try await track(
+            stopIdsOfInterest: stopIdsOfInterest,
+            serviceNo: serviceNo,
+            numTarget: numTarget,
+            maxLookbackStops: maxLookbackStops,
+            stopGapOption: stopGapOption,
+            inDirection: inDirection
+        )
+
+        // trim out a section for each stop range
+        var rangeEstimates: [[BusStopArrivalEstimates]] = []
+        for (startCode, endCode) in stopRangesOfInterest {
+            guard let startIndex = estimates.firstIndex(where: { $0.stopId == startCode }),
+                  let endIndex = estimates.firstIndex(where: { $0.stopId == endCode }),
+                  startIndex < endIndex
+            else {
+                // invalid range
+                rangeEstimates.append([])
+                continue
+            }
+
+            let rawEstimateRange = estimates[startIndex...endIndex]
+            let timeOffset = rawEstimateRange.last!.deltaTime
+            let estimateRange = rawEstimateRange.map { rawEstimate in
+                BusStopArrivalEstimates(
+                    stopId: rawEstimate.stopId,
+                    deltaTime: rawEstimate.deltaTime - timeOffset,
+                    deltaError: rawEstimate.deltaError,
+                    estimates: rawEstimate.estimates
+                )
+            }
+            rangeEstimates.append(estimateRange)
+        }
+
+        return rangeEstimates
+    }
+
     /// Tracks the arrival times of a bus between a few given stops of interest, based on the
     /// arrival times of that bus at other stops along its route.
     ///
