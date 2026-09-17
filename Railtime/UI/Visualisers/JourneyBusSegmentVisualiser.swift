@@ -262,11 +262,14 @@ struct JourneyBusSegmentVisualiser: View {
                 .fill(Color.clear)
                 .frame(
                     width: (
-                        // the location of the last bus, if any (treat as 0 if we have none)
-                        ((estimates.first?.estimates.last?.eta.timeDelta(since: now).seconds ?? 0)
-                            / 60 * horizontalScale) + busHOffset
-                        // plus enough space that the last bus can be moved to the very left
-                        + geometrySize.width - Sizing.stopLineAndLabelsWidth - Sizing.firstBusHorizontalOffset,
+                        max(
+                            0,
+                            // the location of the last bus, if any (treat as 0 if we have none)
+                            ((estimates.first?.estimates.last?.eta.timeDelta(since: now).seconds ?? 0)
+                                / 60 * horizontalScale) + busHOffset
+                            // plus enough space that the last bus can be moved to the very left
+                            + geometrySize.width - Sizing.stopLineAndLabelsWidth - Sizing.firstBusHorizontalOffset,
+                        )
                     ),
                     height: 1
                 )

@@ -237,22 +237,47 @@ struct JourneyVisualiser: View {
             yOffsetLegMap[pathItem] = yOffsetSoFar
             timeDeltaTranslation[pathItem] = timeDeltaSoFar
 
-            // calculate height of this leg
-            if let context = manager.legContext(forPathItem: pathItem, as: JourneyBusLeg.self), // get context
-               !context.stopEstimations.isEmpty { // ensure that it actually has items
+            // use parameter packs to allow easy iteration over different concrete types fo JourneyStopBasedLegContext
+            func attempt<each Context: JourneyStopBasedLegContext>(
+                context: any JourneyLegContext,
+                contextTypes: repeat (each Context).Type
+            ) -> Bool {
+                func check<SomeContext: JourneyStopBasedLegContext>(
+                    against type: SomeContext.Type
+                ) -> Bool {
+                    guard let context = context as? SomeContext else { return false }
 
-                // use the time difference
-                let timeDifference = context.stopEstimations.last!.deltaTime - context.stopEstimations.first!.deltaTime
-                if isCollapsed[pathItem] == false { // if NOT collapsed, use delta-time
-                    yOffsetSoFar += timeDifference.seconds / 60 * verticalScale
-                } else { // if collapsed, time delta remains the same but y offset is the collapsed vertical distance
-                    yOffsetSoFar += Sizing.collapsedVerticalDistance
+                    guard !context.stopEstimations.isEmpty else { return false } // ensure that it actually has items
+
+                    // use the time difference
+                    let timeDifference = context.stopEstimations.last!.deltaTime - context.stopEstimations.first!.deltaTime
+                    if isCollapsed[pathItem] == false { // if NOT collapsed, use delta-time
+                        yOffsetSoFar += timeDifference.seconds / 60 * verticalScale
+                    } else { // if collapsed, time delta remains the same but y offset is the collapsed vertical distance
+                        yOffsetSoFar += Sizing.collapsedVerticalDistance
+                    }
+                    timeDeltaSoFar += timeDifference
+
+                    return true
                 }
-                timeDeltaSoFar += timeDifference
-                continue
+
+                for contextType in repeat each contextTypes {
+                    if check(against: contextType.self) { return true }
+                }
+
+                return false
             }
 
-            // unavailable data, use collapsed height
+            // calculate height of this leg
+            if let leg = manager.journey.legs[pathItem],
+               let context = manager.context.edgeContext[leg.contextId] as? (any JourneyStopBasedLegContext) {
+                // if we manage to find the height, go to the next one
+                if attempt(context: context, contextTypes: JourneyBusLeg.Context.self) {
+                    continue
+                }
+            }
+
+            // unavailable data or was not able to find height, use collapsed height as fallback
             yOffsetSoFar += Sizing.collapsedVerticalDistance
             timeDeltaSoFar += .mins(Sizing.collapsedVerticalDistance / verticalScale)
         }
@@ -264,15 +289,39 @@ struct JourneyVisualiser: View {
     /// such that the first bus, of the first stop, of the first leg, is located at `firstBusHorizontalOffset`
     func busHorizontalOffset() -> CGFloat {
         guard let firstLegId = manager.journey.path.first,
-              let firstLegContext = manager.legContext(forPathItem: firstLegId, as: JourneyBusLeg.self),
-              let firstStop = firstLegContext.stopEstimations.first,
-              let firstBus = firstStop.estimates.first
+              let firstLeg = manager.journey.legs[firstLegId],
+              let firstLegContext = manager.context.edgeContext[firstLeg.contextId]
         else { return 0 }
 
-        // leftwards adjustment such that the bus is located at the very left of the graph
-        let leftwardsTare = firstBus.eta.timeDelta(since: now).seconds / 60 * horizontalScale
-        // then adjust rightwards to be at the correct offset
-        return -leftwardsTare + Sizing.firstBusHorizontalOffset
+        // use parameter packs to allow easy iteration over different concrete types fo JourneyStopBasedLegContext
+        func attempt<each Context: JourneyStopBasedLegContext>(
+            contextTypes: repeat (each Context).Type
+        ) -> CGFloat {
+            func check<SomeContext: JourneyStopBasedLegContext>(
+                against type: SomeContext.Type
+            ) -> CGFloat? {
+                guard let context = firstLegContext as? SomeContext else { return nil }
+
+                guard let firstStop = context.stopEstimations.first,
+                      let firstBus = firstStop.estimates.first
+                else { return nil }
+
+                // leftwards adjustment such that the bus is located at the very left of the graph
+                let leftwardsTare = firstBus.eta.timeDelta(since: now).seconds / 60 * horizontalScale
+                // then adjust rightwards to be at the correct offset
+                return -leftwardsTare + Sizing.firstBusHorizontalOffset
+            }
+
+            for contextType in repeat each contextTypes {
+                if let result = check(against: contextType.self) {
+                    return result
+                }
+            }
+
+            return 0
+        }
+
+        return attempt(contextTypes: JourneyBusLeg.Context.self)
     }
 
     /// Calculates where the time tickers should be located
@@ -294,59 +343,82 @@ struct JourneyVisualiser: View {
         var tickerGroups: [TickerGroup] = []
 
         for pathItem in manager.journey.path {
-            // we ignore this leg if it is not a bus leg, or has no data
-            guard let leg = manager.journey.leg(for: pathItem, as: JourneyBusLeg.self),
-                  let legContext = manager.context.context(forLeg: leg),
-                  let firstStop = legContext.stopEstimations.first, // TODO: fallback for empty estimations
-                  let lastStop = legContext.stopEstimations.last,
-                  !firstStop.estimates.isEmpty, !lastStop.estimates.isEmpty
-            else { continue }
+            // use parameter packs to allow easy iteration over different concrete types fo JourneyStopBasedLegContext
+            func attempt<each Context: JourneyStopBasedLegContext>(
+                leg: any JourneyLeg,
+                context: any JourneyLegContext,
+                contextTypes: repeat (each Context).Type
+            ) {
+                func check<SomeContext: JourneyStopBasedLegContext>(
+                    against type: SomeContext.Type
+                ) -> Bool {
+                    guard let context = context as? SomeContext else { return false }
 
-            let timeOffset = timeDeltaTranslation[leg.id] ?? .zero
-            let yOffset = yOffsetLegMap[leg.id] ?? 0
+                    guard let firstStop = context.stopEstimations.first, // TODO: fallback for empty estimations
+                          let lastStop = context.stopEstimations.last,
+                          !firstStop.estimates.isEmpty, !lastStop.estimates.isEmpty
+                    else { return false }
 
-            // update the lowerbound and upperbound of the current ticker group to ensure that it can contain the
-            // FIRST stops of this leg
-            let firstStopLowerbound = ( // we add time delta because there is no need to add "now" to everything
-                (firstStop.estimates.first!.eta.timeDelta(since: now) + timeOffset).seconds / 60 / 5
-            ).rounded(.awayFromZero)
-            let firstStopUpperbound = (
-                (firstStop.estimates.last!.eta.timeDelta(since: now)).seconds / 60 / 5
-                // TODO: add scroll allowance
-            ).rounded(.awayFromZero)
-            let lastStopLowerbound = (
-                (lastStop.estimates.first!.eta.timeDelta(since: now) + timeOffset).seconds / 60 / 5
-            ).rounded(.awayFromZero)
-            let lastStopUpperbound = (
-                (lastStop.estimates.last!.eta.timeDelta(since: now)).seconds / 60 / 5
-                // TODO: add scroll allowance
-            ).rounded(.awayFromZero)
+                    let timeOffset = timeDeltaTranslation[leg.id] ?? .zero
+                    let yOffset = yOffsetLegMap[leg.id] ?? 0
 
-            currentTickerGroup.lowerbound = min(currentTickerGroup.lowerbound, Int(firstStopLowerbound))
-            currentTickerGroup.upperbound = max(currentTickerGroup.upperbound, Int(firstStopLowerbound), Int(firstStopUpperbound))
+                    // update the lowerbound and upperbound of the current ticker group to ensure that it can contain the
+                    // FIRST stops of this leg
+                    let firstStopLowerbound = ( // we add time delta because there is no need to add "now" to everything
+                        (firstStop.estimates.first!.eta.timeDelta(since: now) + timeOffset).seconds / 60 / 5
+                    ).rounded(.awayFromZero)
+                    let firstStopUpperbound = (
+                        (firstStop.estimates.last!.eta.timeDelta(since: now)).seconds / 60 / 5
+                        // TODO: add scroll allowance
+                    ).rounded(.awayFromZero)
+                    let lastStopLowerbound = (
+                        (lastStop.estimates.first!.eta.timeDelta(since: now) + timeOffset).seconds / 60 / 5
+                    ).rounded(.awayFromZero)
+                    let lastStopUpperbound = (
+                        (lastStop.estimates.last!.eta.timeDelta(since: now)).seconds / 60 / 5
+                        // TODO: add scroll allowance
+                    ).rounded(.awayFromZero)
 
-            // we cut off the ticker group if this is collapsed
-            if isCollapsed[leg.id] == false {
-                // increase upperbound to include the *LAST* bus.
-                currentTickerGroup.upperbound = max(currentTickerGroup.upperbound, Int(lastStopLowerbound))
-                // and then just go to the next leg
-                continue
+                    currentTickerGroup.lowerbound = min(currentTickerGroup.lowerbound, Int(firstStopLowerbound))
+                    currentTickerGroup.upperbound = max(currentTickerGroup.upperbound, Int(firstStopLowerbound), Int(firstStopUpperbound))
+
+                    // we cut off the ticker group if this is collapsed
+                    if isCollapsed[leg.id] == false {
+                        // increase upperbound to include the *LAST* bus.
+                        currentTickerGroup.upperbound = max(currentTickerGroup.upperbound, Int(lastStopLowerbound))
+                        // and then just go to the next leg
+                        return true
+                    }
+
+                    // add the current group, basically to mark the end of it
+                    currentTickerGroup.endingHeight = yOffset
+                    tickerGroups.append(currentTickerGroup)
+
+                    // create a new ticker group, positioned at the bottom of this leg (ie. top + collapse vertical distance)
+                    let stopTimeRange = lastStop.deltaTime - firstStop.deltaTime
+                    currentTickerGroup = .init(
+                        lowerbound: Int(lastStopLowerbound),
+                        upperbound: Int(lastStopUpperbound),
+                        step: 5,
+                        startingHeight: yOffset + Sizing.collapsedVerticalDistance,
+                        endingHeight: 0,
+                        timeOffset: timeOffset + stopTimeRange
+                    )
+
+                    return true
+                }
+
+                for contextType in repeat each contextTypes {
+                    if check(against: contextType.self) { return }
+                }
             }
 
-            // add the current group, basically to mark the end of it
-            currentTickerGroup.endingHeight = yOffset
-            tickerGroups.append(currentTickerGroup)
+            // we ignore this leg if it is not a bus leg, or has no data
+            guard let leg = manager.journey.legs[pathItem],
+                  let legContext = manager.context.edgeContext[leg.contextId]
+            else { continue }
 
-            // create a new ticker group, positioned at the bottom of this leg (ie. top + collapse vertical distance)
-            let stopTimeRange = lastStop.deltaTime - firstStop.deltaTime
-            currentTickerGroup = .init(
-                lowerbound: Int(lastStopLowerbound),
-                upperbound: Int(lastStopUpperbound),
-                step: 5,
-                startingHeight: yOffset + Sizing.collapsedVerticalDistance,
-                endingHeight: 0,
-                timeOffset: timeOffset + stopTimeRange
-            )
+            attempt(leg: leg, context: legContext, contextTypes: JourneyBusLeg.Context.self)
         }
 
         // add the incomplete ticker group
