@@ -39,6 +39,19 @@ extension JourneyVisualiser {
                 geometrySize: geometrySize,
                 busHOffset: busHOffset
             )
+        } else if let walkLeg = manager.journey.leg(for: pathItem, as: JourneyWalkLeg.self),
+                  let walkContext = manager.context.context(forLeg: walkLeg) {
+            JourneyWalkVisualiser(
+                context: walkContext,
+                geometrySize: geometrySize,
+                scrollPosition: scrollPosition, // no need to adjust Y scroll position, walk doesnt use it
+                now: now,
+                verticalScale: verticalScale,
+                horizontalScale: horizontalScale,
+                vehicleHOffset: busHOffset,
+                namespace: namespace
+            )
+            .padding(.top, yOffsetLegMap[walkLeg.id] ?? 0)
         } // add any other leg types after here
     }
 

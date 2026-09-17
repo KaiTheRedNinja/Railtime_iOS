@@ -235,7 +235,7 @@ struct JourneyVisualiser: View {
             if let leg = manager.journey.legs[pathItem],
                let context = manager.context.edgeContext[leg.contextId] as? (any JourneyStopBasedLegContext) {
                 // if we manage to find the height, go to the next one
-                if attempt(context: context, contextTypes: JourneyBusLeg.Context.self) {
+                if attempt(context: context, contextTypes: JourneyBusLeg.Context.self, JourneyTrainLeg.Context.self) {
                     continue
                 }
             }
@@ -284,7 +284,7 @@ struct JourneyVisualiser: View {
             return 0
         }
 
-        return attempt(contextTypes: JourneyBusLeg.Context.self)
+        return attempt(contextTypes: JourneyBusLeg.Context.self, JourneyTrainLeg.Context.self)
     }
 
     /// Calculates where the time tickers should be located
@@ -312,6 +312,9 @@ struct JourneyVisualiser: View {
                 context: any JourneyLegContext,
                 contextTypes: repeat (each Context).Type
             ) {
+                let timeOffset = timeDeltaTranslation[leg.id] ?? .zero
+                let yOffset = yOffsetLegMap[leg.id] ?? 0
+
                 func check<SomeContext: JourneyStopBasedLegContext>(
                     against type: SomeContext.Type
                 ) -> Bool {
@@ -321,9 +324,6 @@ struct JourneyVisualiser: View {
                           let lastStop = context.stopEstimations.last,
                           !firstStop.estimates.isEmpty, !lastStop.estimates.isEmpty
                     else { return false }
-
-                    let timeOffset = timeDeltaTranslation[leg.id] ?? .zero
-                    let yOffset = yOffsetLegMap[leg.id] ?? 0
 
                     // update the lowerbound and upperbound of the current ticker group to ensure that it can contain the
                     // FIRST stops of this leg
@@ -374,6 +374,22 @@ struct JourneyVisualiser: View {
                 for contextType in repeat each contextTypes {
                     if check(against: contextType.self) { return }
                 }
+                // try walking. Walks are always compact.
+                if let walkContext = context as? JourneyWalkLeg.Context {
+                    // add the current group, basically to mark the end of it
+                    currentTickerGroup.endingHeight = yOffset
+                    tickerGroups.append(currentTickerGroup)
+
+                    // create a new ticker group, positioned at the bottom of this leg (ie. top + collapse vertical distance)
+                    currentTickerGroup = .init(
+                        lowerbound: 0,
+                        upperbound: 0,
+                        step: 5,
+                        startingHeight: yOffset + Sizing.collapsedVerticalDistance,
+                        endingHeight: 0,
+                        timeOffset: timeOffset + walkContext.walkTime
+                    )
+                }
             }
 
             // we ignore this leg if it is not a bus leg, or has no data
@@ -381,7 +397,7 @@ struct JourneyVisualiser: View {
                   let legContext = manager.context.edgeContext[leg.contextId]
             else { continue }
 
-            attempt(leg: leg, context: legContext, contextTypes: JourneyBusLeg.Context.self)
+            attempt(leg: leg, context: legContext, contextTypes: JourneyBusLeg.Context.self, JourneyTrainLeg.Context.self)
         }
 
         // add the incomplete ticker group
