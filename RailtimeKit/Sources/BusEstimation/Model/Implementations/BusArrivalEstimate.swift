@@ -8,6 +8,8 @@
 import Foundation
 import LTAAPI
 
+public typealias BusStopArrivalEstimates = StopArrivalEstimates<BusArrivalEstimate>
+
 /// An estimate for when a bus, with a given ID, will arrive at a given stop.
 public struct BusArrivalEstimate: VehicleArrivalEstimate {
     /// The ID of this bus.
@@ -84,10 +86,5 @@ public struct BusArrivalEstimate: VehicleArrivalEstimate {
             feature: feature,
             busType: busType
         )
-    }
-
-    /// The time delta from `ref` until this bus's ETA.
-    public func minutesFrom(_ ref: Date) -> TimeDelta {
-        eta.timeDelta(since: ref)
     }
 }

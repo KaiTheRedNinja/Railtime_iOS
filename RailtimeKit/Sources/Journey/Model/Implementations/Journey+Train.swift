@@ -6,12 +6,31 @@
 //
 
 import Foundation
+import BusEstimation
 import LTAAPI
 
 /// A node representing a bus stop
 public struct JourneyMRTStopNode: JourneyNode {
     // TODO: replace with the type we implement for MRT Context
-    public typealias Context = JourneyArbitraryLocationNode.Context
+    public struct Context: JourneyNodeContext {
+        /// The name of the stop
+        public let description: String?
+        /// The latitude of the stop
+        public let latitude: Double
+        /// The longitude of the stop
+        public let longitude: Double
+        /// The lines that this stop serves
+        public let lines: [String]
+        /// The exits available
+        public let exits: [Exit]
+
+        public struct Exit: Equatable, Codable {
+            /// The code for the stop, eg "Exit A"
+            var code: String
+            /// The description for what this exit corresponds to
+            var description: String
+        }
+    }
 
     public var id: JourneyNodeID = .init()
     public var busStopCode: String
@@ -34,10 +53,10 @@ public struct JourneyMRTLeg: JourneyLeg {
         /// The code for the stop that this segment ends with - i.e. the stop that the user would exit the MRT
         public var endCode: String
 
-        /// The period between when trains arrive at the starting MRT stop.
+        /// The estimates, starting from the start code and ending at the end code.
         ///
-        /// Because LTA does not provide us with exact MRT position estimates, this is the best we can do.
-        public var periodBetweenMRTs: TimeDelta
+        /// Note that these are all projections, because LTA does not give us actual train timings.
+        public var estimates: [TrainStopArrivalEstimates]
     }
 
     public var id: JourneyLegID = .init()
