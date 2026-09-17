@@ -24,10 +24,13 @@ actor RateLimiter {
             let nextAllowed = lastRequestTime + interval
 
             if clock.now < nextAllowed {
+                // we set the last request time here to avoid the double-entrancy problem
+                self.lastRequestTime = nextAllowed
                 try? await Task.sleep(until: nextAllowed, clock: clock)
             }
         }
-
         lastRequestTime = clock.now
+
+        print("[RATE LIMITER] Approved at \(Date.now)")
     }
 }
