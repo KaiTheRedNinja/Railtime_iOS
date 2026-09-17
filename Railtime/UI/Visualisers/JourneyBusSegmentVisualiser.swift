@@ -11,6 +11,7 @@ import BusEstimation
 import LTAAPI
 
 /// The visualiser responsible for drawing the stop line and vertical view
+@available(*, deprecated, renamed: "JourneyPathItemVisualiser", message: "Use context-agnostic version instead")
 struct JourneyBusSegmentVisualiser: View {
     /// The context for this bus leg
     var busContext: JourneyBusLeg.Context

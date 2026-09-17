@@ -71,7 +71,7 @@ extension JourneyManager {
         } else { false }
 
         let next = if pathIndex + 1 < journey.path.count,
-                      let nextLeg = journey.legs[journey.path[pathIndex - 1]],
+                      let nextLeg = journey.legs[journey.path[pathIndex + 1]],
                       let nextLegContext = context.edgeContext[nextLeg.contextId] {
             thisLeg.canBeMerged(
                 withAnyNextLeg: nextLeg,

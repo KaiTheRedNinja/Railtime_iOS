@@ -99,32 +99,13 @@ struct JourneyVisualiser: View {
                                 )
 
                             ForEach(journey.path.enumerated(), id: \.offset) { (_, pathItem) in
-                                if let busLeg = journey.leg(for: pathItem, as: JourneyBusLeg.self),
-                                   let busContext = context.context(forLeg: busLeg) {
-                                    let yOffset = yOffsetLegMap[busLeg.id] ?? 0
-                                    let xOffset = (timeDeltaTranslation[busLeg.id] ?? .zero).seconds / 60 * horizontalScale
-
-                                    JourneyBusSegmentVisualiser(
-                                        busContext: busContext,
-                                        stopLookup: context.nodeContext,
-                                        geometrySize: geometry.size,
-                                        scrollPosition: .init(
-                                            x: scrollPosition.x,
-                                            y: scrollPosition.y - yOffset
-                                        ),
-                                        now: now,
-                                        verticalScale: verticalScale,
-                                        horizontalScale: horizontalScale,
-                                        busHOffset: busHOffset - xOffset,
-                                        isCollapsedExt: .init(get: {
-                                            isCollapsed[busLeg.id] ?? true
-                                        }, set: { newCollapsedState in
-                                            isCollapsed[busLeg.id] = newCollapsedState
-                                        }),
-                                        namespace: namespace
-                                    )
-                                    .padding(.top, yOffset)
-                                }
+                                vehicleSegment(
+                                    forPathItem: pathItem,
+                                    yOffsetLegMap: yOffsetLegMap,
+                                    timeDeltaTranslation: timeDeltaTranslation,
+                                    geometrySize: geometry.size,
+                                    busHOffset: busHOffset
+                                )
                             }
                         }
                         .frame(minHeight: geometry.size.height, alignment: .top)
@@ -180,6 +161,62 @@ struct JourneyVisualiser: View {
         .onReceive(nowRefreshTimer) { _ in
             now = now.addingTimeInterval(0.1)
         }
+    }
+
+    @ViewBuilder
+    func vehicleSegment(
+        forPathItem pathItem: JourneyLegID,
+        yOffsetLegMap: [JourneyLegID: CGFloat],
+        timeDeltaTranslation: [JourneyLegID: TimeDelta],
+        geometrySize: CGSize,
+        busHOffset: CGFloat
+    ) -> some View {
+        if let busLeg = manager.journey.leg(for: pathItem, as: JourneyBusLeg.self),
+           let busContext = manager.context.context(forLeg: busLeg) {
+            typedSegment(
+                leg: busLeg,
+                context: busContext,
+                yOffsetLegMap: yOffsetLegMap,
+                timeDeltaTranslation: timeDeltaTranslation,
+                geometrySize: geometrySize,
+                busHOffset: busHOffset
+            )
+        }
+    }
+
+    @ViewBuilder
+    func typedSegment<Leg>(
+        leg: Leg,
+        context: Leg.Context,
+        yOffsetLegMap: [JourneyLegID: CGFloat],
+        timeDeltaTranslation: [JourneyLegID: TimeDelta],
+        geometrySize: CGSize,
+        busHOffset: CGFloat
+    ) -> some View where Leg: JourneyLeg, Leg.Context: JourneyStopBasedLegContext {
+        let yOffset = yOffsetLegMap[leg.id] ?? 0
+        let xOffset = (timeDeltaTranslation[leg.id] ?? .zero).seconds / 60 * horizontalScale
+
+        JourneyPathItemVisualiser<Leg>(
+            context: context,
+            stopLookup: manager.context.nodeContext,
+            isExtension: manager.isExtension(pathItem: leg.id),
+            geometrySize: geometrySize,
+            scrollPosition: .init(
+                x: scrollPosition.x,
+                y: scrollPosition.y - yOffset
+            ),
+            now: now,
+            verticalScale: verticalScale,
+            horizontalScale: horizontalScale,
+            vehicleHOffset: busHOffset - xOffset,
+            isCollapsedExt: .init(get: {
+                isCollapsed[leg.id] ?? true
+            }, set: { newCollapsedState in
+                isCollapsed[leg.id] = newCollapsedState
+            }),
+            namespace: namespace
+        )
+        .padding(.top, yOffset)
     }
 
     func timeTickers(

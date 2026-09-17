@@ -18,6 +18,8 @@ struct JourneyPathItemVisualiser<Leg>: View where Leg: JourneyLeg, Leg.Context: 
     var context: Leg.Context
     /// The lookup dictionary for stops
     var stopLookup: [String: any JourneyNodeContext] = [:]
+    /// Whether it is an extension of the previous/next item
+    var isExtension: (prev: Bool, next: Bool)
 
     /// The current size of the viewport, which includes the stop line and tt graph, but
     /// excludes the time tickers
@@ -56,6 +58,7 @@ struct JourneyPathItemVisualiser<Leg>: View where Leg: JourneyLeg, Leg.Context: 
     init(
         context: Leg.Context,
         stopLookup: [String : any JourneyNodeContext],
+        isExtension: (prev: Bool, next: Bool),
         geometrySize: CGSize,
         scrollPosition: CGPoint,
         now: Date,
@@ -68,6 +71,7 @@ struct JourneyPathItemVisualiser<Leg>: View where Leg: JourneyLeg, Leg.Context: 
     ) {
         self.context = context
         self.stopLookup = stopLookup
+        self.isExtension = isExtension
         self.geometrySize = geometrySize
         self.scrollPosition = scrollPosition
         self.now = now
