@@ -132,6 +132,7 @@ public final class DiskCache {
 /// miss. That one full pull is used to (re)populate the per-service files
 /// for *every* service seen, not just the one requested, so subsequent
 /// lookups for other services are usually cache hits too.
+@MainActor
 public final class CachedDataSource {
     /// Key identifying a single in-memory short-term cache entry for a live
     /// BusArrival lookup.

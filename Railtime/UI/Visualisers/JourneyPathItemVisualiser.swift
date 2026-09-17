@@ -139,7 +139,8 @@ struct JourneyPathItemVisualiser<Leg>: View where Leg: JourneyLeg, Leg.Context: 
                 treatAsCollapsed ? [estimates.first!, estimates.last!] : context.stopEstimations,
                 id: \.stopId
             ) { (stopEstimate: LegStopArrivalEstimates) in
-                let isStartOrEnd = (stopEstimate.stopId == context.startCode) || (stopEstimate.stopId == context.endCode)
+                let isStartOrEnd = (stopEstimate.stopId == context.startCode && !isExtension.prev) ||
+                                   (stopEstimate.stopId == context.endCode   && !isExtension.next)
                 let indicatorDiameter = if isStartOrEnd {
                     Sizing.busIndicatorDiameter
                 } else {
@@ -266,7 +267,7 @@ struct JourneyPathItemVisualiser<Leg>: View where Leg: JourneyLeg, Leg.Context: 
             Rectangle()
                 .fill(Color.clear)
                 .frame(
-                    width: (
+                    width: max(0, 
                         // the location of the last vehicle, if any (treat as 0 if we have none)
                         ((estimates.first?.estimates.last?.eta.timeDelta(since: now).seconds ?? 0)
                          / 60 * horizontalScale) + vehicleHOffset
@@ -399,18 +400,23 @@ struct JourneyPathItemVisualiser<Leg>: View where Leg: JourneyLeg, Leg.Context: 
                             .fill(fillColor)
                     }
                     .opacity(isSelected ? 1 : 0.5)
-                    .matchedGeometryEffect(id: "\(vehicleEstimate.displayText)\(vehicleEstimate.id)", in: namespace)
+                    .matchedGeometryEffect(
+                        id: "\(estimates.first?.id ?? "N/A")_\(vehicleEstimate.displayText)_\(vehicleEstimate.id)",
+                        in: namespace
+                    )
                     .frame(
                         width: Sizing.firstBusHorizontalOffset * 2,
                         height: treatAsCollapsed ? nil : Sizing.firstStopVerticalOffset * 2
                     ) // horizontally (and vertically center, if not collapsed)
-                    .onTapGesture {
-                        if isSelected {
-                            selectedVehicleId = nil
-                        } else {
-                            selectedVehicleId = vehicleEstimate.id
+                    .simultaneousGesture(
+                        TapGesture().onEnded { _ in
+                            if isSelected {
+                                selectedVehicleId = nil
+                            } else {
+                                selectedVehicleId = vehicleEstimate.id
+                            }
                         }
-                    }
+                    )
                     .padding(.leading, horizontalOffset - Sizing.firstBusHorizontalOffset) // position
                     .padding(
                         .top,
@@ -423,6 +429,7 @@ struct JourneyPathItemVisualiser<Leg>: View where Leg: JourneyLeg, Leg.Context: 
                                )
                         )
                     ) // move with scroll, but only on the line
+                    .opacity(isExtension.prev ? 0.001 : 1)
             }
         }
         .mask {

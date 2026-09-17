@@ -59,7 +59,7 @@ public struct JourneyBusLeg: JourneyLeg {
         selfContext: Context,
         nextContext: Context
     ) -> Bool {
-        return self.serviceNo == next.serviceNo && // must have the same service
-               selfContext.stopEstimations.last == nextContext.stopEstimations.first // must overlap estimations
+        return self.serviceNo == next.serviceNo // must have the same service
+//               selfContext.stopEstimations.last == nextContext.stopEstimations.first // must overlap estimations
     }
 }

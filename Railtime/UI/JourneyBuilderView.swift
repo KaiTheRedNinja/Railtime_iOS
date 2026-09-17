@@ -74,26 +74,37 @@ struct JourneyBuilderView: View {
                     }
                 }
             } footer: {
-                Button {
-                    // create the new end stop
-                    let newEndStop = JourneyBusStopNode(busStopCode: "", nextLegIds: [])
-                    let newLeg = JourneyBusLeg(serviceNo: "", destinationId: newEndStop.id)
+                HStack {
+                    Button {
+                        // create the new end stop
+                        let newEndStop = JourneyBusStopNode(busStopCode: "", nextLegIds: [])
+                        let newLeg = JourneyBusLeg(serviceNo: "", destinationId: newEndStop.id)
 
-                    // link it to the current last item
-                    let lastNodeId = if let lastPathItem = manager.journey.path.last,
-                                        let lastLeg = manager.journey.legs[lastPathItem] {
-                        lastLeg.destinationId
-                    } else {
-                        manager.journey.startNodeId
+                        // link it to the current last item
+                        let lastNodeId = if let lastPathItem = manager.journey.path.last,
+                                            let lastLeg = manager.journey.legs[lastPathItem] {
+                            lastLeg.destinationId
+                        } else {
+                            manager.journey.startNodeId
+                        }
+                        manager.journey.nodes[lastNodeId]?.nextLegIds.append(newLeg.id)
+
+                        manager.journey.nodes[newEndStop.id] = newEndStop
+                        manager.journey.legs[newLeg.id] = newLeg
+                        manager.journey.path.append(newLeg.id)
+                        manager.journey.removeUnconnected()
+                    } label: {
+                        Image(systemName: "plus")
                     }
-                    manager.journey.nodes[lastNodeId]?.nextLegIds.append(newLeg.id)
 
-                    manager.journey.nodes[newEndStop.id] = newEndStop
-                    manager.journey.legs[newLeg.id] = newLeg
-                    manager.journey.path.append(newLeg.id)
-                    manager.journey.removeUnconnected()
-                } label: {
-                    Image(systemName: "plus")
+                    Spacer()
+
+                    Button {
+                        manager.journey = Journey.sampleJourney
+                        manager.context = .empty
+                    } label: {
+                        Image(systemName: "arrow.trianglehead.branch")
+                    }
                 }
             }
 

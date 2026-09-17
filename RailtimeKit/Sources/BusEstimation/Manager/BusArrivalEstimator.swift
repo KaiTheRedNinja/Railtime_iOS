@@ -28,6 +28,7 @@ public final class BusArrivalEstimator {
     ///   - cacheDir: Directory for the on-disk non-live data cache.
     ///   - cacheTTLHours: How long, in hours, cached non-live data stays
     ///     valid.
+    @MainActor
     public init(
         client: LTAClient,
         now: Date? = nil,

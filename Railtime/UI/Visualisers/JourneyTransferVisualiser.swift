@@ -110,11 +110,11 @@ struct JourneyTransferVisualiser<Leg>: View where Leg: JourneyLeg, Leg.Context: 
                         width: Sizing.firstBusHorizontalOffset * 2,
                         height: Sizing.firstStopVerticalOffset * 2
                     ) // horizontally and vertically center
-                    .onTapGesture {
-                        print("BUS SELECTED: ", vehicleEstimate.displayText)
-                    }
                     .padding(.leading, horizontalOffset - Sizing.firstBusHorizontalOffset) // position
             }
+        }
+        .mask {
+            Rectangle()
         }
     }
 }

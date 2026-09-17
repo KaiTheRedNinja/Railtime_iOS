@@ -121,6 +121,9 @@ struct JourneyVisualiser: View {
                                             geometrySize: geometry.size,
                                             busHOffset: busHOffset
                                         )
+                                        .onTapGesture {
+                                            manager.changePath(atIndex: index + 1, toPathItem: otherLegId)
+                                        }
                                     }
                                 }
                             }

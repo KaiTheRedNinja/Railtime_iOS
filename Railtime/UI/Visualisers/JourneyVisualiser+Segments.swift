@@ -87,7 +87,9 @@ extension JourneyVisualiser {
                 geometrySize: geometrySize,
                 busHOffset: busHOffset
             )
-        } // add any other leg types after here
+        } else { // add any other leg types after here
+            Text("Unknown leg")
+        }
     }
 
     @ViewBuilder
