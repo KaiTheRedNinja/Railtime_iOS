@@ -15,6 +15,7 @@ extension BusArrivalEstimator {
     ///
     /// - Parameters:
     ///   - known: The stops resolved so far, target-first.
+    ///   - skipped: The stops that have been skipped between the last in `known` and the `rawWindow`, in downstream-first
     ///   - rawWindow: The newly-fetched live window for the upstream stop
     ///     being merged in.
     ///   - currentBusCount: The caller's current running count of distinct
@@ -34,6 +35,7 @@ extension BusArrivalEstimator {
     ///   `rawWindow`, and the new total number of distinct buses found.
     static internal func alignMergeAndProjectWindow(
         known: [BusStopArrivalEstimates],
+        skipped: [BusStopArrivalEstimates] = [],
         rawWindow: BusStopArrivalEstimates,
         currentBusCount: Int
     ) -> (known: [BusStopArrivalEstimates], drift: TimeDelta, busCount: Int) {
@@ -75,6 +77,43 @@ extension BusArrivalEstimator {
             deltaError: rawWindow.deltaError + resolvedBestError,
             estimates: rawWindowEstimates
         )
+
+        // How much to scale the estimated time by. In y = mx + c,
+        // y -> final value
+        // m -> the scale
+        // x -> skippedStop.deltaTime - tail.deltaTime
+        // c -> tail.deltaTime
+        let scale = (thisStop.deltaTime - tail.deltaTime).seconds / (rawWindow.deltaTime - tail.deltaTime).seconds
+
+        // project from the tail stop up to the skipped stops. Note that some ETAs may be in the past.
+        // most downstream is first
+        for skippedStop in skipped {
+            let projectedTimeSinceTail = (skippedStop.deltaTime - tail.deltaTime).scale(by: scale)
+            let projectedDeltaTime = projectedTimeSinceTail + tail.deltaTime
+            let stopEstimate = BusStopArrivalEstimates(
+                stopId: skippedStop.stopId,
+                deltaTime: projectedDeltaTime,
+                deltaError: skippedStop.deltaError,
+                estimates: tail.estimates.map { tailEstimate in
+                    // since the skipped stop is upstream, the eta is earlier than in the tail.
+                    let projectedEta = tailEstimate.eta.incrementingBy(timeDelta: projectedTimeSinceTail.scale(by: -1))
+
+                    return .init(
+                        busId: tailEstimate.id,
+                        busServiceNo: tailEstimate.busServiceNo,
+                        eta: projectedEta,
+                        error: tailEstimate.error,
+                        source: .projected,
+                        projectedFromStop: tail.stopId,
+                        load: tailEstimate.metadata.load,
+                        feature: tailEstimate.metadata.feature,
+                        busType: tailEstimate.metadata.busType
+                    )
+                }
+            )
+
+            known.append(stopEstimate)
+        }
 
         // project any new busses to downstream bus stops
         for estimate in thisStop.estimates[overlapLen...] {

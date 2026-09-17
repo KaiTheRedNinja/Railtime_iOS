@@ -81,6 +81,9 @@ extension BusArrivalEstimator {
         // the number of attempts we are allowed. This only matters after the last target stop.
         var movingAttemptLimit = maxLookbackStops
 
+        // the skipped stops, which will be interpolated
+        var skippedStops: [BusStopArrivalEstimates] = []
+
         while stopOffset < lastTargetStopIdx {
             print("Attempt #", attempted + 1, "of", movingAttemptLimit, "— bus count:", busCount, "of", movingTarget)
 
@@ -123,6 +126,16 @@ extension BusArrivalEstimator {
                     "min,", scheduleDeltaSinceLast.seconds / 60,
                     "min from last is less than stop gap", stopGap.seconds / 60.0, "min"
                 )
+
+                skippedStops.append(
+                    .init(
+                        stopId: upstreamCode,
+                        deltaTime: estimatedDeltaTime,
+                        deltaError: .zero,
+                        estimates: []
+                    )
+                )
+
                 // attempt not made
                 continue // too close to target stop to be useful, and not a target of interest
             }
@@ -147,8 +160,12 @@ extension BusArrivalEstimator {
 
             // align the estimates for this stop with existing estimates
             let mergeResult = BusArrivalEstimator.alignMergeAndProjectWindow(
-                known: estimates, rawWindow: rawWindow, currentBusCount: busCount
+                known: estimates,
+                skipped: skippedStops,
+                rawWindow: rawWindow,
+                currentBusCount: busCount
             )
+            skippedStops = []
             estimates = mergeResult.known
             let drift = mergeResult.drift
             busCount = mergeResult.busCount
