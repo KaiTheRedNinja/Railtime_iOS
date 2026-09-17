@@ -29,6 +29,16 @@ extension JourneyVisualiser {
                 geometrySize: geometrySize,
                 busHOffset: busHOffset
             )
+        } else if let trainLeg = manager.journey.leg(for: pathItem, as: JourneyTrainLeg.self),
+                  let trainContext = manager.context.context(forLeg: trainLeg) {
+            typedSegment(
+                leg: trainLeg,
+                context: trainContext,
+                yOffsetLegMap: yOffsetLegMap,
+                timeDeltaTranslation: timeDeltaTranslation,
+                geometrySize: geometrySize,
+                busHOffset: busHOffset
+            )
         } // add any other leg types after here
     }
 
@@ -82,6 +92,17 @@ extension JourneyVisualiser {
                 leg: busLeg,
                 sameLevelAs: targetLegId,
                 context: busContext,
+                yOffsetLegMap: yOffsetLegMap,
+                timeDeltaTranslation: timeDeltaTranslation,
+                geometrySize: geometrySize,
+                busHOffset: busHOffset
+            )
+        } else if let trainLeg = manager.journey.leg(for: otherLegId, as: JourneyTrainLeg.self),
+                  let trainContext = manager.context.context(forLeg: trainLeg) {
+            typedTransfer(
+                leg: trainLeg,
+                sameLevelAs: targetLegId,
+                context: trainContext,
                 yOffsetLegMap: yOffsetLegMap,
                 timeDeltaTranslation: timeDeltaTranslation,
                 geometrySize: geometrySize,

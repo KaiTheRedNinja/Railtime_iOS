@@ -47,7 +47,7 @@ public struct JourneyTrainStopNode: JourneyNode {
 /// A node representing an MRT journey
 public struct JourneyTrainLeg: JourneyLeg {
     /// The estimations for a segment of a bus route
-    public struct Context: JourneyLegContext {
+    public struct Context: JourneyStopBasedLegContext {
         /// The code for the stop that this segment starts with - i.e. the stop that the user would enter the MRT
         public var startCode: String
         /// The code for the stop that this segment ends with - i.e. the stop that the user would exit the MRT

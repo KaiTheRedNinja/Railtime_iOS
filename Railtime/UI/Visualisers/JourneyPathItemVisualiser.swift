@@ -122,9 +122,11 @@ struct JourneyPathItemVisualiser<Leg>: View where Leg: JourneyLeg, Leg.Context: 
 
     func stopLine(stopTimeRange: TimeDelta, estimates: [LegStopArrivalEstimates]) -> some View {
         ZStack(alignment: .topLeading) {
+            let fillColor = Color(rgb: estimates.first?.estimates.first?.displayColor ?? "", fallback: Color.green)
+
             // stop line
             Capsule()
-                .fill(Color.green)
+                .fill(fillColor)
                 .frame(
                     width: Sizing.stopLineWidth,
                     height: treatAsCollapsed
@@ -149,7 +151,7 @@ struct JourneyPathItemVisualiser<Leg>: View where Leg: JourneyLeg, Leg.Context: 
 
                 HStack(alignment: .center, spacing: 5) {
                     Circle()
-                        .fill(Color.green)
+                        .fill(fillColor)
                         .frame(width: indicatorDiameter, height: indicatorDiameter)
                         .overlay {
                             if isStartOrEnd {
