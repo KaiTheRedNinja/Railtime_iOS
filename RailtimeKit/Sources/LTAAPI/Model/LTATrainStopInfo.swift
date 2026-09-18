@@ -6,6 +6,10 @@
 //
 
 public struct LTATrainStopInfo: Equatable, Codable {
+    /// The mrt stop code. For interchanges, this may have multiple lines.
+    public let id: String
+    /// The mrt stop code, under a proper name for compatibility
+    public var mrtStopCode: String { id }
     /// The name of the stop
     public let description: String?
     /// The latitude of the stop
@@ -23,5 +27,19 @@ public struct LTATrainStopInfo: Equatable, Codable {
         var code: String
         /// The description for what this exit corresponds to
         var description: String
+
+        public init(code: String, description: String) {
+            self.code = code
+            self.description = description
+        }
+    }
+
+    public init(id: String, description: String?, latitude: Double, longitude: Double, lines: [String], exits: [Exit]) {
+        self.id = id
+        self.description = description
+        self.latitude = latitude
+        self.longitude = longitude
+        self.lines = lines
+        self.exits = exits
     }
 }

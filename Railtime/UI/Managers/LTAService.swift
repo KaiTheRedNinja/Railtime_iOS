@@ -1,6 +1,8 @@
 import Foundation
 import CoreLocation
 import Observation
+import LTAAPI
+import BusEstimation
 
 // MARK: - LTA Service
 
@@ -44,6 +46,31 @@ class LTAService {
         loadPreseededStations()
         loadPreseededBusStops()
         loadPreseededBusRoutes()
+
+        // load the stations into cache
+        let estimator = BusArrivalEstimator(client: try! LTAClient(accountKey: apiKey))
+        estimator.data.saveMRTStopsToCache(allStations.map {
+            .init(
+                id: $0.id,
+                description: $0.name,
+                latitude: $0.coordinate.latitude,
+                longitude: $0.coordinate.longitude,
+                lines: $0.lines,
+                exits: $0.exits.map {
+                    .init(code: $0.code, description: $0.description)
+                }
+            )
+        })
+        estimator.data.saveBusStopsToCache(
+            allBusStops.map {
+                .init(
+                    busStopCode: $0.id,
+                    roadName: $0.roadName,
+                    description: $0.name,
+                    latitude: $0.coordinate.latitude,
+                    longitude: $0.coordinate.longitude
+                )
+        })
     }
     
     private func rebuildBusStopsById() {

@@ -28,4 +28,12 @@ public struct LTABusStopInfo: Equatable, Codable {
         case latitude = "Latitude"
         case longitude = "Longitude"
     }
+
+    public init(busStopCode: String, roadName: String?, description: String?, latitude: Double, longitude: Double) {
+        self.busStopCode = busStopCode
+        self.roadName = roadName
+        self.description = description
+        self.latitude = latitude
+        self.longitude = longitude
+    }
 }

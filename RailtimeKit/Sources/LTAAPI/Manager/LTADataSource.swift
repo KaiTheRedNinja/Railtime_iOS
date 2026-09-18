@@ -120,9 +120,13 @@ public final class LTADataSource {
         return info
     }
 
-    /// Returns the list of MRT stops. This ONLY uses on-disk cache.
-    public func getMRTStopList() -> [LTATrainStopInfo]? {
-        if let cached: [LTATrainStopInfo] = cache.read(category: "train", key: "allStops") {
+    /// Returns static MRT stops information for an `mrtStopCode`. This ONLY uses on-disk cache - use
+    /// `saveMRTStopsToCache` to bulk-save from an external source.
+    ///
+    /// - Parameter mrtStopCode: The MRT stop code to look up.
+    /// - Returns: The stop's info, or `nil` if the stop doesn't exist.
+    public func getMRTStopInfo(mrtStopCode: String) -> LTATrainStopInfo? {
+        if let cached: LTATrainStopInfo = cache.read(category: "stops", key: mrtStopCode) {
             return cached
         }
         return nil
@@ -130,7 +134,9 @@ public final class LTADataSource {
 
     /// Saves an external bulk list of MRT stops to the cache
     public func saveMRTStopsToCache(_ stops: [LTATrainStopInfo]) {
-        cache.write(category: "train", key: "allStops", data: stops)
+        for stopInfo in stops {
+            cache.write(category: "stops", key: stopInfo.mrtStopCode, data: stopInfo)
+        }
     }
 
     /// Saves an external bulk list of bus stops to the cache
