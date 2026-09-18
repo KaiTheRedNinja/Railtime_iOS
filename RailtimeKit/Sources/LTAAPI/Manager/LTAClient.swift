@@ -145,12 +145,4 @@ public final class LTAClient {
         let results: [LTABusStopInfo] = try await getAllPages(path: "BusStops", params: ["BusStopCode": busStopCode])
         return results.first
     }
-
-    // ---- 2.31 MRT Schedule -------------------------------------------------
-
-    public func mrtSchedule() async throws -> URL? {
-        let result: LTAMRTScheduleResponse = try await get(path: "GTFSScheduleTrain")
-        guard let link = result.value.first?.link else { return nil }
-        return URL(string: link)
-    }
 }

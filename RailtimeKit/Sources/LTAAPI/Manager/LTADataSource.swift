@@ -120,42 +120,34 @@ public final class LTADataSource {
         return info
     }
 
-    /// Get the MRT stop and schedule information
-    public func getMrtSchedleInfo() async throws {
-        let destinationURL = cache.root
-            .appending(path: "mrt/gtfs")
+    /// Returns the list of MRT stops. This ONLY uses on-disk cache.
+    public func getMRTStopList() -> [LTATrainStopInfo]? {
+        if let cached: [LTATrainStopInfo] = cache.read(category: "train", key: "allStops") {
+            return cached
+        }
+        return nil
+    }
 
-        if FileManager.default.fileExists(atPath: destinationURL.path()) {
-            // use that instead
-            print("File already exists!")
-        } else {
-            guard let url = try await client.mrtSchedule() else {
-                print("Could not get MRT URL!")
-                return
-            }
-            // download and move
-            let (tempURL, response) = try await URLSession.shared.download(from: url)
-            let downloadLocation = FileManager.default.temporaryDirectory
-                .appendingPathComponent("gtfs_archive.zip")
-            guard let httpResponse = response as? HTTPURLResponse,
-                  (200...299).contains(httpResponse.statusCode) else {
-                throw URLError(.badServerResponse)
-            }
-            if FileManager.default.fileExists(atPath: downloadLocation.path) {
-                try FileManager.default.removeItem(at: downloadLocation)
-            }
-            try FileManager.default.moveItem(at: tempURL, to: downloadLocation)
+    /// Saves an external bulk list of MRT stops to the cache
+    public func saveMRTStopsToCache(_ stops: [LTATrainStopInfo]) {
+        cache.write(category: "train", key: "allStops", data: stops)
+    }
 
-            // unzip
-            try FileManager.default.createDirectory(
-                at: destinationURL,
-                withIntermediateDirectories: true
-            )
+    /// Saves an external bulk list of bus stops to the cache
+    public func saveBusStopsToCache(_ stops: [LTABusStopInfo]) {
+        for stopInfo in stops {
+            cache.write(category: "stops", key: stopInfo.busStopCode, data: stopInfo)
+        }
+    }
 
-            try FileManager.default.unzipItem(
-                at: downloadLocation,
-                to: destinationURL
-            )
+    /// Saves an external bulk list of bus routes to the cache
+    public func saveBulkRoutesToCache(_ routes: [LTABusRouteRow]) {
+        var byService: [String: [LTABusRouteRow]] = [:]
+        for row in routes {
+            byService[row.serviceNo, default: []].append(row)
+        }
+        for (svc, rows) in byService {
+            cache.write(category: "routes", key: svc, data: rows)
         }
     }
 }

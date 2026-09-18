@@ -11,26 +11,7 @@ import LTAAPI
 
 /// A node representing a bus stop
 public struct JourneyTrainStopNode: JourneyNode {
-    // TODO: replace with the type we implement for MRT Context
-    public struct Context: JourneyNodeContext {
-        /// The name of the stop
-        public let description: String?
-        /// The latitude of the stop
-        public let latitude: Double
-        /// The longitude of the stop
-        public let longitude: Double
-        /// The lines that this stop serves
-        public let lines: [String]
-        /// The exits available
-        public let exits: [Exit]
-
-        public struct Exit: Equatable, Codable {
-            /// The code for the stop, eg "Exit A"
-            var code: String
-            /// The description for what this exit corresponds to
-            var description: String
-        }
-    }
+    public typealias Context = LTATrainStopInfo
 
     public var id: JourneyNodeID = .init()
     public var trainStopCode: String
@@ -43,6 +24,8 @@ public struct JourneyTrainStopNode: JourneyNode {
         self.nextLegIds = nextLegIds
     }
 }
+
+extension LTATrainStopInfo: JourneyNodeContext {}
 
 /// A node representing an MRT journey
 public struct JourneyTrainLeg: JourneyLeg {

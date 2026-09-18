@@ -4,29 +4,6 @@ import Foundation
 // Disk cache for non-live data (BusRoutes / BusServices / BusStops)
 // --------------------------------------------------------------------------
 
-/// Replaces every run of characters outside `[A-Za-z0-9_-]` with a single
-/// underscore, mirroring the Python module's `_SAFE_KEY_RE` regex, so cache
-/// keys are always safe to use as file names.
-///
-/// - Parameter key: The raw cache key.
-/// - Returns: A filesystem-safe version of `key`, or `"default"` if `key`
-///   sanitizes down to nothing.
-private func sanitizedCacheKey(_ key: String) -> String {
-    let allowed = CharacterSet(charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-")
-    var result = ""
-    var lastCharWasReplaced = false
-    for scalar in key.unicodeScalars {
-        if allowed.contains(scalar) {
-            result.unicodeScalars.append(scalar)
-            lastCharWasReplaced = false
-        } else if !lastCharWasReplaced {
-            result.append("_")
-            lastCharWasReplaced = true
-        }
-    }
-    return result.isEmpty ? "default" : result
-}
-
 /// Simple per-key JSON file cache with a TTL.
 ///
 /// Deliberately never touches BusArrival (2.1) — that endpoint is live and
@@ -120,5 +97,28 @@ public final class DiskCache {
             return
         }
         try? encoded.write(to: filePath)
+    }
+
+    /// Replaces every run of characters outside `[A-Za-z0-9_-]` with a single
+    /// underscore, mirroring the Python module's `_SAFE_KEY_RE` regex, so cache
+    /// keys are always safe to use as file names.
+    ///
+    /// - Parameter key: The raw cache key.
+    /// - Returns: A filesystem-safe version of `key`, or `"default"` if `key`
+    ///   sanitizes down to nothing.
+    private func sanitizedCacheKey(_ key: String) -> String {
+        let allowed = CharacterSet(charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-")
+        var result = ""
+        var lastCharWasReplaced = false
+        for scalar in key.unicodeScalars {
+            if allowed.contains(scalar) {
+                result.unicodeScalars.append(scalar)
+                lastCharWasReplaced = false
+            } else if !lastCharWasReplaced {
+                result.append("_")
+                lastCharWasReplaced = true
+            }
+        }
+        return result.isEmpty ? "default" : result
     }
 }

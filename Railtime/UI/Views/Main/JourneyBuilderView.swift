@@ -122,18 +122,6 @@ struct JourneyBuilderView: View {
                         } label: {
                             Image(systemName: "arrow.trianglehead.branch")
                         }
-
-                        Button {
-                            Task {
-                                do {
-                                    try await manager.estimator?.data.getMrtSchedleInfo()
-                                } catch {
-                                    print("Error: \(error)")
-                                }
-                            }
-                        } label: {
-                            Image(systemName: "train.side.rear.car")
-                        }
                     }
                 }
 
