@@ -132,10 +132,29 @@ public final class LTADataSource {
         return nil
     }
 
+    /// Returns the routes for a given `serviceCode`. This ONLY uses on-disk cache - use
+    /// `saveMRTRoutesToCache` to bulk-save from an external source.
+    ///
+    /// - Parameter serviceCode: The service number to look up routes for.
+    /// - Returns: The routes for `serviceCode`, or `nil` if not found.
+    public func getMRTServiceRoutes(serviceCode: String) async throws -> LTATrainRoutes? {
+        print("Getting MRT service routes for", serviceCode)
+        if let cached: LTATrainRoutes = cache.read(category: "routes", key: serviceCode) {
+            return cached
+        }
+        return nil
+    }
+
     /// Saves an external bulk list of MRT stops to the cache
     public func saveMRTStopsToCache(_ stops: [LTATrainStopInfo]) {
         for stopInfo in stops {
             cache.write(category: "stops", key: stopInfo.mrtStopCode, data: stopInfo)
+        }
+    }
+    /// Saves an external bulk list of MRT stops to the cache
+    public func saveMRTRoutesToCache(_ routes: [LTATrainRoutes]) {
+        for routeInfo in routes {
+            cache.write(category: "routes", key: routeInfo.code, data: routeInfo)
         }
     }
 

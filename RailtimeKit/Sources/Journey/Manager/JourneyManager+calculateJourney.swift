@@ -179,6 +179,8 @@ extension JourneyManager {
                 taskGroup.addTask {
                     // TODO: actually project the estimations
                     let rawEstimatesForRanges: [[TrainStopArrivalEstimates]] = .init(repeating: [], count: stopRanges.count)
+                    for stopRange in stopRanges {
+                    }
 //                    try await self.estimator.track(
 //                        stopRangesOfInterest: stopRanges.map { ($0.startCode, $0.endCode) },
 //                        serviceNo: serviceNo

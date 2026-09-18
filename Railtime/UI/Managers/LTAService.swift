@@ -33,7 +33,8 @@ class LTAService {
             sortedStationsByLength = allStations.sorted { $0.name.count > $1.name.count }
         }
     }
-    
+    var allMRTRoutes: [LTATrainRoutes] = []
+
     private(set) var busStopsById: [String: BusStop] = [:]
     private(set) var sortedStationsByLength: [Station] = []
     
@@ -46,6 +47,7 @@ class LTAService {
         loadPreseededStations()
         loadPreseededBusStops()
         loadPreseededBusRoutes()
+        loadPreseededMRTRoutes()
 
         // load the stations into cache
         let estimator = BusArrivalEstimator(client: try! LTAClient(accountKey: apiKey))
@@ -71,6 +73,7 @@ class LTAService {
                     longitude: $0.coordinate.longitude
                 )
         })
+        estimator.data.saveMRTRoutesToCache(allMRTRoutes)
     }
     
     private func rebuildBusStopsById() {
@@ -552,7 +555,25 @@ class LTAService {
         print("Using fallback preseeded MRT stations")
         loadFallbackStations()
     }
-    
+
+    private func loadPreseededMRTRoutes() {
+        struct MRTRoutesContents: Codable {
+            var routes: [String: LTATrainRoutes]
+        }
+
+        if let url = Bundle.main.url(forResource: "mrt_routes", withExtension: "json") {
+            do {
+                let data = try Data(contentsOf: url)
+                let decoded = try JSONDecoder().decode(MRTRoutesContents.self, from: data)
+                self.allMRTRoutes = Array(decoded.routes.values)
+                print("Successfully loaded \(decoded.routes.values.count) MRT/LRT routes from main bundle url.")
+                return
+            } catch {
+                print("Error decoding stations.json from bundle url: \(error)")
+            }
+        }
+    }
+
     private func loadFallbackStations() {
         self.allStations = [
             Station(
