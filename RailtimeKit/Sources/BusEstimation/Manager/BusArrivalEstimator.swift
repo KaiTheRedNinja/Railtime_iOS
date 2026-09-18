@@ -17,7 +17,7 @@ public final class BusArrivalEstimator {
     /// The reference "current time" estimates are computed relative to.
     public var now: Date
     /// The cached data source wrapping `client`'s non-live endpoints.
-    public let data: CachedDataSource
+    public let data: LTADataSource
 
     /// Creates an estimator.
     ///
@@ -37,7 +37,7 @@ public final class BusArrivalEstimator {
     ) {
         self.client = client
         self.now = now ?? .now
-        self.data = CachedDataSource(client: client, cache: DiskCache(root: cacheDir, ttl: cacheTTLHours * 3600))
+        self.data = LTADataSource(client: client, cache: DiskCache(root: cacheDir, ttl: cacheTTLHours * 3600))
     }
 }
 
