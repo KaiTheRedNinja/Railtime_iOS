@@ -1,0 +1,2655 @@
+
+[
+    {
+        "id": "NS1/EW24",
+        "name": "Jurong East",
+        "latitude": 1.3332,
+        "longitude": 103.7423,
+        "lines": ["NS", "EW"],
+        "chineseName": "裕廊东",
+        "tamilName": "ஜூரோங் கிழக்கு",
+        "exits": [
+            { "code": "Exit A", "description": "Jurong Gateway Road, Vision Exchange" },
+            { "code": "Exit B", "description": "Westgate, Ng Teng Fong General Hospital" },
+            { "code": "Exit C", "description": "JEM, IMM Building (via J-Walk)" },
+            { "code": "Exit D", "description": "Jurong East Bus Interchange" }
+        ]
+    },
+    {
+        "id": "NS2",
+        "name": "Bukit Batok",
+        "latitude": 1.3490,
+        "longitude": 103.7496,
+        "lines": ["NS"],
+        "chineseName": "武吉巴督",
+        "tamilName": "புக்கிட் பாத்தோக்",
+        "exits": [
+            { "code": "Exit A", "description": "West Mall, Bukit Batok Central" },
+            { "code": "Exit B", "description": "Bukit Batok Bus Interchange" },
+            { "code": "Exit C", "description": "Bukit Batok Community Club, Bukit Batok Polyclinic" },
+            { "code": "Exit D", "description": "Bukit Batok West Avenue 3" }
+        ]
+    },
+    {
+        "id": "NS3",
+        "name": "Bukit Gombak",
+        "latitude": 1.3587,
+        "longitude": 103.7518,
+        "lines": ["NS"],
+        "chineseName": "武吉甘柏",
+        "tamilName": "புக்கிட் கோம்பாக்",
+        "exits": [
+            { "code": "Exit A", "description": "Bukit Batok Town Park (Little Guilin), Bukit Gombak Stadium" },
+            { "code": "Exit B", "description": "Bukit Batok West Avenue 5, Dazhong Primary School" },
+            { "code": "Exit C", "description": "Bukit Gombak Community Centre" },
+            { "code": "Exit D", "description": "Hillgrove Secondary School" }
+        ]
+    },
+    {
+        "id": "NS4/BP1",
+        "name": "Choa Chu Kang",
+        "latitude": 1.3854,
+        "longitude": 103.7443,
+        "lines": ["NS", "BP"],
+        "chineseName": "蔡厝港",
+        "tamilName": "சுவா சூ காங்",
+        "exits": [
+            { "code": "Exit A", "description": "Lot One Shoppers' Mall, Choa Chu Kang Bus Interchange" },
+            { "code": "Exit B", "description": "Choa Chu Kang Centre, Keat Hong Community Club" },
+            { "code": "Exit C", "description": "Choa Chu Kang Avenue 4" },
+            { "code": "Exit D", "description": "Choa Chu Kang Park" }
+        ]
+    },
+    {
+        "id": "NS5",
+        "name": "Yew Tee",
+        "latitude": 1.3973,
+        "longitude": 103.7474,
+        "lines": ["NS"],
+        "chineseName": "油池",
+        "tamilName": "இயூ டீ",
+        "exits": [
+            { "code": "Exit A", "description": "YewTee Point, Choa Chu Kang Street 62" },
+            { "code": "Exit B", "description": "Yew Tee Square, Choa Chu Kang Drive" },
+            { "code": "Exit C", "description": "Limbang Park, Regent Secondary School" },
+            { "code": "Exit D", "description": "Choa Chu Kang North 6" }
+        ]
+    },
+    {
+        "id": "NS7",
+        "name": "Kranji",
+        "latitude": 1.4251,
+        "longitude": 103.7621,
+        "lines": ["NS"],
+        "chineseName": "克兰芝",
+        "tamilName": "கிராஞ்சி",
+        "exits": [
+            { "code": "Exit A", "description": "Woodlands Road, Singapore Turf Club (Former)" },
+            { "code": "Exit B", "description": "Kranji Road, Kranji Reservoir Park transfer buses" },
+            { "code": "Exit C", "description": "Turf Club Avenue" },
+            { "code": "Exit D", "description": "Woodlands Road, Heavy Vehicle Park" }
+        ]
+    },
+    {
+        "id": "NS8",
+        "name": "Marsiling",
+        "latitude": 1.4325,
+        "longitude": 103.7741,
+        "lines": ["NS"],
+        "chineseName": "马西岭",
+        "tamilName": "மார்சிலிங்",
+        "exits": [
+            { "code": "Exit A", "description": "Woodlands Avenue 3, Marsiling Lane" },
+            { "code": "Exit B", "description": "Woodlands Avenue 1, Marsiling Community Club" },
+            { "code": "Exit C", "description": "Fuchun Community Club, Fuchun Primary School" },
+            { "code": "Exit D", "description": "Marsiling Drive, Woodlands Stadium" }
+        ]
+    },
+    {
+        "id": "NS9/TE2",
+        "name": "Woodlands",
+        "latitude": 1.4369,
+        "longitude": 103.7865,
+        "lines": ["NS", "TE"],
+        "chineseName": "兀兰",
+        "tamilName": "உட்லண்ட்ஸ்",
+        "exits": [
+            { "code": "Exit 1", "description": "Causeway Point, Woodlands Bus Interchange" },
+            { "code": "Exit 2", "description": "Woodlands Civic Centre, CPF Woodlands" },
+            { "code": "Exit 3", "description": "Woodlands Square, Woods Square" },
+            { "code": "Exit 4", "description": "Woodlands Avenue 3, Republic Polytechnic" },
+            { "code": "Exit 5", "description": "Woodlands Avenue 2" },
+            { "code": "Exit 6", "description": "Woodlands Avenue 5" },
+            { "code": "Exit 7", "description": "Woodlands Square pedestrian mall" }
+        ]
+    },
+    {
+        "id": "NS10",
+        "name": "Admiralty",
+        "latitude": 1.4406,
+        "longitude": 103.8010,
+        "lines": ["NS"],
+        "chineseName": "海军部",
+        "tamilName": "அட்மிரல்ட்டி",
+        "exits": [
+            { "code": "Exit A", "description": "Kampung Admiralty, Admiralty Place" },
+            { "code": "Exit B", "description": "Woodlands Avenue 7, Woodlands Galaxy Community Club" },
+            { "code": "Exit C", "description": "Woodlands Drive 71" },
+            { "code": "Exit D", "description": "Woodlands Ring Primary School" }
+        ]
+    },
+    {
+        "id": "NS11",
+        "name": "Sembawang",
+        "latitude": 1.4491,
+        "longitude": 103.8201,
+        "lines": ["NS"],
+        "chineseName": "三巴旺",
+        "tamilName": "செம்பவாங்",
+        "exits": [
+            { "code": "Exit A", "description": "Sun Plaza, Sembawang Bus Interchange" },
+            { "code": "Exit B", "description": "Sembawang Way, Canberra Community Club" },
+            { "code": "Exit C", "description": "Sembawang Drive, Sembawang Mart" },
+            { "code": "Exit D", "description": "Canberra Road, Bukit Canberra" }
+        ]
+    },
+    {
+        "id": "NS12",
+        "name": "Canberra",
+        "latitude": 1.4431,
+        "longitude": 103.8297,
+        "lines": ["NS"],
+        "chineseName": "坎贝拉",
+        "tamilName": "கான்பரா",
+        "exits": [
+            { "code": "Exit A", "description": "Canberra Plaza, Canberra Walk" },
+            { "code": "Exit B", "description": "Canberra Link, Jalan Sendudok" },
+            { "code": "Exit C", "description": "Canberra Way, EastBrook @ Canberra" },
+            { "code": "Exit D", "description": "Canberra Crescent, EastCreek @ Canberra" },
+            { "code": "Exit E", "description": "Canberra Link overhead bridge" }
+        ]
+    },
+    {
+        "id": "NS13",
+        "name": "Yishun",
+        "latitude": 1.4294,
+        "longitude": 103.8350,
+        "lines": ["NS"],
+        "chineseName": "义顺",
+        "tamilName": "யீஷூன்",
+        "exits": [
+            { "code": "Exit A", "description": "Northpoint City (North Wing), Yishun Avenue 2" },
+            { "code": "Exit B", "description": "Yishun Avenue 5, Chong Pang City transfer buses" },
+            { "code": "Exit C", "description": "Northpoint City (South Wing), Yishun Integrated Transport Hub" },
+            { "code": "Exit D", "description": "Yishun Pond Park, Khoo Teck Puat Hospital" },
+            { "code": "Exit E", "description": "Yishun Avenue 2, Golden Village Yishun" }
+        ]
+    },
+    {
+        "id": "NS14",
+        "name": "Khatib",
+        "latitude": 1.4174,
+        "longitude": 103.8329,
+        "lines": ["NS"],
+        "chineseName": "卡迪",
+        "tamilName": "காதிப்",
+        "exits": [
+            { "code": "Exit A", "description": "Yishun Avenue 2, Mandai Wildlife Reserve Shuttle" },
+            { "code": "Exit B", "description": "Yishun Ring Road, Peiying Primary School" },
+            { "code": "Exit C", "description": "Yishun Avenue 2, Lower Seletar Reservoir Park" },
+            { "code": "Exit D", "description": "Yishun Street 81, Naval Base Secondary School" }
+        ]
+    },
+    {
+        "id": "NS15",
+        "name": "Yio Chu Kang",
+        "latitude": 1.3817,
+        "longitude": 103.8449,
+        "lines": ["NS"],
+        "chineseName": "杨厝港",
+        "tamilName": "இயோ சூ காங்",
+        "exits": [
+            { "code": "Exit A", "description": "Nanyang Polytechnic, Ang Mo Kio Avenue 8" },
+            { "code": "Exit B", "description": "Yio Chu Kang Bus Interchange, Ang Mo Kio Thye Hua Kwan Hospital" },
+            { "code": "Exit C", "description": "Yio Chu Kang Sports Complex, Grassroots' Club" },
+            { "code": "Exit D", "description": "Anderson Serangoon Junior College" }
+        ]
+    },
+    {
+        "id": "NS16",
+        "name": "Ang Mo Kio",
+        "latitude": 1.3699,
+        "longitude": 103.8496,
+        "lines": ["NS"],
+        "chineseName": "宏茂桥",
+        "tamilName": "அங் மோ கியோ",
+        "exits": [
+            { "code": "Exit A", "description": "AMK Hub, Ang Mo Kio Bus Interchange" },
+            { "code": "Exit B", "description": "Ang Mo Kio Avenue 8, Cheng San Community Club" },
+            { "code": "Exit C", "description": "Ang Mo Kio Town Garden East" },
+            { "code": "Exit D", "description": "Ang Mo Kio Avenue 3" }
+        ]
+    },
+    {
+        "id": "NS17/CC15",
+        "name": "Bishan",
+        "latitude": 1.3508,
+        "longitude": 103.8481,
+        "lines": ["NS", "CC"],
+        "chineseName": "碧山",
+        "tamilName": "பீஷான்",
+        "exits": [
+            { "code": "Exit A", "description": "Junction 8, Bishan Bus Interchange" },
+            { "code": "Exit B", "description": "Bishan Community Club, CPF Bishan Building" },
+            { "code": "Exit C", "description": "Bishan Stadium, Bishan Swimming Complex" },
+            { "code": "Exit D", "description": "Bishan-Ang Mo Kio Park, Raffles Institution" },
+            { "code": "Exit E", "description": "Bishan Street 14" }
+        ]
+    },
+    {
+        "id": "NS18",
+        "name": "Braddell",
+        "latitude": 1.3405,
+        "longitude": 103.8468,
+        "lines": ["NS"],
+        "chineseName": "布莱德",
+        "tamilName": "பிரேடல்",
+        "exits": [
+            { "code": "Exit A", "description": "Lorong 2 Toa Payoh, Beatty Secondary School" },
+            { "code": "Exit B", "description": "Lorong 1 Toa Payoh, Braddell Heights Community Club" },
+            { "code": "Exit C", "description": "Toa Payoh West Community Club" }
+        ]
+    },
+    {
+        "id": "NS19",
+        "name": "Toa Payoh",
+        "latitude": 1.3326,
+        "longitude": 103.8476,
+        "lines": ["NS"],
+        "chineseName": "大巴窑",
+        "tamilName": "தோ பாயோ",
+        "exits": [
+            { "code": "Exit A", "description": "HDB Hub, Toa Payoh Bus Interchange" },
+            { "code": "Exit B", "description": "Toa Payoh Central, Toa Payoh Public Library" },
+            { "code": "Exit C", "description": "Lorong 2 Toa Payoh" },
+            { "code": "Exit D", "description": "Toa Payoh Town Park, SAFRA Toa Payoh" }
+        ]
+    },
+    {
+        "id": "NS20",
+        "name": "Novena",
+        "latitude": 1.3204,
+        "longitude": 103.8438,
+        "lines": ["NS"],
+        "chineseName": "诺维娜",
+        "tamilName": "நொவீனா",
+        "exits": [
+            { "code": "Exit A", "description": "Velocity @ Novena Square, Mount Elizabeth Novena Hospital" },
+            { "code": "Exit B", "description": "Square 2, Tan Tock Seng Hospital, Novena Specialist Center" },
+            { "code": "Exit C", "description": "United Square Shopping Mall, Goldhill Plaza" }
+        ]
+    },
+    {
+        "id": "NS21/DT11",
+        "name": "Newton",
+        "latitude": 1.3123,
+        "longitude": 103.8380,
+        "lines": ["NS", "DT"],
+        "chineseName": "纽顿",
+        "tamilName": "நியூட்டன்",
+        "exits": [
+            { "code": "Exit A", "description": "Scotts Road, Prudential Tower, Sheraton Towers Singapore" },
+            { "code": "Exit B", "description": "Newton Food Centre, Anglo-Chinese School (Junior)" },
+            { "code": "Exit C", "description": "Bukit Timah Road, Cairnhill Community Club" }
+        ]
+    },
+    {
+        "id": "NS22/TE14",
+        "name": "Orchard",
+        "latitude": 1.3040,
+        "longitude": 103.8318,
+        "lines": ["NS", "TE"],
+        "chineseName": "乌节",
+        "tamilName": "ஆர்ச்சர்ட்",
+        "exits": [
+            { "code": "Exit 1", "description": "ION Orchard, Wisma Atria" },
+            { "code": "Exit 2", "description": "Tangs Plaza, Lucky Plaza" },
+            { "code": "Exit 3", "description": "Shaw House, WHEELOCK PLACE" },
+            { "code": "Exit 4", "description": "Orchard Boulevard, Four Seasons Hotel" },
+            { "code": "Exit 5", "description": "Paterson Road, Camden Medical Centre" },
+            { "code": "Exit 6", "description": "Scotts Road, Far East Plaza" },
+            { "code": "Exit 7", "description": "Orchard Road pedestrian underpass" },
+            { "code": "Exit 8", "description": "Boutiques along Orchard Turn" }
+        ]
+    },
+    {
+        "id": "NS23",
+        "name": "Somerset",
+        "latitude": 1.3002,
+        "longitude": 103.8390,
+        "lines": ["NS"],
+        "chineseName": "索美塞",
+        "tamilName": "சாமர்செட்",
+        "exits": [
+            { "code": "Exit A", "description": "313@somerset, Orchard Central, Orchard Gateway" },
+            { "code": "Exit B", "description": "Midpoint Orchard, The Centrepoint" },
+            { "code": "Exit C", "description": "Somerset Skate Park, *SCAPE, Cineleisure Orchard" }
+        ]
+    },
+    {
+        "id": "NS24/NE6/CC1",
+        "name": "Dhoby Ghaut",
+        "latitude": 1.2989,
+        "longitude": 103.8459,
+        "lines": ["NS", "NE", "CC"],
+        "chineseName": "多美歌",
+        "tamilName": "டோபி காட்",
+        "exits": [
+            { "code": "Exit A", "description": "Plaza Singapura, The Atrium@Orchard" },
+            { "code": "Exit B", "description": "The Cathay, School of the Arts (SOTA)" },
+            { "code": "Exit C", "description": "Istana Park, Fort Canning Park" },
+            { "code": "Exit D", "description": "Orchard Road, House of Tan Yeok Nee" },
+            { "code": "Exit E", "description": "Handy Road, Mount Emily Park" },
+            { "code": "Exit F", "description": "Penang Road, Haw Par Centre" }
+        ]
+    },
+    {
+        "id": "NS25/EW13",
+        "name": "City Hall",
+        "latitude": 1.2931,
+        "longitude": 103.8521,
+        "lines": ["NS", "EW"],
+        "chineseName": "政府大厦",
+        "tamilName": "சிட்டி ஹால்",
+        "exits": [
+            { "code": "Exit A", "description": "Raffles City Shopping Centre, Swissôtel The Stamford" },
+            { "code": "Exit B", "description": "St Andrew's Cathedral, National Gallery Singapore" },
+            { "code": "Exit C", "description": "Capitol Piazza, Funan Mall, Peninsula Plaza" },
+            { "code": "Exit D", "description": "Padang, Singapore Recreation Club" }
+        ]
+    },
+    {
+        "id": "NS26/EW14",
+        "name": "Raffles Place",
+        "latitude": 1.2839,
+        "longitude": 103.8515,
+        "lines": ["NS", "EW"],
+        "chineseName": "莱佛士坊",
+        "tamilName": "ராஃபிள்ஸ் பிளேஸ்",
+        "exits": [
+            { "code": "Exit A", "description": "One Raffles Place, Caltex House, Republic Plaza" },
+            { "code": "Exit B", "description": "OCBC Centre, Singapore River, Boat Quay" },
+            { "code": "Exit C", "description": "Ocean Financial Centre, Collyer Quay" },
+            { "code": "Exit D", "description": "Equity Plaza, CapitaGreen, Market Street Food Centre" },
+            { "code": "Exit E", "description": "Fullerton Hotel, Merlion Park" },
+            { "code": "Exit F", "description": "Robinson Road, Shenton Way" },
+            { "code": "Exit G", "description": "Battery Road, UOB Plaza" },
+            { "code": "Exit H", "description": "Six Battery Road, Asian Civilisations Museum" },
+            { "code": "Exit I", "description": "Bank of China Building, Ascott Raffles Place" },
+            { "code": "Exit J", "description": "The Arcade, Clifford Centre" }
+        ]
+    },
+    {
+        "id": "NS27/CC33/TE20",
+        "name": "Marina Bay",
+        "latitude": 1.2764,
+        "longitude": 103.8546,
+        "lines": ["NS", "CE", "TE"],
+        "chineseName": "滨海湾",
+        "tamilName": "மரினா பே",
+        "exits": [
+            { "code": "Exit 1", "description": "Marina Bay Financial Centre, Marina Way" },
+            { "code": "Exit 2", "description": "Central Boulevard, Asia Square" },
+            { "code": "Exit 3", "description": "Marina One Residences" },
+            { "code": "Exit 4", "description": "Park Street, Straits View" }
+        ]
+    },
+    {
+        "id": "NS28",
+        "name": "Marina South Pier",
+        "latitude": 1.2662,
+        "longitude": 103.8637,
+        "lines": ["NS"],
+        "chineseName": "滨海南码头",
+        "tamilName": "மரினா சவுத் படகுத்துறை",
+        "exits": [
+            { "code": "Exit A", "description": "Marina South Pier, Singapore Island Cruise ferry terminal" },
+            { "code": "Exit B", "description": "Marina Bay Cruise Centre Singapore" }
+        ]
+    },
+    {
+        "id": "EW1",
+        "name": "Pasir Ris",
+        "latitude": 1.3725,
+        "longitude": 103.9493,
+        "lines": ["EW"],
+        "chineseName": "巴西立",
+        "tamilName": "பாசிர் ரிஸ்",
+        "exits": [
+            { "code": "Exit A", "description": "Pasir Ris Bus Interchange, Pasir Ris Town Park" },
+            { "code": "Exit B", "description": "White Sands Shopping Centre, Pasir Ris Central" },
+            { "code": "Exit C", "description": "Pasir Ris Street 51" }
+        ]
+    },
+    {
+        "id": "EW2/DT32",
+        "name": "Tampines",
+        "latitude": 1.3533,
+        "longitude": 103.9452,
+        "lines": ["EW", "DT"],
+        "chineseName": "淡滨尼",
+        "tamilName": "தம்பினிஸ்",
+        "exits": [
+            { "code": "Exit A", "description": "Tampines 1, Tampines Bus Interchange" },
+            { "code": "Exit B", "description": "Tampines Mall, Century Square" },
+            { "code": "Exit C", "description": "Our Tampines Hub, Tampines Concourse" },
+            { "code": "Exit D", "description": "Tampines Avenue 4, CPF Tampines Building" }
+        ]
+    },
+    {
+        "id": "EW3",
+        "name": "Simei",
+        "latitude": 1.3432,
+        "longitude": 103.9533,
+        "lines": ["EW"],
+        "chineseName": "四美",
+        "tamilName": "சீமெய்",
+        "exits": [
+            { "code": "Exit A", "description": "Eastpoint Mall, Simei Street 3" },
+            { "code": "Exit B", "description": "Changi General Hospital, Simei Care Centre" }
+        ]
+    },
+    {
+        "id": "EW4/CG",
+        "name": "Tanah Merah",
+        "latitude": 1.3273,
+        "longitude": 103.9463,
+        "lines": ["EW", "CG"],
+        "chineseName": "丹那美拉",
+        "tamilName": "தானா மேரா",
+        "exits": [
+            { "code": "Exit A", "description": "New Upper Changi Road, Bedok Market Place Complex" },
+            { "code": "Exit B", "description": "Anglican High School, Bedok South Avenue 3" }
+        ]
+    },
+    {
+        "id": "EW5",
+        "name": "Bedok",
+        "latitude": 1.3240,
+        "longitude": 103.9300,
+        "lines": ["EW"],
+        "chineseName": "勿洛",
+        "tamilName": "பிடோக்",
+        "exits": [
+            { "code": "Exit A", "description": "Bedok Mall, Bedok Integrated Transport Hub" },
+            { "code": "Exit B", "description": "Bedok Interchange Hawker Centre, Heartbeat@Bedok" },
+            { "code": "Exit C", "description": "New Upper Changi Road, Bedok North Avenue 3" }
+        ]
+    },
+    {
+        "id": "EW6",
+        "name": "Kembangan",
+        "latitude": 1.3211,
+        "longitude": 103.9129,
+        "lines": ["EW"],
+        "chineseName": "景万岸",
+        "tamilName": "கெம்பாங்கான்",
+        "exits": [
+            { "code": "Exit A", "description": "Sims Avenue East, Jalan Kembangan" },
+            { "code": "Exit B", "description": "Changi Road, Kampung Siglap Mosque" }
+        ]
+    },
+    {
+        "id": "EW7",
+        "name": "Eunos",
+        "latitude": 1.3197,
+        "longitude": 103.9030,
+        "lines": ["EW"],
+        "chineseName": "友诺士",
+        "tamilName": "யூனுஸ்",
+        "exits": [
+            { "code": "Exit A", "description": "Sims Avenue, Geylang Serai Market" },
+            { "code": "Exit B", "description": "Eunos Bus Interchange, Eunos Crescent" },
+            { "code": "Exit C", "description": "Jalan Eunos, Kampong Ubi Community Centre" }
+        ]
+    },
+    {
+        "id": "EW8/CC9",
+        "name": "Paya Lebar",
+        "latitude": 1.3181,
+        "longitude": 103.8931,
+        "lines": ["EW", "CC"],
+        "chineseName": "巴耶利峇",
+        "tamilName": "பாய லேபார்",
+        "exits": [
+            { "code": "Exit A", "description": "SingPost Centre, Paya Lebar Square" },
+            { "code": "Exit B", "description": "PLQ Mall, Paya Lebar Quarter" },
+            { "code": "Exit C", "description": "Geylang Road, Tanjong Katong Complex" },
+            { "code": "Exit D", "description": "Paya Lebar Road, City Plaza" }
+        ]
+    },
+    {
+        "id": "EW9",
+        "name": "Aljunied",
+        "latitude": 1.3164,
+        "longitude": 103.8829,
+        "lines": ["EW"],
+        "chineseName": "阿裕尼",
+        "tamilName": "அல்ஜுனிட்",
+        "exits": [
+            { "code": "Exit A", "description": "Aljunied Road, Geylang Methodist School" },
+            { "code": "Exit B", "description": "Sims Avenue, James Cook University" }
+        ]
+    },
+    {
+        "id": "EW10",
+        "name": "Kallang",
+        "latitude": 1.3115,
+        "longitude": 103.8714,
+        "lines": ["EW"],
+        "chineseName": "加冷",
+        "tamilName": "காலாங்",
+        "exits": [
+            { "code": "Exit A", "description": "Lorong 1 Geylang Bus Terminal, Kallang Riverside Park" },
+            { "code": "Exit B", "description": "Sims Avenue, Singapore Sports Hub transfer buses" }
+        ]
+    },
+    {
+        "id": "EW11",
+        "name": "Lavender",
+        "latitude": 1.3074,
+        "longitude": 103.8628,
+        "lines": ["EW"],
+        "chineseName": "劳明达",
+        "tamilName": "லவண்டர்",
+        "exits": [
+            { "code": "Exit A", "description": "Kallang Road, ICA Building (Immigration & Checkpoints Authority)" },
+            { "code": "Exit B", "description": "Victoria Street, Golden Mile Food Centre" }
+        ]
+    },
+    {
+        "id": "EW12/DT14",
+        "name": "Bugis",
+        "latitude": 1.3005,
+        "longitude": 103.8561,
+        "lines": ["EW", "DT"],
+        "chineseName": "武吉士",
+        "tamilName": "பூகிஸ்",
+        "exits": [
+            { "code": "Exit A", "description": "Victoria Street, Kampong Glam, Arab Street" },
+            { "code": "Exit B", "description": "Rochor Road, Raffles Hospital" },
+            { "code": "Exit C", "description": "Bugis Junction, Bugis+" },
+            { "code": "Exit D", "description": "Tan Quee Lan Street, DUO Galleria" }
+        ]
+    },
+    {
+        "id": "EW15",
+        "name": "Tanjong Pagar",
+        "latitude": 1.2764,
+        "longitude": 103.8457,
+        "lines": ["EW"],
+        "chineseName": "丹戎巴葛",
+        "tamilName": "தஞ்சோங் பகார்",
+        "exits": [
+            { "code": "Exit A", "description": "Guoco Tower, Tanjong Pagar Centre" },
+            { "code": "Exit B", "description": "Maxwell Chambers, Tanjong Pagar Plaza" },
+            { "code": "Exit C", "description": "Anson Road, International Plaza" },
+            { "code": "Exit D", "description": "Cecil Street, AXA Tower (redevelopment site)" },
+            { "code": "Exit G", "description": "Telok Ayer Park, Shenton Way" }
+        ]
+    },
+    {
+        "id": "EW16/NE3/TE17",
+        "name": "Outram Park",
+        "latitude": 1.2803,
+        "longitude": 103.8395,
+        "lines": ["EW", "NE", "TE"],
+        "chineseName": "欧南园",
+        "tamilName": "ஊட்ரம் பார்க்",
+        "exits": [
+            { "code": "Exit 1", "description": "Singapore General Hospital (SGH Campus)" },
+            { "code": "Exit 2", "description": "Outram Community Hospital, National Heart Centre" },
+            { "code": "Exit 3", "description": "Pearl's Hill City Park, Chinatown" },
+            { "code": "Exit 4", "description": "Dorsett Singapore, New Bridge Road" },
+            { "code": "Exit 6", "description": "Teo Hong Road, Bukit Pasoh Road" },
+            { "code": "Exit 7", "description": "Cantonment Road, Police Cantonment Complex" }
+        ]
+    },
+    {
+        "id": "EW17",
+        "name": "Tiong Bahru",
+        "latitude": 1.2861,
+        "longitude": 103.8270,
+        "lines": ["EW"],
+        "chineseName": "中峇鲁",
+        "tamilName": "தியோங் பாரு",
+        "exits": [
+            { "code": "Exit A", "description": "Tiong Bahru Plaza, Tiong Bahru Road" },
+            { "code": "Exit B", "description": "Bukit Ho Swee, Henderson Community Club" }
+        ]
+    },
+    {
+        "id": "EW18",
+        "name": "Redhill",
+        "latitude": 1.2896,
+        "longitude": 103.8168,
+        "lines": ["EW"],
+        "chineseName": "红山",
+        "tamilName": "ரெட்ஹில்",
+        "exits": [
+            { "code": "Exit A", "description": "Redhill Close, Enabling Village, Redhill Market" },
+            { "code": "Exit B", "description": "Jalan Tiong, Crescent Girls' School" }
+        ]
+    },
+    {
+        "id": "EW19",
+        "name": "Queenstown",
+        "latitude": 1.2944,
+        "longitude": 103.8060,
+        "lines": ["EW"],
+        "chineseName": "女皇镇",
+        "tamilName": "குவீன்ஸ்டவுன்",
+        "exits": [
+            { "code": "Exit A", "description": "Commonwealth Avenue, Queenstown Community Centre" },
+            { "code": "Exit B", "description": "Queenstown Stadium, Queenstown Sports Complex" },
+            { "code": "Exit C", "description": "Stirling Road, Queensway Shopping Centre" },
+            { "code": "Exit D", "description": "Margaret Drive, Queenstown Public Library" }
+        ]
+    },
+    {
+        "id": "EW20",
+        "name": "Commonwealth",
+        "latitude": 1.3025,
+        "longitude": 103.7983,
+        "lines": ["EW"],
+        "chineseName": "联邦",
+        "tamilName": "காமன்வெல்த்",
+        "exits": [
+            { "code": "Exit A", "description": "Commonwealth Drive, Sheng Siong Supermarket" },
+            { "code": "Exit B", "description": "Commonwealth Avenue, Faith Methodist Church" }
+        ]
+    },
+    {
+        "id": "EW21/CC22",
+        "name": "Buona Vista",
+        "latitude": 1.3073,
+        "longitude": 103.7900,
+        "lines": ["EW", "CC"],
+        "chineseName": "波那维斯达",
+        "tamilName": "புவன விஸ்தா",
+        "exits": [
+            { "code": "Exit A", "description": "The Star Vista, Rochester Mall" },
+            { "code": "Exit B", "description": "North Buona Vista Road, Biopolis" },
+            { "code": "Exit C", "description": "Civil Service College, MOE Headquarters" },
+            { "code": "Exit D", "description": "Commonwealth Avenue, one-north transfer buses" }
+        ]
+    },
+    {
+        "id": "EW22",
+        "name": "Dover",
+        "latitude": 1.3114,
+        "longitude": 103.7786,
+        "lines": ["EW"],
+        "chineseName": "杜佛",
+        "tamilName": "டோவர்",
+        "exits": [
+            { "code": "Exit A", "description": "Singapore Polytechnic, Dover Road" },
+            { "code": "Exit B", "description": "Commonwealth Avenue West, School of Science and Technology" }
+        ]
+    },
+    {
+        "id": "EW23",
+        "name": "Clementi",
+        "latitude": 1.3152,
+        "longitude": 103.7652,
+        "lines": ["EW"],
+        "chineseName": "金文泰",
+        "tamilName": "கிளிமெண்டி",
+        "exits": [
+            { "code": "Exit A", "description": "The Clementi Mall, Clementi Bus Interchange" },
+            { "code": "Exit B", "description": "Clementi Town Centre, Clementi Polyclinic" },
+            { "code": "Exit C", "description": "Commonwealth Avenue West, 321 Clementi" },
+            { "code": "Exit D", "description": "Clementi Stadium, Clementi Sports Hall" }
+        ]
+    },
+    {
+        "id": "EW25",
+        "name": "Chinese Garden",
+        "latitude": 1.3424,
+        "longitude": 103.7326,
+        "lines": ["EW"],
+        "chineseName": "裕华园",
+        "tamilName": "சீனத் தோட்டம்",
+        "exits": [
+            { "code": "Exit A", "description": "Boon Lay Way, Jurong Lake Gardens" },
+            { "code": "Exit B", "description": "Jurong East Sports Complex, Jurong East Swimming Complex" },
+            { "code": "Exit C", "description": "Yuhua Community Club, Fuhua Secondary School" }
+        ]
+    },
+    {
+        "id": "EW26",
+        "name": "Lakeside",
+        "latitude": 1.3442,
+        "longitude": 103.7209,
+        "lines": ["EW"],
+        "chineseName": "湖畔",
+        "tamilName": "ஏரிக்கரை",
+        "exits": [
+            { "code": "Exit A", "description": "Boon Lay Way, Jurong Lake Gardens (Lakeside Field)" },
+            { "code": "Exit B", "description": "Yuan Ching Road, Jurong Secondary School" },
+            { "code": "Exit C", "description": "Corporation Road, Rulang Primary School" }
+        ]
+    },
+    {
+        "id": "EW27",
+        "name": "Boon Lay",
+        "latitude": 1.3386,
+        "longitude": 103.7060,
+        "lines": ["EW"],
+        "chineseName": "文礼",
+        "tamilName": "பூன் லே",
+        "exits": [
+            { "code": "Exit A", "description": "Boon Lay Bus Interchange, Jurong Point (Boon Lay MRT)" },
+            { "code": "Exit B", "description": "Boon Lay Way, Jurong Central Park" },
+            { "code": "Exit C", "description": "SAFRA Jurong, Jurong West Community Building" }
+        ]
+    },
+    {
+        "id": "EW28",
+        "name": "Pioneer",
+        "latitude": 1.3376,
+        "longitude": 103.6973,
+        "lines": ["EW"],
+        "chineseName": "先驱",
+        "tamilName": "பயனியர்",
+        "exits": [
+            { "code": "Exit A", "description": "Jurong West Street 63, Pioneer Mall" },
+            { "code": "Exit B", "description": "Jurong West Avenue 5, Boon Lay Secondary School" }
+        ]
+    },
+    {
+        "id": "EW29",
+        "name": "Joo Koon",
+        "latitude": 1.3277,
+        "longitude": 103.6784,
+        "lines": ["EW"],
+        "chineseName": "裕群",
+        "tamilName": "ஜூ கூன்",
+        "exits": [
+            { "code": "Exit A", "description": "FairPrice Hub, Joo Koon Integrated Transport Hub" },
+            { "code": "Exit B", "description": "Joo Koon Circle, Singapore Discovery Centre" },
+            { "code": "Exit C", "description": "Benoi Road, Singapore Army Museum" }
+        ]
+    },
+    {
+        "id": "EW30",
+        "name": "Gul Circle",
+        "latitude": 1.3195,
+        "longitude": 103.6605,
+        "lines": ["EW"],
+        "chineseName": "卡尔圈",
+        "tamilName": "கல் சர்க்கிள்",
+        "exits": [
+            { "code": "Exit A", "description": "Tuas Road, Gul Circle" },
+            { "code": "Exit B", "description": "Tuas Avenue 3, Gul Avenue" }
+        ]
+    },
+    {
+        "id": "EW31",
+        "name": "Tuas Crescent",
+        "latitude": 1.3210,
+        "longitude": 103.6491,
+        "lines": ["EW"],
+        "chineseName": "大士弯",
+        "tamilName": "துவாஸ் கிரசண்ட்",
+        "exits": [
+            { "code": "Exit A", "description": "Tuas Crescent, Pioneer Road" },
+            { "code": "Exit B", "description": "Tuas Avenue 7, Tuas Avenue 8" }
+        ]
+    },
+    {
+        "id": "EW32",
+        "name": "Tuas West Road",
+        "latitude": 1.3299,
+        "longitude": 103.6396,
+        "lines": ["EW"],
+        "chineseName": "大士西路",
+        "tamilName": "துவாஸ் வெஸ்ட் ரோடு",
+        "exits": [
+            { "code": "Exit A", "description": "Tuas West Road, Pioneer Road" },
+            { "code": "Exit B", "description": "Tuas Avenue 10, Tuas Avenue 20" }
+        ]
+    },
+    {
+        "id": "EW33",
+        "name": "Tuas Link",
+        "latitude": 1.3404,
+        "longitude": 103.6369,
+        "lines": ["EW"],
+        "chineseName": "大士连路",
+        "tamilName": "துவாஸ் லிங்க்",
+        "exits": [
+            { "code": "Exit A", "description": "Tuas West Drive, Tuas Checkpoint transfer buses" },
+            { "code": "Exit B", "description": "Tuas South Avenue 3, Raffles Marina" }
+        ]
+    },
+    {
+        "id": "CG1/DT35",
+        "name": "Expo",
+        "latitude": 1.3354,
+        "longitude": 103.9616,
+        "lines": ["CG", "DT"],
+        "chineseName": "博览",
+        "tamilName": "எக்ஸ்போ",
+        "exits": [
+            { "code": "Exit A", "description": "Singapore EXPO, Changi City Point" },
+            { "code": "Exit B", "description": "Expo Drive, Upper Changi Road East" }
+        ]
+    },
+    {
+        "id": "CG2",
+        "name": "Changi Airport",
+        "latitude": 1.3573,
+        "longitude": 103.9886,
+        "lines": ["CG"],
+        "chineseName": "樟宜机场",
+        "tamilName": "சாங்கி விமானநிலையம்",
+        "exits": [
+            { "code": "Exit A", "description": "Changi Airport Terminal 2, Terminal 3" },
+            { "code": "Exit B", "description": "Jewel Changi Airport, Terminal 1 Link Bridge" }
+        ]
+    },
+    {
+        "id": "NE1/CC29",
+        "name": "HarbourFront",
+        "latitude": 1.2653,
+        "longitude": 103.8224,
+        "lines": ["NE", "CC"],
+        "chineseName": "港湾",
+        "tamilName": "துறைமுகம்",
+        "exits": [
+            { "code": "Exit A", "description": "Telok Blangah Road, Seah Im Food Centre, Seah Im Bus Terminal" },
+            { "code": "Exit B", "description": "HarbourFront Centre, Singapore Cruise Centre, Regional Ferry Terminal" },
+            { "code": "Exit C", "description": "VivoCity (Level 1 / B2), Sentosa Express transfer" },
+            { "code": "Exit D", "description": "VivoCity (Promenade), Sentosa Boardwalk" },
+            { "code": "Exit E", "description": "HarbourFront Tower One & Two, Singapore Cable Car" }
+        ]
+    },
+    {
+        "id": "NE4/DT19",
+        "name": "Chinatown",
+        "latitude": 1.2845,
+        "longitude": 103.8434,
+        "lines": ["NE", "DT"],
+        "chineseName": "牛车水",
+        "tamilName": "சைனாடவுன்",
+        "exits": [
+            { "code": "Exit A", "description": "Pagoda Street, Chinatown Heritage Centre, Sri Mariamman Temple" },
+            { "code": "Exit C", "description": "People's Park Complex, Upper Cross Street" },
+            { "code": "Exit D", "description": "People's Park Centre, Chinatown Point" },
+            { "code": "Exit E", "description": "Chinatown Point, Hong Lim Complex" },
+            { "code": "Exit F", "description": "Upper Cross Street, Hong Lim Market & Food Centre" }
+        ]
+    },
+    {
+        "id": "NE5",
+        "name": "Clarke Quay",
+        "latitude": 1.2884,
+        "longitude": 103.8466,
+        "lines": ["NE"],
+        "chineseName": "克拉码头",
+        "tamilName": "கிளார்க் கீ",
+        "exits": [
+            { "code": "Exit A", "description": "Clarke Quay Central, Singapore River, Read Bridge" },
+            { "code": "Exit B", "description": "The Riverwalk, Upper Circular Road" },
+            { "code": "Exit C", "description": "Swissôtel Merchant Court, Merchant Road" },
+            { "code": "Exit E", "description": "Clarke Quay Central (Eu Tong Sen Street)" },
+            { "code": "Exit F", "description": "Clarke Quay Central (New Bridge Road), Hong Lim Park" },
+            { "code": "Exit G", "description": "Clarke Quay riverside promenade, Boat Quay" }
+        ]
+    },
+    {
+        "id": "NE7/DT12",
+        "name": "Little India",
+        "latitude": 1.3068,
+        "longitude": 103.8492,
+        "lines": ["NE", "DT"],
+        "chineseName": "小印度",
+        "tamilName": "லிட்டில் இந்தியா",
+        "exits": [
+            { "code": "Exit A", "description": "Tekka Centre, Buffalo Road" },
+            { "code": "Exit B", "description": "Bukit Timah Road, Race Course Road" },
+            { "code": "Exit C", "description": "Race Course Road, Sri Veeramakaliamman Temple" },
+            { "code": "Exit D", "description": "Sungei Road, Sim Lim Square" },
+            { "code": "Exit E", "description": "Kerbau Road, Little India Arcade" }
+        ]
+    },
+    {
+        "id": "NE8",
+        "name": "Farrer Park",
+        "latitude": 1.3126,
+        "longitude": 103.8546,
+        "lines": ["NE"],
+        "chineseName": "花拉公园",
+        "tamilName": "ஃபேரர் பார்க்",
+        "exits": [
+            { "code": "Exit A", "description": "Rangoon Road, Owen Road" },
+            { "code": "Exit B", "description": "Race Course Road, Sri Srinivasa Perumal Temple" },
+            { "code": "Exit C", "description": "Connexion, Farrer Park Hospital, One Farrer Hotel" },
+            { "code": "Exit D", "description": "Perumal Road" },
+            { "code": "Exit E", "description": "City Square Mall, Kitchener Road" },
+            { "code": "Exit F", "description": "Mustafa Centre, Syed Alwi Road" },
+            { "code": "Exit G", "description": "City Square Residences, Somme Road" },
+            { "code": "Exit H", "description": "Serangoon Road, Tai Pei Buddhist Centre" },
+            { "code": "Exit I", "description": "City Square Mall (Basement 1 link)" }
+        ]
+    },
+    {
+        "id": "NE9",
+        "name": "Boon Keng",
+        "latitude": 1.3194,
+        "longitude": 103.8617,
+        "lines": ["NE"],
+        "chineseName": "文庆",
+        "tamilName": "பூன் கெங்",
+        "exits": [
+            { "code": "Exit A", "description": "Boon Keng Road, Kallang Community Club" },
+            { "code": "Exit B", "description": "Bendemeer Road, Bendemeer Shopping Mall" },
+            { "code": "Exit C", "description": "Serangoon Road, Whampoa River Park Connector" }
+        ]
+    },
+    {
+        "id": "NE10",
+        "name": "Potong Pasir",
+        "latitude": 1.3314,
+        "longitude": 103.8691,
+        "lines": ["NE"],
+        "chineseName": "波东巴西",
+        "tamilName": "போத்தோங் பாசிர்",
+        "exits": [
+            { "code": "Exit A", "description": "The Poiz Centre, Upper Serangoon Road" },
+            { "code": "Exit B", "description": "Potong Pasir Community Club, Saint Andrew's Village" },
+            { "code": "Exit C", "description": "The Poiz Residences, Potong Pasir Avenue 1" }
+        ]
+    },
+    {
+        "id": "NE11",
+        "name": "Woodleigh",
+        "latitude": 1.3392,
+        "longitude": 103.8708,
+        "lines": ["NE"],
+        "chineseName": "兀里",
+        "tamilName": "உட்லீ",
+        "exits": [
+            { "code": "Exit A", "description": "The Woodleigh Mall, Woodleigh Village" },
+            { "code": "Exit B", "description": "Upper Serangoon Road, Bidadari Park" },
+            { "code": "Exit C", "description": "Mount Vernon Sanctuary, Alkaff Lake" },
+            { "code": "Exit D", "description": "Woodleigh Bus Interchange (Underground), Heritage Walk" },
+            { "code": "Exit E", "description": "Woodleigh Glen, Bartley Secondary School" }
+        ]
+    },
+    {
+        "id": "NE12/CC13",
+        "name": "Serangoon",
+        "latitude": 1.3497,
+        "longitude": 103.8736,
+        "lines": ["NE", "CC"],
+        "chineseName": "实龙岗",
+        "tamilName": "சிராங்கூன்",
+        "exits": [
+            { "code": "Exit A", "description": "Upper Serangoon Road, Serangoon Central" },
+            { "code": "Exit B", "description": "Serangoon Bus Interchange, NEX Shopping Mall" },
+            { "code": "Exit C", "description": "NEX (Level 1), Serangoon Avenue 2" },
+            { "code": "Exit D", "description": "Serangoon Central, Braddell Heights Community Hub" },
+            { "code": "Exit E", "description": "Upper Serangoon Road, Boundary Road" },
+            { "code": "Exit F", "description": "Serangoon Avenue 2, Yangzheng Primary School" },
+            { "code": "Exit G", "description": "Serangoon Stadium, Serangoon Swimming Complex" },
+            { "code": "Exit H", "description": "NEX (Basement 2 link)" }
+        ]
+    },
+    {
+        "id": "NE13",
+        "name": "Kovan",
+        "latitude": 1.3601,
+        "longitude": 103.8850,
+        "lines": ["NE"],
+        "chineseName": "高文",
+        "tamilName": "கோவன்",
+        "exits": [
+            { "code": "Exit A", "description": "Heartland Mall, Kovan 209 Market & Food Centre" },
+            { "code": "Exit B", "description": "Upper Serangoon Road, Kovan Hub" },
+            { "code": "Exit C", "description": "Tampines Road, Paya Lebar Kovan Community Club" }
+        ]
+    },
+    {
+        "id": "NE14",
+        "name": "Hougang",
+        "latitude": 1.3713,
+        "longitude": 103.8924,
+        "lines": ["NE"],
+        "chineseName": "后港",
+        "tamilName": "ஹவ்காங்",
+        "exits": [
+            { "code": "Exit A", "description": "Hougang Mall, Hougang Central" },
+            { "code": "Exit B", "description": "Hougang Central Bus Interchange, Hougang Polyclinic" },
+            { "code": "Exit C", "description": "Upper Serangoon Road, Montfort School" }
+        ]
+    },
+    {
+        "id": "NE15",
+        "name": "Buangkok",
+        "latitude": 1.3829,
+        "longitude": 103.8931,
+        "lines": ["NE"],
+        "chineseName": "万国",
+        "tamilName": "புவாங்கோக்",
+        "exits": [
+            { "code": "Exit A", "description": "Sengkang Central, Compassvale Bow" },
+            { "code": "Exit B", "description": "Sengkang Grand Mall, Buangkok Integrated Transport Hub" }
+        ]
+    },
+    {
+        "id": "NE16/STC",
+        "name": "Sengkang",
+        "latitude": 1.3917,
+        "longitude": 103.8955,
+        "lines": ["NE", "SK"],
+        "chineseName": "盛港",
+        "tamilName": "செங்காங்",
+        "exits": [
+            { "code": "Exit A", "description": "Compass One, Sengkang Community Hub" },
+            { "code": "Exit B", "description": "Sengkang Square, Kopitiam Square" },
+            { "code": "Exit C", "description": "Compassvale Road, Sengkang Bus Interchange" },
+            { "code": "Exit D", "description": "Compass One (Taxi Stand), Sengkang Central" }
+        ]
+    },
+    {
+        "id": "NE17/PTC",
+        "name": "Punggol",
+        "latitude": 1.4050,
+        "longitude": 103.9023,
+        "lines": ["NE", "PG", "CP"],
+        "chineseName": "榜鹅",
+        "tamilName": "பொங்கோல்",
+        "exits": [
+            { "code": "Exit A", "description": "Waterway Point (East Wing), Punggol Central" },
+            { "code": "Exit B", "description": "Punggol Bus Interchange, Punggol Town Square" },
+            { "code": "Exit C", "description": "Waterway Point (West Wing), My Waterway@Punggol" },
+            { "code": "Exit D", "description": "Punggol Place, One Punggol Community Hub" }
+        ]
+    },
+    {
+        "id": "NE18",
+        "name": "Punggol Coast",
+        "latitude": 1.4150,
+        "longitude": 103.9090,
+        "lines": ["NE"],
+        "chineseName": "榜鹅海岸",
+        "tamilName": "பொங்கோல் கோஸ்ட்",
+        "exits": [
+            { "code": "Exit 1", "description": "Singapore Institute of Technology (SIT Punggol Campus)" },
+            { "code": "Exit 2", "description": "Punggol Digital District, JTC Business Park" },
+            { "code": "Exit 3", "description": "Punggol Coast Bus Interchange, New Punggol Road" }
+        ]
+    },
+    {
+        "id": "CC2",
+        "name": "Bras Basah",
+        "latitude": 1.2968,
+        "longitude": 103.8507,
+        "lines": ["CC"],
+        "chineseName": "百胜",
+        "tamilName": "பிராஸ் பாசா",
+        "exits": [
+            { "code": "Exit A", "description": "Singapore Art Museum, Queen Street" },
+            { "code": "Exit B", "description": "SMU (Singapore Management University - Li Ka Shing Library)" },
+            { "code": "Exit C", "description": "SMU School of Accountancy, Bras Basah Complex" },
+            { "code": "Exit D", "description": "Waterloo Street, Church of Saints Peter and Paul" },
+            { "code": "Exit E", "description": "National Museum of Singapore, Stamford Road" }
+        ]
+    },
+    {
+        "id": "CC3",
+        "name": "Esplanade",
+        "latitude": 1.2934,
+        "longitude": 103.8553,
+        "lines": ["CC"],
+        "chineseName": "滨海中心",
+        "tamilName": "எஸ்பிளனேட்",
+        "exits": [
+            { "code": "Exit A", "description": "Suntec City Mall, Suntec Singapore Convention Centre" },
+            { "code": "Exit B", "description": "Marina Square, Marina Mandarin Singapore" },
+            { "code": "Exit C", "description": "Raffles City Shopping Centre, Bras Basah Road" },
+            { "code": "Exit D", "description": "Esplanade - Theatres on the Bay, War Memorial Park" },
+            { "code": "Exit E", "description": "JW Marriott Hotel Singapore South Beach, South Beach Tower" },
+            { "code": "Exit F", "description": "Raffles Hotel, Seah Street" },
+            { "code": "Exit G", "description": "Suntec City Tower 4, Nicoll Highway" }
+        ]
+    },
+    {
+        "id": "CC4/DT15",
+        "name": "Promenade",
+        "latitude": 1.2930,
+        "longitude": 103.8611,
+        "lines": ["CC", "DT"],
+        "chineseName": "宝门廊",
+        "tamilName": "புரொமனாட்",
+        "exits": [
+            { "code": "Exit A", "description": "Millenia Walk, The Ritz-Carlton Millenia Singapore" },
+            { "code": "Exit B", "description": "Suntec City Mall (Towers 1 & 2), Temasek Boulevard" },
+            { "code": "Exit C", "description": "Singapore Flyer, Marina Bay Street Circuit" }
+        ]
+    },
+    {
+        "id": "CC5",
+        "name": "Nicoll Highway",
+        "latitude": 1.2996,
+        "longitude": 103.8637,
+        "lines": ["CC"],
+        "chineseName": "尼诰大道",
+        "tamilName": "நிக்கல் நெடுஞ்சாலை",
+        "exits": [
+            { "code": "Exit A", "description": "The Concourse, Golden Mile Food Centre, Beach Road" },
+            { "code": "Exit B", "description": "Kallang River, Nicoll Highway Park" }
+        ]
+    },
+    {
+        "id": "CC6",
+        "name": "Stadium",
+        "latitude": 1.3028,
+        "longitude": 103.8753,
+        "lines": ["CC"],
+        "chineseName": "体育场",
+        "tamilName": "ஸ்டேடியம்",
+        "exits": [
+            { "code": "Exit A", "description": "National Stadium, Singapore Indoor Stadium, Kallang Wave Mall" },
+            { "code": "Exit B", "description": "OCBC Arena, OCBC Aquatic Centre, Leisure Park Kallang" }
+        ]
+    },
+    {
+        "id": "CC7",
+        "name": "Mountbatten",
+        "latitude": 1.3063,
+        "longitude": 103.8825,
+        "lines": ["CC"],
+        "chineseName": "蒙巴登",
+        "tamilName": "மவுண்ட்பேட்டன்",
+        "exits": [
+            { "code": "Exit A", "description": "Old Airport Road Food Centre, Mountbatten Community Club" },
+            { "code": "Exit B", "description": "Kallang Squash & Tennis Centre, Dunman High School" }
+        ]
+    },
+    {
+        "id": "CC8",
+        "name": "Dakota",
+        "latitude": 1.3084,
+        "longitude": 103.8885,
+        "lines": ["CC"],
+        "chineseName": "达科达",
+        "tamilName": "டகோட்டா",
+        "exits": [
+            { "code": "Exit A", "description": "Old Airport Road, Jalan Satu, Tanjong Katong Secondary School" },
+            { "code": "Exit B", "description": "Cassia Crescent, Geylang Park Connector, Broadrick Secondary School" }
+        ]
+    },
+    {
+        "id": "CC10/DT26",
+        "name": "MacPherson",
+        "latitude": 1.3259,
+        "longitude": 103.8899,
+        "lines": ["CC", "DT"],
+        "chineseName": "麦波申",
+        "tamilName": "மெக்பர்சன்",
+        "exits": [
+            { "code": "Exit A", "description": "Circuit Road, MacPherson Market & Food Centre" },
+            { "code": "Exit B", "description": "Geylang East Industrial Estate, Ubi Avenue 2" },
+            { "code": "Exit C", "description": "Paya Lebar Road, Citimac Industrial Complex" },
+            { "code": "Exit D", "description": "Ubi Road 1, Kampong Ubi Industrial Estate" }
+        ]
+    },
+    {
+        "id": "CC11",
+        "name": "Tai Seng",
+        "latitude": 1.3354,
+        "longitude": 103.8879,
+        "lines": ["CC"],
+        "chineseName": "大成",
+        "tamilName": "தை செங்",
+        "exits": [
+            { "code": "Exit A", "description": "Upper Paya Lebar Road, BreadTalk IHQ, 18 Tai Seng" },
+            { "code": "Exit B", "description": "Tai Seng Street, Harper Road, Sakae Building" },
+            { "code": "Exit C", "description": "Irving Road, The Commerze @ Irving" }
+        ]
+    },
+    {
+        "id": "CC12",
+        "name": "Bartley",
+        "latitude": 1.3426,
+        "longitude": 103.8797,
+        "lines": ["CC"],
+        "chineseName": "巴特礼",
+        "tamilName": "பார்ட்லி",
+        "exits": [
+            { "code": "Exit A", "description": "Bartley Road, Maris Stella High School" },
+            { "code": "Exit B", "description": "Bartley Secondary School, Gambir Walk" }
+        ]
+    },
+    {
+        "id": "CC14",
+        "name": "Lorong Chuan",
+        "latitude": 1.3516,
+        "longitude": 103.8639,
+        "lines": ["CC"],
+        "chineseName": "罗弄泉",
+        "tamilName": "லோரோங் சுவான்",
+        "exits": [
+            { "code": "Exit A", "description": "Nanyang Junior College, St. Gabriel's Primary School" },
+            { "code": "Exit B", "description": "Australian International School, New Tech Park" }
+        ]
+    },
+    {
+        "id": "CC16",
+        "name": "Marymount",
+        "latitude": 1.3487,
+        "longitude": 103.8394,
+        "lines": ["CC"],
+        "chineseName": "玛丽蒙",
+        "tamilName": "மேரிமவுண்ட்",
+        "exits": [
+            { "code": "Exit A", "description": "Marymount Road, Shunfu Mart Food Centre" },
+            { "code": "Exit B", "description": "Bishan Street 21, Raffles Institution (Boarding)" }
+        ]
+    },
+    {
+        "id": "CC17/TE9",
+        "name": "Caldecott",
+        "latitude": 1.3378,
+        "longitude": 103.8396,
+        "lines": ["CC", "TE"],
+        "chineseName": "加利谷",
+        "tamilName": "கால்டிகாட்",
+        "exits": [
+            { "code": "Exit 1", "description": "Toa Payoh Rise, Thomson Road" },
+            { "code": "Exit 2", "description": "Mount Pleasant Road, Caldecott Broadcast Centre (Former Site)" },
+            { "code": "Exit 3", "description": "Lighthouse School, Association for the Blind" },
+            { "code": "Exit 4", "description": "Lorong 1 Toa Payoh, Marymount Flyover" }
+        ]
+    },
+    {
+        "id": "CC19/DT9",
+        "name": "Botanic Gardens",
+        "latitude": 1.3223,
+        "longitude": 103.8153,
+        "lines": ["CC", "DT"],
+        "chineseName": "植物园",
+        "tamilName": "பூட்டானிக் கார்டன்ஸ்",
+        "exits": [
+            { "code": "Exit A", "description": "Singapore Botanic Gardens (Bukit Timah Gate), Eco Garden" },
+            { "code": "Exit B", "description": "NUS Bukit Timah Campus, Cluny Road" }
+        ]
+    },
+    {
+        "id": "CC20",
+        "name": "Farrer Road",
+        "latitude": 1.3175,
+        "longitude": 103.8075,
+        "lines": ["CC"],
+        "chineseName": "花拉路",
+        "tamilName": "ஃபேரர் சாலை",
+        "exits": [
+            { "code": "Exit A", "description": "Farrer Road, Empress Road Market & Food Centre" },
+            { "code": "Exit B", "description": "Woollerton Park, Spanish Village" }
+        ]
+    },
+    {
+        "id": "CC21",
+        "name": "Holland Village",
+        "latitude": 1.3118,
+        "longitude": 103.7961,
+        "lines": ["CC"],
+        "chineseName": "荷兰村",
+        "tamilName": "ஹாலந்து வில்லேஜ்",
+        "exits": [
+            { "code": "Exit A", "description": "Lorong Mambong, Holland Road Shopping Centre" },
+            { "code": "Exit B", "description": "Lorong Liput, One Holland Village" },
+            { "code": "Exit C", "description": "Holland Avenue, Anglo-Chinese School (International)" }
+        ]
+    },
+    {
+        "id": "CC23",
+        "name": "one-north",
+        "latitude": 1.2994,
+        "longitude": 103.7874,
+        "lines": ["CC"],
+        "chineseName": "纬壹",
+        "tamilName": "ஒன்-நார்த்",
+        "exits": [
+            { "code": "Exit A", "description": "Fusionopolis, Galaxis, Symbiosis" },
+            { "code": "Exit B", "description": "Biopolis, one-north Park, Mediapolis" }
+        ]
+    },
+    {
+        "id": "CC24",
+        "name": "Kent Ridge",
+        "latitude": 1.2933,
+        "longitude": 103.7846,
+        "lines": ["CC"],
+        "chineseName": "肯特岗",
+        "tamilName": "கெண்ட் ரிட்ஜ்",
+        "exits": [
+            { "code": "Exit A", "description": "National University Hospital (NUH Main Building)" },
+            { "code": "Exit B", "description": "NUS Faculty of Medicine & Dentistry, Science Park I" },
+            { "code": "Exit C", "description": "NUH Medical Centre, Lower Kent Ridge Road" }
+        ]
+    },
+    {
+        "id": "CC25",
+        "name": "Haw Par Villa",
+        "latitude": 1.2825,
+        "longitude": 103.7818,
+        "lines": ["CC"],
+        "chineseName": "虎豹别墅",
+        "tamilName": "ஹாவ் பார் வில்லா",
+        "exits": [
+            { "code": "Exit A", "description": "Haw Par Villa, Pasir Panjang Road, West Coast Highway" }
+        ]
+    },
+    {
+        "id": "CC26",
+        "name": "Pasir Panjang",
+        "latitude": 1.2762,
+        "longitude": 103.7915,
+        "lines": ["CC"],
+        "chineseName": "巴西班让",
+        "tamilName": "பாசிர் பாஞ்சாங்",
+        "exits": [
+            { "code": "Exit A", "description": "Pasir Panjang Food Centre, PSA Pass Centre, Mapletree Business City" }
+        ]
+    },
+    {
+        "id": "CC27",
+        "name": "Labrador Park",
+        "latitude": 1.2722,
+        "longitude": 103.8029,
+        "lines": ["CC"],
+        "chineseName": "拉柏多公园",
+        "tamilName": "லாப்ரடார் பார்க்",
+        "exits": [
+            { "code": "Exit A", "description": "Labrador Nature Reserve, Alexandra Retail Centre (ARC), PSA Building" }
+        ]
+    },
+    {
+        "id": "CC28",
+        "name": "Telok Blangah",
+        "latitude": 1.2706,
+        "longitude": 103.8097,
+        "lines": ["CC"],
+        "chineseName": "直落布兰雅",
+        "tamilName": "தெலுக் பிளாங்கா",
+        "exits": [
+            { "code": "Exit A", "description": "Telok Blangah Drive, Telok Blangah Market & Food Centre, Mount Faber Park" }
+        ]
+    },
+    {
+        "id": "CC30",
+        "name": "Keppel",
+        "latitude": 1.2694,
+        "longitude": 103.8315,
+        "lines": ["CC"],
+        "chineseName": "吉宝",
+        "tamilName": "கெப்பல்",
+        "exits": [
+            { "code": "Exit 1", "description": "Keppel Road, Keppel Distripark" },
+            { "code": "Exit 2", "description": "Kampong Bahru Road, Bukit Purmei" }
+        ]
+    },
+    {
+        "id": "CC31",
+        "name": "Cantonment",
+        "latitude": 1.2728,
+        "longitude": 103.8398,
+        "lines": ["CC"],
+        "chineseName": "广东民",
+        "tamilName": "கெண்டோன்மன்ட்",
+        "exits": [
+            { "code": "Exit 1", "description": "Spooner Road, Former Tanjong Pagar Railway Station" },
+            { "code": "Exit 2", "description": "Cantonment Road, Tanjong Pagar Community Club" }
+        ]
+    },
+    {
+        "id": "CC32",
+        "name": "Prince Edward Road",
+        "latitude": 1.2736,
+        "longitude": 103.8475,
+        "lines": ["CC"],
+        "chineseName": "爱德华太子路",
+        "tamilName": "பிரின்ஸ் எட்வர்ட் ரோடு",
+        "exits": [
+            { "code": "Exit 1", "description": "Prince Edward Road, Shenton Way Bus Terminal" },
+            { "code": "Exit 2", "description": "Anson Road, Palmer Road, Haji Muhammad Salleh Mosque" },
+            { "code": "Exit 3", "description": "Enggor Street, Bernam Street" }
+        ]
+    },
+    {
+        "id": "CC34/DT16",
+        "name": "Bayfront",
+        "latitude": 1.2819,
+        "longitude": 103.8590,
+        "lines": ["CE", "DT"],
+        "chineseName": "海湾舫",
+        "tamilName": "பேஃபிரண்ட்",
+        "exits": [
+            { "code": "Exit A", "description": "Bayfront Avenue, Gardens by the Bay (Meadow/Silver Garden)" },
+            { "code": "Exit B", "description": "Gardens by the Bay (Supertree Grove, Flower Dome, Cloud Forest)" },
+            { "code": "Exit C", "description": "The Shoppes at Marina Bay Sands, Sands Expo and Convention Centre" },
+            { "code": "Exit D", "description": "Marina Bay Sands Hotel, Sands SkyPark" },
+            { "code": "Exit E", "description": "ArtScience Museum, Event Plaza at Marina Bay Sands" }
+        ]
+    },
+    {
+        "id": "DT1/BP6",
+        "name": "Bukit Panjang",
+        "latitude": 1.3786,
+        "longitude": 103.7615,
+        "lines": ["DT", "BP"],
+        "chineseName": "武吉班让",
+        "tamilName": "புக்கிட் பாஞ்சாங்",
+        "exits": [
+            { "code": "Exit A", "description": "Bukit Panjang Plaza, Senja Cashew Community Club" },
+            { "code": "Exit B", "description": "Hillion Mall, Bukit Panjang Integrated Transport Hub" },
+            { "code": "Exit C", "description": "Woodlands Road, Junction 10" },
+            { "code": "Exit D", "description": "Upper Bukit Timah Road" }
+        ]
+    },
+    {
+        "id": "DT2",
+        "name": "Cashew",
+        "latitude": 1.3698,
+        "longitude": 103.7644,
+        "lines": ["DT"],
+        "chineseName": "凯秀",
+        "tamilName": "கேஷ்யூ",
+        "exits": [
+            { "code": "Exit A", "description": "Upper Bukit Timah Road, Cashew Heights, Assumption English School" },
+            { "code": "Exit B", "description": "Cashew Road, Hazel Park Condominium" }
+        ]
+    },
+    {
+        "id": "DT3",
+        "name": "Hillview",
+        "latitude": 1.3623,
+        "longitude": 103.7674,
+        "lines": ["DT"],
+        "chineseName": "山景",
+        "tamilName": "ஹில்வியூ",
+        "exits": [
+            { "code": "Exit A", "description": "HillV2, Hillview Rise, The Rail Mall" },
+            { "code": "Exit B", "description": "Upper Bukit Timah Road, Dairy Farm Nature Park" }
+        ]
+    },
+    {
+        "id": "DT4",
+        "name": "Hume",
+        "latitude": 1.3538,
+        "longitude": 103.7695,
+        "lines": ["DT"],
+        "chineseName": "谦道",
+        "tamilName": "ஹியூம்",
+        "exits": [
+            { "code": "Exit 1", "description": "Hume Avenue, Parc Palais, Symphony Heights" },
+            { "code": "Exit 2", "description": "Upper Bukit Timah Road, Rail Corridor, Former Bukit Timah Fire Station" }
+        ]
+    },
+    {
+        "id": "DT5",
+        "name": "Beauty World",
+        "latitude": 1.3412,
+        "longitude": 103.7758,
+        "lines": ["DT"],
+        "chineseName": "美世界",
+        "tamilName": "பியூட்டி வோர்ல்ட்",
+        "exits": [
+            { "code": "Exit A", "description": "Beauty World Centre, Bukit Timah Market & Food Centre" },
+            { "code": "Exit B", "description": "Beauty World Plaza, Bukit Timah Shopping Centre" },
+            { "code": "Exit C", "description": "Jalan Jurong Kechil, Chun Tin Road eateries" }
+        ]
+    },
+    {
+        "id": "DT6",
+        "name": "King Albert Park",
+        "latitude": 1.3358,
+        "longitude": 103.7831,
+        "lines": ["DT"],
+        "chineseName": "阿尔柏王园",
+        "tamilName": "கிங் ஆல்பர்ட் பார்க்",
+        "exits": [
+            { "code": "Exit A", "description": "KAP Mall, Bukit Timah Railway Station, Rail Corridor" },
+            { "code": "Exit B", "description": "Methodist Girls' School, Blackmore Drive" }
+        ]
+    },
+    {
+        "id": "DT7",
+        "name": "Sixth Avenue",
+        "latitude": 1.3308,
+        "longitude": 103.7969,
+        "lines": ["DT"],
+        "chineseName": "第六道",
+        "tamilName": "சிக்ஸ்த் அவென்யூ",
+        "exits": [
+            { "code": "Exit A", "description": "Sixth Avenue, Dynasty Garden, Guthrie House" },
+            { "code": "Exit B", "description": "Eng Neo Avenue, Vanda Road" }
+        ]
+    },
+    {
+        "id": "DT8",
+        "name": "Tan Kah Kee",
+        "latitude": 1.3262,
+        "longitude": 103.8074,
+        "lines": ["DT"],
+        "chineseName": "陈嘉庚",
+        "tamilName": "தான் கா கீ",
+        "exits": [
+            { "code": "Exit A", "description": "Hwa Chong Institution, Bukit Timah Road" },
+            { "code": "Exit B", "description": "Nanyang Girls' High School, Coronation Shopping Plaza" }
+        ]
+    },
+    {
+        "id": "DT10/TE11",
+        "name": "Stevens",
+        "latitude": 1.3201,
+        "longitude": 103.8260,
+        "lines": ["DT", "TE"],
+        "chineseName": "史蒂芬",
+        "tamilName": "ஸ்டீவன்ஸ்",
+        "exits": [
+            { "code": "Exit 1", "description": "Stevens Road, Novotel & Mercure Singapore on Stevens" },
+            { "code": "Exit 2", "description": "Whitley Road, Singapore Chinese Girls' School" },
+            { "code": "Exit 3", "description": "Bukit Timah Road, Saint Joseph's Institution" },
+            { "code": "Exit 4", "description": "Dunearn Road" }
+        ]
+    },
+    {
+        "id": "DT13",
+        "name": "Rochor",
+        "latitude": 1.3039,
+        "longitude": 103.8526,
+        "lines": ["DT"],
+        "chineseName": "梧槽",
+        "tamilName": "ரோச்சோர்",
+        "exits": [
+            { "code": "Exit A", "description": "Sim Lim Square, LASALLE College of the Arts (McNally Campus)" },
+            { "code": "Exit B", "description": "Albert Complex, Sim Lim Tower, Sungei Road" }
+        ]
+    },
+    {
+        "id": "DT17",
+        "name": "Downtown",
+        "latitude": 1.2794,
+        "longitude": 103.8528,
+        "lines": ["DT"],
+        "chineseName": "市中心",
+        "tamilName": "டவுன்டவுன்",
+        "exits": [
+            { "code": "Exit A", "description": "Marina Bay Financial Centre (Towers 1, 2 & 3)" },
+            { "code": "Exit B", "description": "Marina Bay Link Mall, Central Boulevard" },
+            { "code": "Exit C", "description": "One Raffles Quay, The Sail @ Marina Bay" },
+            { "code": "Exit D", "description": "Promenade via Marina Boulevard" },
+            { "code": "Exit E", "description": "Asia Square Tower 1 & 2" },
+            { "code": "Exit F", "description": "Marina View, Singapore Conference Hall" }
+        ]
+    },
+    {
+        "id": "DT18",
+        "name": "Telok Ayer",
+        "latitude": 1.2821,
+        "longitude": 103.8486,
+        "lines": ["DT"],
+        "chineseName": "直落亚逸",
+        "tamilName": "தெலுக் ஆயர்",
+        "exits": [
+            { "code": "Exit A", "description": "Cross Street, China Square Central, Far East Square" },
+            { "code": "Exit B", "description": "Telok Ayer Street, Thian Hock Keng Temple, Amoy Street" },
+            { "code": "Exit C", "description": "Cecil Street, Prudential Tower" }
+        ]
+    },
+    {
+        "id": "DT20",
+        "name": "Fort Canning",
+        "latitude": 1.2925,
+        "longitude": 103.8443,
+        "lines": ["DT"],
+        "chineseName": "福康宁",
+        "tamilName": "ஃபோர்ட் கென்னிங்",
+        "exits": [
+            { "code": "Exit A", "description": "River Valley Road, Fort Canning Park, Liang Court site" },
+            { "code": "Exit B", "description": "Clemenceau Avenue, UE Square, Robertson Quay" }
+        ]
+    },
+    {
+        "id": "DT21",
+        "name": "Bencoolen",
+        "latitude": 1.2987,
+        "longitude": 103.8503,
+        "lines": ["DT"],
+        "chineseName": "明古连",
+        "tamilName": "பென்கூலன்",
+        "exits": [
+            { "code": "Exit A", "description": "Bencoolen Street, Hotel Rendezvous, SMU School of Social Sciences" },
+            { "code": "Exit B", "description": "NAFA (Nanyang Academy of Fine Arts Campus 1), Waterloo Street" },
+            { "code": "Exit C", "description": "Prinsep Street, Sunshine Plaza" }
+        ]
+    },
+    {
+        "id": "DT22",
+        "name": "Jalan Besar",
+        "latitude": 1.3052,
+        "longitude": 103.8553,
+        "lines": ["DT"],
+        "chineseName": "惹兰勿刹",
+        "tamilName": "ஜலான் பசார்",
+        "exits": [
+            { "code": "Exit A", "description": "Jalan Besar, Sim Lim Tower, Berseh Food Centre" },
+            { "code": "Exit B", "description": "Weld Road, Kelantan Road, Jalan Besar Plaza" }
+        ]
+    },
+    {
+        "id": "DT23",
+        "name": "Bendemeer",
+        "latitude": 1.3137,
+        "longitude": 103.8629,
+        "lines": ["DT"],
+        "chineseName": "明地迷亚",
+        "tamilName": "பெண்டிமீர்",
+        "exits": [
+            { "code": "Exit A", "description": "Kallang Bahru, Bendemeer Shopping Mall" },
+            { "code": "Exit B", "description": "Lavender Street, CT Hub, Aperia Mall" }
+        ]
+    },
+    {
+        "id": "DT24",
+        "name": "Geylang Bahru",
+        "latitude": 1.3213,
+        "longitude": 103.8717,
+        "lines": ["DT"],
+        "chineseName": "芽笼峇鲁",
+        "tamilName": "கெலாங் பாரு",
+        "exits": [
+            { "code": "Exit A", "description": "Geylang Bahru Market & Food Centre, Kolam Ayer Community Club" },
+            { "code": "Exit B", "description": "Kallang Pudding Road, Kallang River Park Connector" }
+        ]
+    },
+    {
+        "id": "DT25",
+        "name": "Mattar",
+        "latitude": 1.3269,
+        "longitude": 103.8832,
+        "lines": ["DT"],
+        "chineseName": "玛达",
+        "tamilName": "மட்டர்",
+        "exits": [
+            { "code": "Exit A", "description": "Mattar Road, Circuit Road Market & Food Centre" },
+            { "code": "Exit B", "description": "Merpati Road, Canossa Catholic Primary School" }
+        ]
+    },
+    {
+        "id": "DT27",
+        "name": "Ubi",
+        "latitude": 1.3299,
+        "longitude": 103.8994,
+        "lines": ["DT"],
+        "chineseName": "乌美",
+        "tamilName": "உபி",
+        "exits": [
+            { "code": "Exit A", "description": "Ubi Avenue 1, Maha Bodhi School, Manjusri Secondary School" },
+            { "code": "Exit B", "description": "Ubi Avenue 2, Kampong Ubi Community Centre" }
+        ]
+    },
+    {
+        "id": "DT28",
+        "name": "Kaki Bukit",
+        "latitude": 1.3349,
+        "longitude": 103.9085,
+        "lines": ["DT"],
+        "chineseName": "加基武吉",
+        "tamilName": "காக்கி புக்கிட்",
+        "exits": [
+            { "code": "Exit A", "description": "Kaki Bukit Avenue 1, Bedok Reservoir Road" },
+            { "code": "Exit B", "description": "Jalan Damai, Bedok North secondary school cluster" }
+        ]
+    },
+    {
+        "id": "DT29",
+        "name": "Bedok North",
+        "latitude": 1.3347,
+        "longitude": 103.9180,
+        "lines": ["DT"],
+        "chineseName": "勿洛北",
+        "tamilName": "பிடோக் நார்த்",
+        "exits": [
+            { "code": "Exit A", "description": "Bedok North Road, Bedok Reservoir Road, Damai Primary School" },
+            { "code": "Exit B", "description": "Bedok Town Park, PIE (Pan Island Expressway)" }
+        ]
+    },
+    {
+        "id": "DT30",
+        "name": "Bedok Reservoir",
+        "latitude": 1.3361,
+        "longitude": 103.9329,
+        "lines": ["DT"],
+        "chineseName": "勿洛蓄水池",
+        "tamilName": "பிடோக் ரெசர்வாய்ர்",
+        "exits": [
+            { "code": "Exit A", "description": "Bedok Reservoir Road, Bedok Reservoir Park" },
+            { "code": "Exit B", "description": "Bedok North Avenue 4, Yu Neng Primary School" }
+        ]
+    },
+    {
+        "id": "DT31",
+        "name": "Tampines West",
+        "latitude": 1.3456,
+        "longitude": 103.9384,
+        "lines": ["DT"],
+        "chineseName": "淡滨尼西",
+        "tamilName": "தம்பினிஸ் வெஸ்ட்",
+        "exits": [
+            { "code": "Exit A", "description": "Tampines Avenue 4, Tampines Palmspring" },
+            { "code": "Exit B", "description": "Tampines Street 81, Junyuan Primary School, Temasek Polytechnic" }
+        ]
+    },
+    {
+        "id": "DT33",
+        "name": "Tampines East",
+        "latitude": 1.3562,
+        "longitude": 103.9546,
+        "lines": ["DT"],
+        "chineseName": "淡滨尼东",
+        "tamilName": "தம்பினிஸ் ஈஸ்ட்",
+        "exits": [
+            { "code": "Exit A", "description": "Tampines Avenue 7, Tampines Street 21" },
+            { "code": "Exit B", "description": "Tampines Avenue 9, Dunman Secondary School" },
+            { "code": "Exit C", "description": "Tampines Avenue 2, Tampines East Community Club" },
+            { "code": "Exit D", "description": "Tampines Boulevard Park, Ngee Ann Secondary School" }
+        ]
+    },
+    {
+        "id": "DT34",
+        "name": "Upper Changi",
+        "latitude": 1.3417,
+        "longitude": 103.9614,
+        "lines": ["DT"],
+        "chineseName": "樟宜路上段",
+        "tamilName": "அப்பர் சாங்கி",
+        "exits": [
+            { "code": "Exit A", "description": "Upper Changi Road East, SUTD (Singapore University of Technology and Design)" },
+            { "code": "Exit B", "description": "Changi South Avenue 1, Changi Business Park" },
+            { "code": "Exit C", "description": "Somapah Road, SUTD Sports Complex" },
+            { "code": "Exit D", "description": "Sunbird Road, Apollo Gardens" }
+        ]
+    },
+    {
+        "id": "DT36",
+        "name": "Xilin",
+        "latitude": 1.3267,
+        "longitude": 103.9687,
+        "lines": ["DT"],
+        "chineseName": "锡林",
+        "tamilName": "சீலின்",
+        "exits": [
+            { "code": "Exit 1", "description": "Xilin Avenue, Changi South Industrial Estate" },
+            { "code": "Exit 2", "description": "Laguna National Golf Resort Club, Changi South Avenue 3" }
+        ]
+    },
+    {
+        "id": "DT37/TE31",
+        "name": "Sungei Bedok",
+        "latitude": 1.3204,
+        "longitude": 103.9575,
+        "lines": ["DT", "TE"],
+        "chineseName": "双溪勿洛",
+        "tamilName": "சுங்கை பிடோக்",
+        "exits": [
+            { "code": "Exit 1", "description": "Upper East Coast Road, Bedok South Avenue 3" },
+            { "code": "Exit 2", "description": "East Coast Road, Eastwood Centre, Bedok Food Centre" },
+            { "code": "Exit 3", "description": "Bayshore Road, Bedok Camp" }
+        ]
+    },
+    {
+        "id": "TE1",
+        "name": "Woodlands North",
+        "latitude": 1.4491,
+        "longitude": 103.7858,
+        "lines": ["TE"],
+        "chineseName": "兀兰北",
+        "tamilName": "உட்லண்ட்ஸ் நார்த்",
+        "exits": [
+            { "code": "Exit 1", "description": "Republic Polytechnic, Admiralty Park" },
+            { "code": "Exit 2", "description": "Woodlands North Coast Road, RTS Link transfer station" }
+        ]
+    },
+    {
+        "id": "TE3",
+        "name": "Woodlands South",
+        "latitude": 1.4274,
+        "longitude": 103.7933,
+        "lines": ["TE"],
+        "chineseName": "兀兰南",
+        "tamilName": "உட்லண்ட்ஸ் சவுத்",
+        "exits": [
+            { "code": "Exit 1", "description": "Woodlands Avenue 1, Christ Church Secondary School" },
+            { "code": "Exit 2", "description": "Champions Way, Singapore Sports School" },
+            { "code": "Exit 3", "description": "Woodlands Drive 16, Woodlands Health Campus" },
+            { "code": "Exit 4", "description": "Woodlands Drive 17, Innova Primary School" },
+            { "code": "Exit 5", "description": "Woodlands Drive 53" }
+        ]
+    },
+    {
+        "id": "TE4",
+        "name": "Springleaf",
+        "latitude": 1.3976,
+        "longitude": 103.8178,
+        "lines": ["TE"],
+        "chineseName": "春叶",
+        "tamilName": "ஸ்பிரிங்லீஃவ்",
+        "exits": [
+            { "code": "Exit 1", "description": "Upper Thomson Road shophouses, Springleaf Nature Park" },
+            { "code": "Exit 2", "description": "Thong Soon Green, Springleaf Garden" },
+            { "code": "Exit 3", "description": "Springside View, Brooks Signature" }
+        ]
+    },
+    {
+        "id": "TE5",
+        "name": "Lentor",
+        "latitude": 1.3855,
+        "longitude": 103.8361,
+        "lines": ["TE"],
+        "chineseName": "伦多",
+        "tamilName": "லென்டோர்",
+        "exits": [
+            { "code": "Exit 1", "description": "Lentor Drive, Lentor Modern, Lentor Central" },
+            { "code": "Exit 2", "description": "Yio Chu Kang Road, Florissa Park" },
+            { "code": "Exit 3", "description": "Lentor Modern retail mall, Lentor Hills Estate" },
+            { "code": "Exit 4", "description": "Lentor Plain, Teacher's Housing Estate" },
+            { "code": "Exit 5", "description": "Ang Mo Kio Avenue 4, Anderson Primary School" }
+        ]
+    },
+    {
+        "id": "TE6",
+        "name": "Mayflower",
+        "latitude": 1.3694,
+        "longitude": 103.8368,
+        "lines": ["TE"],
+        "chineseName": "美华",
+        "tamilName": "மேஃபிளவர்",
+        "exits": [
+            { "code": "Exit 1", "description": "Kebun Baru Community Club, Mayflower Market and Food Centre" },
+            { "code": "Exit 2", "description": "Ang Mo Kio Avenue 4, CHIJ St. Nicholas Girls' School" },
+            { "code": "Exit 3", "description": "Bishan-Ang Mo Kio Park (West entrance)" },
+            { "code": "Exit 4", "description": "Ang Mo Kio Street 11, Kebun Baru Heights" },
+            { "code": "Exit 5", "description": "Mayflower Rise, Ang Mo Kio Avenue 4" },
+            { "code": "Exit 6", "description": "Ang Mo Kio Avenue 9, Ang Mo Kio Community Hospital" }
+        ]
+    },
+    {
+        "id": "TE7",
+        "name": "Bright Hill",
+        "latitude": 1.3632,
+        "longitude": 103.8329,
+        "lines": ["TE", "CR"],
+        "chineseName": "光明山",
+        "tamilName": "பிரைட் ஹில்",
+        "exits": [
+            { "code": "Exit 1", "description": "Sin Ming Avenue, Kong Meng San Phor Kark See Monastery" },
+            { "code": "Exit 2", "description": "Fulton Road, Bishan-Ang Mo Kio Park" },
+            { "code": "Exit 3", "description": "Sin Ming Walk, Ai Tong School" },
+            { "code": "Exit 4", "description": "Bright Hill Drive" }
+        ]
+    },
+    {
+        "id": "TE8",
+        "name": "Upper Thomson",
+        "latitude": 1.3544,
+        "longitude": 103.8329,
+        "lines": ["TE"],
+        "chineseName": "汤申路上段",
+        "tamilName": "அப்பர் தாம்சன்",
+        "exits": [
+            { "code": "Exit 1", "description": "Thomson Plaza, Upper Thomson Road" },
+            { "code": "Exit 2", "description": "Soo Chow Walk, Upper Thomson eateries" },
+            { "code": "Exit 3", "description": "Jalan Keli, Thomson View Condominium" },
+            { "code": "Exit 4", "description": "Bright Hill Drive, Sin Ming Plaza" },
+            { "code": "Exit 5", "description": "Upper Thomson Road, Shunfu Estate" }
+        ]
+    },
+    {
+        "id": "TE12",
+        "name": "Napier",
+        "latitude": 1.3068,
+        "longitude": 103.8187,
+        "lines": ["TE"],
+        "chineseName": "纳比雅",
+        "tamilName": "நேப்பியர்",
+        "exits": [
+            { "code": "Exit 1", "description": "Gleneagles Hospital, Napier Road, Tanglin Gate (Singapore Botanic Gardens)" },
+            { "code": "Exit 2", "description": "Cluny Road, Singapore Botanic Gardens Visitor Centre" }
+        ]
+    },
+    {
+        "id": "TE13",
+        "name": "Orchard Boulevard",
+        "latitude": 1.3023,
+        "longitude": 103.8239,
+        "lines": ["TE"],
+        "chineseName": "乌节林荫道",
+        "tamilName": "ஆர்ச்சர்ட் பொலிவார்ட்",
+        "exits": [
+            { "code": "Exit 1", "description": "Camden Medical Centre, Orchard Boulevard" },
+            { "code": "Exit 2", "description": "Grange Road, Tourism Court" }
+        ]
+    },
+    {
+        "id": "TE15",
+        "name": "Great World",
+        "latitude": 1.2934,
+        "longitude": 103.8321,
+        "lines": ["TE"],
+        "chineseName": "大世界",
+        "tamilName": "கிரேட் வோர்ல்ட்",
+        "exits": [
+            { "code": "Exit 1", "description": "Kim Seng Promenade, River Valley Road" },
+            { "code": "Exit 2", "description": "Great World City Mall (Basement 2 direct link)" },
+            { "code": "Exit 3", "description": "Zion Road, Zion Riverside Food Centre" },
+            { "code": "Exit 4", "description": "Kim Seng Road, Singapore River Walk" },
+            { "code": "Exit 5", "description": "River Valley Green, Alexandra Primary School" },
+            { "code": "Exit 6", "description": "Great World Serviced Apartments" }
+        ]
+    },
+    {
+        "id": "TE16",
+        "name": "Havelock",
+        "latitude": 1.2882,
+        "longitude": 103.8296,
+        "lines": ["TE"],
+        "chineseName": "合乐",
+        "tamilName": "ஹவ்லாக்",
+        "exits": [
+            { "code": "Exit 1", "description": "Zion Road, Havelock Road, Concorde Shopping Centre" },
+            { "code": "Exit 2", "description": "Jalan Bukit Ho Swee, Giok Hong Tian Temple" },
+            { "code": "Exit 3", "description": "Holiday Inn Singapore Atrium, Grand Copthorne Waterfront" },
+            { "code": "Exit 4", "description": "Havelock Road, Singapore Subordinate Courts site" },
+            { "code": "Exit 5", "description": "Bukit Ho Swee Link" }
+        ]
+    },
+    {
+        "id": "TE18",
+        "name": "Maxwell",
+        "latitude": 1.2806,
+        "longitude": 103.8439,
+        "lines": ["TE"],
+        "chineseName": "麦士威",
+        "tamilName": "மேக்ஸ்வெல்",
+        "exits": [
+            { "code": "Exit 1", "description": "Neil Road, Jinrikisha Station, Tanjong Pagar conservation area" },
+            { "code": "Exit 2", "description": "Maxwell Food Centre, Buddha Tooth Relic Temple" },
+            { "code": "Exit 3", "description": "South Bridge Road, Kreta Ayer Community Centre" }
+        ]
+    },
+    {
+        "id": "TE19",
+        "name": "Shenton Way",
+        "latitude": 1.2778,
+        "longitude": 103.8503,
+        "lines": ["TE"],
+        "chineseName": "珊顿道",
+        "tamilName": "ஷென்டன் வே",
+        "exits": [
+            { "code": "Exit 1", "description": "Shenton House, Singapore Conference Hall, UIC Building" },
+            { "code": "Exit 2", "description": "OUE Downtown, SGX Centre, Shenton Way" },
+            { "code": "Exit 3", "description": "Asia Square, Marina View" },
+            { "code": "Exit 4", "description": "Prince Edward Road, V on Shenton" },
+            { "code": "Exit 5", "description": "McCallum Street, Cecil Street" },
+            { "code": "Exit 6", "description": "Shenton Way Bus Terminal" }
+        ]
+    },
+    {
+        "id": "TE21",
+        "name": "Marina South",
+        "latitude": 1.2740,
+        "longitude": 103.8631,
+        "lines": ["TE"],
+        "chineseName": "滨海南",
+        "tamilName": "மரினா சவுத்",
+        "exits": [
+            { "code": "Exit 1", "description": "Marina Gardens Drive, future Marina South residential precinct" },
+            { "code": "Exit 2", "description": "Marina Coast Drive, Straits View Park" }
+        ]
+    },
+    {
+        "id": "TE22",
+        "name": "Gardens by the Bay",
+        "latitude": 1.2789,
+        "longitude": 103.8674,
+        "lines": ["TE"],
+        "chineseName": "滨海湾花园",
+        "tamilName": "கார்டன்ஸ் பை தி பே",
+        "exits": [
+            { "code": "Exit 1", "description": "Gardens by the Bay (Bay South), Marina Barrage" },
+            { "code": "Exit 2", "description": "Marina Gardens Drive, Active Garden" },
+            { "code": "Exit 3", "description": "Bay East Garden link, Meadow Carpark" }
+        ]
+    },
+    {
+        "id": "TE23",
+        "name": "Tanjong Rhu",
+        "latitude": 1.2982,
+        "longitude": 103.8727,
+        "lines": ["TE"],
+        "chineseName": "丹戎禺",
+        "tamilName": "தஞ்சோங் ரூ",
+        "exits": [
+            { "code": "Exit 1", "description": "Tanjong Rhu Road, Pebble Bay, Water Place" },
+            { "code": "Exit 2", "description": "Singapore Sports Hub (via Tanjong Rhu Suspension Bridge), Singapore Indoor Stadium" }
+        ]
+    },
+    {
+        "id": "TE24",
+        "name": "Katong Park",
+        "latitude": 1.2991,
+        "longitude": 103.8856,
+        "lines": ["TE"],
+        "chineseName": "加东公园",
+        "tamilName": "காத்தோங் பார்க்",
+        "exits": [
+            { "code": "Exit 1", "description": "Meyer Road, Fort Road, Dunman High School" },
+            { "code": "Exit 2", "description": "Katong Park, Tanjong Katong Road South" }
+        ]
+    },
+    {
+        "id": "TE25",
+        "name": "Tanjong Katong",
+        "latitude": 1.3005,
+        "longitude": 103.8984,
+        "lines": ["TE"],
+        "chineseName": "丹戎加东",
+        "tamilName": "தஞ்சோங் காத்தோங்",
+        "exits": [
+            { "code": "Exit 1", "description": "Amber Road, Chinese Swimming Club" },
+            { "code": "Exit 2", "description": "Tanjong Katong Road, King's Mansion" },
+            { "code": "Exit 3", "description": "Mountbatten Road, Amber Park" }
+        ]
+    },
+    {
+        "id": "TE26",
+        "name": "Marine Parade",
+        "latitude": 1.3031,
+        "longitude": 103.9061,
+        "lines": ["TE"],
+        "chineseName": "马林百列",
+        "tamilName": "மரின் பரேட்",
+        "exits": [
+            { "code": "Exit 1", "description": "Marine Parade Central, Parkway Parade, Marine Parade Promenade" },
+            { "code": "Exit 2", "description": "Parkway Parade (Basement underpass link)" },
+            { "code": "Exit 3", "description": "Marine Parade Community Building, Tao Nan School" },
+            { "code": "Exit 4", "description": "Marine Parade Road, CHIJ (Katong) Primary" },
+            { "code": "Exit 5", "description": "Jalan Rahmat, Roxy Square, Grand Mercure Singapore Roxy" },
+            { "code": "Exit 6", "description": "East Coast Road shophouses, Katong V" }
+        ]
+    },
+    {
+        "id": "TE27",
+        "name": "Marine Terrace",
+        "latitude": 1.3061,
+        "longitude": 103.9163,
+        "lines": ["TE"],
+        "chineseName": "马林台",
+        "tamilName": "மரின் டெரஸ்",
+        "exits": [
+            { "code": "Exit 1", "description": "Marine Terrace, 59 Marine Terrace Market & Food Centre" },
+            { "code": "Exit 2", "description": "Marine Parade Road, CHIJ Katong Convent" },
+            { "code": "Exit 3", "description": "Telok Kurau Road, St. Patrick's School" },
+            { "code": "Exit 4", "description": "Ngee Ann Primary School, Victoria Junior College" },
+            { "code": "Exit 5", "description": "East Coast Park (via Siglap Park Connector underpass)" },
+            { "code": "Exit 6", "description": "Marine Drive, Marine Parade Market" }
+        ]
+    },
+    {
+        "id": "TE28",
+        "name": "Siglap",
+        "latitude": 1.3101,
+        "longitude": 103.9298,
+        "lines": ["TE"],
+        "chineseName": "实乞纳",
+        "tamilName": "சிக்லாப்",
+        "exits": [
+            { "code": "Exit 1", "description": "Marine Parade Road, Victoria School" },
+            { "code": "Exit 2", "description": "Siglap Link, East Coast Park (Carpark C4 underpass)" },
+            { "code": "Exit 3", "description": "Upper East Coast Road, Siglap Centre" },
+            { "code": "Exit 4", "description": "Laguna Park, Mandarin Gardens" }
+        ]
+    },
+    {
+        "id": "TE29",
+        "name": "Bayshore",
+        "latitude": 1.3130,
+        "longitude": 103.9387,
+        "lines": ["TE"],
+        "chineseName": "碧湾",
+        "tamilName": "பேஷோர்",
+        "exits": [
+            { "code": "Exit 1", "description": "Bayshore Road, The Bayshore, Costa Del Sol" },
+            { "code": "Exit 2", "description": "Upper East Coast Road, Bedok Camp II" },
+            { "code": "Exit 3", "description": "East Coast Parkway (ECP), East Coast Park (Carpark E2 underpass)" }
+        ]
+    },
+    {
+        "id": "TE30",
+        "name": "Bedok South",
+        "latitude": 1.3168,
+        "longitude": 103.9489,
+        "lines": ["TE"],
+        "chineseName": "勿洛南",
+        "tamilName": "பிடோக் சவுத்",
+        "exits": [
+            { "code": "Exit 1", "description": "Upper East Coast Road, Bedok South Avenue 3" },
+            { "code": "Exit 2", "description": "Bayshore Road, Bedok View Secondary School" },
+            { "code": "Exit 3", "description": "Temasek Secondary School, Temasek Primary School" }
+        ]
+    },
+    
+    {
+        "id": "BP2",
+        "name": "South View",
+        "latitude": 1.3803,
+        "longitude": 103.7453,
+        "lines": ["BP"],
+        "chineseName": "南观",
+        "tamilName": "சவுத் வியூ",
+        "exits": [
+            { "code": "Exit 1", "description": "Choa Chu Kang Way, Keat Hong Community Club" },
+            { "code": "Exit 2", "description": "Choa Chu Kang Avenue 1, South View Primary School" }
+        ]
+    },
+    {
+        "id": "BP3",
+        "name": "Keat Hong",
+        "latitude": 1.3786,
+        "longitude": 103.7490,
+        "lines": ["BP"],
+        "chineseName": "吉丰",
+        "tamilName": "கீட் ஹோங்",
+        "exits": [
+            { "code": "Exit 1", "description": "Choa Chu Kang Way, Keat Hong Shopping Centre" },
+            { "code": "Exit 2", "description": "Choa Chu Kang Avenue 1" }
+        ]
+    },
+    {
+        "id": "BP4",
+        "name": "Teck Whye",
+        "latitude": 1.3767,
+        "longitude": 103.7537,
+        "lines": ["BP"],
+        "chineseName": "德惠",
+        "tamilName": "டெக் வாய்",
+        "exits": [
+            { "code": "Exit 1", "description": "Choa Chu Kang Road, Teck Whye Shopping Centre" },
+            { "code": "Exit 2", "description": "Jalan Teck Whye, ITE College West" }
+        ]
+    },
+    {
+        "id": "BP5",
+        "name": "Phoenix",
+        "latitude": 1.3786,
+        "longitude": 103.7580,
+        "lines": ["BP"],
+        "chineseName": "凤凰",
+        "tamilName": "ஃபீனிக்ஸ்",
+        "exits": [
+            { "code": "Exit 1", "description": "Choa Chu Kang Road, Phoenix Park" },
+            { "code": "Exit 2", "description": "Upper Bukit Timah Road" }
+        ]
+    },
+    {
+        "id": "BP7",
+        "name": "Petir",
+        "latitude": 1.3779,
+        "longitude": 103.7667,
+        "lines": ["BP"],
+        "chineseName": "柏提",
+        "tamilName": "பெட்டீர்",
+        "exits": [
+            { "code": "Exit 1", "description": "Petir Road, Bukit Panjang Community Club" },
+            { "code": "Exit 2", "description": "Gangsa Road" }
+        ]
+    },
+    {
+        "id": "BP8",
+        "name": "Pending",
+        "latitude": 1.3762,
+        "longitude": 103.7713,
+        "lines": ["BP"],
+        "chineseName": "秉定",
+        "tamilName": "பெண்டிங்",
+        "exits": [
+            { "code": "Exit 1", "description": "Pending Road, Bukit Panjang Market" },
+            { "code": "Exit 2", "description": "Petir Road, Fajar Secondary School (Former)" }
+        ]
+    },
+    {
+        "id": "BP9",
+        "name": "Bangkit",
+        "latitude": 1.3800,
+        "longitude": 103.7727,
+        "lines": ["BP"],
+        "chineseName": "万吉",
+        "tamilName": "பங்கிட்",
+        "exits": [
+            { "code": "Exit 1", "description": "Bukit Panjang Ring Road, Bangkit Market" },
+            { "code": "Exit 2", "description": "Petir Road, Zhenghua Community Club" }
+        ]
+    },
+    {
+        "id": "BP10",
+        "name": "Fajar",
+        "latitude": 1.3842,
+        "longitude": 103.7709,
+        "lines": ["BP"],
+        "chineseName": "法嘉",
+        "tamilName": "ஃபாஜார்",
+        "exits": [
+            { "code": "Exit 1", "description": "Fajar Road, Fajar Shopping Centre" },
+            { "code": "Exit 2", "description": "Bukit Panjang Ring Road, Greenridge Shopping Centre" }
+        ]
+    },
+    {
+        "id": "BP11",
+        "name": "Segar",
+        "latitude": 1.3879,
+        "longitude": 103.7695,
+        "lines": ["BP"],
+        "chineseName": "实加",
+        "tamilName": "செகார்",
+        "exits": [
+            { "code": "Exit 1", "description": "Bukit Panjang Ring Road, Zhenghua Nature Park" },
+            { "code": "Exit 2", "description": "Segar Road, West Spring Primary School" }
+        ]
+    },
+    {
+        "id": "BP12",
+        "name": "Jelapang",
+        "latitude": 1.3867,
+        "longitude": 103.7645,
+        "lines": ["BP"],
+        "chineseName": "日拉邦",
+        "tamilName": "ஜேலப்பாங்",
+        "exits": [
+            { "code": "Exit 1", "description": "Bukit Panjang Ring Road, Greenridge Secondary School (Former)" },
+            { "code": "Exit 2", "description": "Jelapang Road, Tiara Ville" }
+        ]
+    },
+    {
+        "id": "BP13",
+        "name": "Senja",
+        "latitude": 1.3828,
+        "longitude": 103.7624,
+        "lines": ["BP"],
+        "chineseName": "信佳",
+        "tamilName": "சென்ஜா",
+        "exits": [
+            { "code": "Exit 1", "description": "Senja Road, Senja Grand" },
+            { "code": "Exit 2", "description": "Bukit Panjang Ring Road, West View Primary School" }
+        ]
+    },
+    {
+        "id": "SE1",
+        "name": "Compassvale",
+        "latitude": 1.3945,
+        "longitude": 103.9005,
+        "lines": ["SK"],
+        "chineseName": "康埔桦",
+        "tamilName": "கம்பாஸ்வேல்",
+        "exits": [
+            { "code": "Exit A", "description": "Compassvale Road, Compassvale Secondary School" },
+            { "code": "Exit B", "description": "Compassvale Street, Compassvale Primary School" }
+        ]
+    },
+    {
+        "id": "SE2",
+        "name": "Rumbia",
+        "latitude": 1.3914,
+        "longitude": 103.9060,
+        "lines": ["SK"],
+        "chineseName": "润美",
+        "tamilName": "ரூம்பியா",
+        "exits": [
+            { "code": "Exit A", "description": "Rivervale Drive, Rivervale Mall" },
+            { "code": "Exit B", "description": "Rivervale Crescent, CHIJ St. Joseph's Convent" }
+        ]
+    },
+    {
+        "id": "SE3",
+        "name": "Bakau",
+        "latitude": 1.3881,
+        "longitude": 103.9054,
+        "lines": ["SK"],
+        "chineseName": "北大",
+        "tamilName": "பக்காவ்",
+        "exits": [
+            { "code": "Exit A", "description": "Rivervale Drive, North Spring Primary School" },
+            { "code": "Exit B", "description": "Rivervale Walk, Sengkang Neighbourhood Park" }
+        ]
+    },
+    {
+        "id": "SE4",
+        "name": "Kangkar",
+        "latitude": 1.3840,
+        "longitude": 103.9022,
+        "lines": ["SK"],
+        "chineseName": "港脚",
+        "tamilName": "காங்கார்",
+        "exits": [
+            { "code": "Exit A", "description": "Rivervale Walk, Rivervale Plaza" },
+            { "code": "Exit B", "description": "Upper Serangoon Road, Seng Kang Secondary School" }
+        ]
+    },
+    {
+        "id": "SE5",
+        "name": "Ranggung",
+        "latitude": 1.3843,
+        "longitude": 103.8972,
+        "lines": ["SK"],
+        "chineseName": "兰岗",
+        "tamilName": "ரங்கோங்",
+        "exits": [
+            { "code": "Exit A", "description": "Compassvale Bow, Sengkang Grand Residences" },
+            { "code": "Exit B", "description": "Compassvale Lane, North Vista Secondary School" }
+        ]
+    },
+    {
+        "id": "SW1",
+        "name": "Cheng Lim",
+        "latitude": 1.3962,
+        "longitude": 103.8938,
+        "lines": ["SK"],
+        "chineseName": "振林",
+        "tamilName": "செங் லிம்",
+        "exits": [
+            { "code": "Exit A", "description": "Anchorvale Street, Sengkang Community Hospital" },
+            { "code": "Exit B", "description": "Anchorvale Lane, Sengkang General Hospital" }
+        ]
+    },
+    {
+        "id": "SW2",
+        "name": "Farmway",
+        "latitude": 1.3972,
+        "longitude": 103.8893,
+        "lines": ["SK"],
+        "chineseName": "农道",
+        "tamilName": "ஃபார்ம்வே",
+        "exits": [
+            { "code": "Exit A", "description": "Anchorvale Crescent, Sengkang Sports Centre" },
+            { "code": "Exit B", "description": "Anchorvale Road, Sengkang Riverside Park" }
+        ]
+    },
+    {
+        "id": "SW3",
+        "name": "Kupang",
+        "latitude": 1.3983,
+        "longitude": 103.8817,
+        "lines": ["SK"],
+        "chineseName": "古邦",
+        "tamilName": "குப்பாங்",
+        "exits": [
+            { "code": "Exit A", "description": "Fernvale Link, Anchor Green Primary School" },
+            { "code": "Exit B", "description": "Fernvale Street, Sengkang Riverside Park" }
+        ]
+    },
+    {
+        "id": "SW4",
+        "name": "Thanggam",
+        "latitude": 1.3973,
+        "longitude": 103.8756,
+        "lines": ["SK"],
+        "chineseName": "丹甘",
+        "tamilName": "தங்கrules",
+        "exits": [
+            { "code": "Exit A", "description": "Fernvale West Walk, Lorong Tanggam eateries" },
+            { "code": "Exit B", "description": "Fernvale Way, Jalan Kayu" }
+        ]
+    },
+    {
+        "id": "SW5",
+        "name": "Fernvale",
+        "latitude": 1.3919,
+        "longitude": 103.8763,
+        "lines": ["SK"],
+        "chineseName": "芬微",
+        "tamilName": "பெர்ன்வேல்",
+        "exits": [
+            { "code": "Exit A", "description": "The Seletar Mall, Fernvale Community Club" },
+            { "code": "Exit B", "description": "Fernvale Road, Pei Hwa Secondary School" }
+        ]
+    },
+    {
+        "id": "SW6",
+        "name": "Layar",
+        "latitude": 1.3921,
+        "longitude": 103.8802,
+        "lines": ["SK"],
+        "chineseName": "拉雅",
+        "tamilName": "லாயார்",
+        "exits": [
+            { "code": "Exit A", "description": "Fernvale Link, Sungei Punggol Park Connector" },
+            { "code": "Exit B", "description": "Fernvale Street" }
+        ]
+    },
+    {
+        "id": "SW7",
+        "name": "Tongkang",
+        "latitude": 1.3904,
+        "longitude": 103.8859,
+        "lines": ["SK"],
+        "chineseName": "同港",
+        "tamilName": "தொங்காங்",
+        "exits": [
+            { "code": "Exit A", "description": "Anchorvale Road, Anchor Green Primary School" },
+            { "code": "Exit B", "description": "Anchorvale Bow, Nan Chiau High School" }
+        ]
+    },
+    {
+        "id": "SW8",
+        "name": "Renjong",
+        "latitude": 1.3869,
+        "longitude": 103.8914,
+        "lines": ["SK"],
+        "chineseName": "仁宗",
+        "tamilName": "ரெஞ்சோங்",
+        "exits": [
+            { "code": "Exit A", "description": "South Bridge Road, Anchorvale Link" },
+            { "code": "Exit B", "description": "Sengkang East Avenue, Palm View Primary School" }
+        ]
+    },
+    {
+        "id": "PE1",
+        "name": "Cove",
+        "latitude": 1.3993,
+        "longitude": 103.9059,
+        "lines": ["PG"],
+        "chineseName": "海湾",
+        "tamilName": "கோவ்",
+        "exits": [
+            { "code": "Exit A", "description": "Punggol Field, Edgefield Plains" },
+            { "code": "Exit B", "description": "Punggol Central, Punggol View Primary School" }
+        ]
+    },
+    {
+        "id": "PE2",
+        "name": "Compassvale (Punggol) / Meridian",
+        "name": "Meridian",
+        "latitude": 1.3969,
+        "longitude": 103.9089,
+        "lines": ["PG"],
+        "chineseName": "丽园",
+        "tamilName": "மெரிடியன்",
+        "exits": [
+            { "code": "Exit A", "description": "Punggol Field, Meridian Secondary School" },
+            { "code": "Exit B", "description": "Edgefield Plains, Horizon Primary School" }
+        ]
+    },
+    {
+        "id": "PE3",
+        "name": "Coral Edge",
+        "latitude": 1.3939,
+        "longitude": 103.9129,
+        "lines": ["PG"],
+        "chineseName": "珊瑚",
+        "tamilName": "கோரல் எட்ஜ்",
+        "exits": [
+            { "code": "Exit A", "description": "Punggol Field, Punggol Plaza" },
+            { "code": "Exit B", "description": "Punggol East, Punggol 21 Community Club" }
+        ]
+    },
+    {
+        "id": "PE4",
+        "name": "Riviera",
+        "latitude": 1.3946,
+        "longitude": 103.9161,
+        "lines": ["PG", "CP"],
+        "chineseName": "里维拉",
+        "tamilName": "ரிவியாரா",
+        "exits": [
+            { "code": "Exit A", "description": "Punggol East, Tebing Lane container bistros" },
+            { "code": "Exit B", "description": "Punggol Central, Sungei Serangoon Park Connector" }
+        ]
+    },
+    {
+        "id": "PE5",
+        "name": "Kadaloor",
+        "latitude": 1.3996,
+        "longitude": 103.9165,
+        "lines": ["PG"],
+        "chineseName": "卡达鲁",
+        "tamilName": "கடலூர்",
+        "exits": [
+            { "code": "Exit A", "description": "Punggol Drive, Waterway Sunrise" },
+            { "code": "Exit B", "description": "Edgedale Plains, Oasis Primary School" }
+        ]
+    },
+    {
+        "id": "PE6",
+        "name": "Oasis",
+        "latitude": 1.4023,
+        "longitude": 103.9128,
+        "lines": ["PG"],
+        "chineseName": "绿洲",
+        "tamilName": "ஓய்சிஸ்",
+        "exits": [
+            { "code": "Exit A", "description": "Punggol Drive, Oasis Terraces, Punggol Polyclinic" },
+            { "code": "Exit B", "description": "Edgefield Plains, My Waterway@Punggol" }
+        ]
+    },
+    {
+        "id": "PE7",
+        "name": "Damai",
+        "latitude": 1.4053,
+        "longitude": 103.9086,
+        "lines": ["PG"],
+        "chineseName": "达迈",
+        "tamilName": "டமாய்",
+        "exits": [
+            { "code": "Exit A", "description": "Punggol Drive, Punggol Road" },
+            { "code": "Exit B", "description": "Punggol View, Oasis Terraces walkway" }
+        ]
+    },
+    {
+        "id": "PW1",
+        "name": "Sam Kee",
+        "latitude": 1.4096,
+        "longitude": 103.9048,
+        "lines": ["PG"],
+        "chineseName": "三记",
+        "tamilName": "சம் கீ",
+        "exits": [
+            { "code": "Exit A", "description": "Sentul Crescent, SAFRA Punggol" },
+            { "code": "Exit B", "description": "Punggol Waterway Park, One Punggol link" }
+        ]
+    },
+    {
+        "id": "PW2",
+        "name": "Teck Lee",
+        "latitude": 1.4128,
+        "longitude": 103.9066,
+        "lines": ["PG"],
+        "chineseName": "德利",
+        "tamilName": "டெக் லீ",
+        "exits": [
+            { "code": "Exit A", "description": "Ponggol Seventh Avenue, Singapore Institute of Technology (SIT)" },
+            { "code": "Exit B", "description": "Punggol Way, Punggol Digital District fringe" }
+        ]
+    },
+    {
+        "id": "PW3",
+        "name": "Punggol Point",
+        "latitude": 1.4169,
+        "longitude": 103.9067,
+        "lines": ["PG"],
+        "chineseName": "榜鹅坊",
+        "tamilName": "பொங்கோல் பொයින්ட்",
+        "exits": [
+            { "code": "Exit A", "description": "Punggol Point Road, The Punggol Settlement" },
+            { "code": "Exit B", "description": "Punggol Promenade Nature Walk, Coney Island West Entrance" }
+        ]
+    },
+    {
+        "id": "PW4",
+        "name": "Samudera",
+        "latitude": 1.4159,
+        "longitude": 103.9022,
+        "lines": ["PG"],
+        "chineseName": "山姆",
+        "tamilName": "சமுத்திரா",
+        "exits": [
+            { "code": "Exit A", "description": "Punggol Way, Northshore Plaza I & II" },
+            { "code": "Exit B", "description": "Northshore Drive, Marina Country Club transfer" }
+        ]
+    },
+    {
+        "id": "PW5",
+        "name": "Nibong",
+        "latitude": 1.4119,
+        "longitude": 103.9003,
+        "lines": ["PG"],
+        "chineseName": "尼蒙",
+        "tamilName": "நிபோங்",
+        "exits": [
+            { "code": "Exit A", "description": "Punggol Way, Waterfront Woodcress" },
+            { "code": "Exit B", "description": "Punggol Field Walk, Sumang Lane" }
+        ]
+    },
+    {
+        "id": "PW6",
+        "name": "Sumang",
+        "latitude": 1.4082,
+        "longitude": 103.8986,
+        "lines": ["PG"],
+        "chineseName": "苏芒",
+        "tamilName": "சுமாங்",
+        "exits": [
+            { "code": "Exit A", "description": "Punggol Way, Waterfront Waves" },
+            { "code": "Exit B", "description": "Sumang Link, Punggol Waterway Park (West)" }
+        ]
+    },
+    {
+        "id": "PW7",
+        "name": "Soo Teck",
+        "latitude": 1.4054,
+        "longitude": 103.8973,
+        "lines": ["PG"],
+        "chineseName": "树德",
+        "tamilName": "சூ டெக்",
+        "exits": [
+            { "code": "Exit A", "description": "Punggol Way, Punggol Walk" },
+            { "code": "Exit B", "description": "Compassvale Crescent, Valour Primary School" }
+        ]
+    }
+    
+    
+]

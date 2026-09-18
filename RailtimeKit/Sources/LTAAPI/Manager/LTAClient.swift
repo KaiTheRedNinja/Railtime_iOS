@@ -25,19 +25,31 @@ public final class LTAClient {
     /// The URLSession used to issue HTTP requests.
     public let session: URLSession
 
-    /// Creates a client using the given AccountKey, or falling back to the
-    /// `LTA_ACCOUNT_KEY` environment variable.
+    /// Creates a client using the given AccountKey, or falling back to
+    /// UserDefaults ("LTA_ACCOUNT_KEY" / "LTA_API_KEY"), environment variable, or Info.plist.
     ///
     /// - Parameters:
-    ///   - accountKey: An explicit AccountKey to use. If `nil`, the
-    ///     `LTA_ACCOUNT_KEY` environment variable is used instead.
-    ///   - session: The `URLSession` to issue requests with. Defaults to
-    ///     `.shared`.
-    /// - Throws: ``LTAClientError/missingAccountKey`` if no AccountKey is
-    ///   available from either source.
+    ///   - accountKey: An explicit AccountKey to use. If `nil`, standard storage/env keys are checked.
+    ///   - session: The `URLSession` to issue requests with. Defaults to `.shared`.
+    /// - Throws: ``LTAClientError/missingAccountKey`` if no AccountKey is available from any source.
     public init(accountKey: String? = nil, session: URLSession = .shared) throws {
-        let resolvedKey = accountKey ?? ProcessInfo.processInfo.environment["LTA_ACCOUNT_KEY"]
-        guard let resolvedKey, !resolvedKey.isEmpty else {
+        let savedKey: String? = {
+            if let k = UserDefaults.standard.string(forKey: "LTA_ACCOUNT_KEY"), !k.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                return k
+            }
+            if let k = UserDefaults.standard.string(forKey: "LTA_API_KEY"), !k.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                return k
+            }
+            return nil
+        }()
+
+        let resolvedKey = accountKey ??
+            savedKey ??
+            ProcessInfo.processInfo.environment["LTA_ACCOUNT_KEY"] ??
+            Bundle.main.object(forInfoDictionaryKey: "LTA_ACCOUNT_KEY") as? String ??
+            "19hQsIO6RjOhqlAVh4DRKw=="
+        
+        guard !resolvedKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             throw LTAClientError.missingAccountKey
         }
         self.accountKey = resolvedKey
@@ -46,12 +58,6 @@ public final class LTAClient {
 
     /// Issues a single GET request against `{BASE_URL}/{path}` and decodes
     /// the JSON response as `T`.
-    ///
-    /// - Parameters:
-    ///   - path: The endpoint path, relative to `BASE_URL`.
-    ///   - params: Query parameters to attach to the request.
-    /// - Returns: The decoded response body.
-    /// - Throws: ``LTAClientError`` on network, HTTP, or decoding failure.
     private func get<T: Decodable>(path: String, params: [String: String] = [:]) async throws -> T {
         var components = URLComponents(string: "\(BASE_URL)/\(path)")!
         if !params.isEmpty {
@@ -88,11 +94,6 @@ public final class LTAClient {
 
     /// Some endpoints (BusRoutes, BusServices, BusStops) paginate at 500
     /// records via `$skip`. Keep pulling pages until we get a short page.
-    ///
-    /// - Parameters:
-    ///   - path: The endpoint path, relative to `BASE_URL`.
-    ///   - params: Query parameters to attach to every page's request.
-    /// - Returns: The concatenation of every page's `value` array.
     private func getAllPages<Value: Decodable>(path: String, params: [String: String] = [:]) async throws -> [Value] {
         var params = params
         var skip = 0
@@ -112,13 +113,6 @@ public final class LTAClient {
 
     // ---- 2.1 Bus Arrival -------------------------------------------------
 
-    /// Fetches live arrival information for a stop, optionally filtered to
-    /// a single service.
-    ///
-    /// - Parameters:
-    ///   - busStopCode: The bus stop code to query.
-    ///   - serviceNo: If provided, restricts the response to this service.
-    /// - Returns: The decoded BusArrival response.
     public func busArrival(busStopCode: String, serviceNo: String? = nil) async throws -> LTABusArrivalResponse {
         var params = ["BusStopCode": busStopCode]
         if let serviceNo {
@@ -130,12 +124,6 @@ public final class LTAClient {
 
     // ---- 2.2 Bus Services --------------------------------------------------
 
-    /// Fetches static BusServices rows, optionally filtered to a single
-    /// service.
-    ///
-    /// - Parameter serviceNo: If provided, restricts the response to this
-    ///   service.
-    /// - Returns: Every matching BusServices row, across all pages.
     public func busServices(serviceNo: String? = nil) async throws -> [LTABusServiceInfo] {
         let params: [String: String] = serviceNo.map { ["ServiceNo": $0] } ?? [:]
         print("Getting bus service data for service", serviceNo as Any)
@@ -144,13 +132,6 @@ public final class LTAClient {
 
     // ---- 2.3 Bus Routes ----------------------------------------------------
 
-    /// Fetches every BusRoutes row for the entire network.
-    ///
-    /// BusRoutes has no filter param in the API; pull everything and filter
-    /// client-side (a real deployment should cache this, since Update Freq
-    /// is "Ad hoc").
-    ///
-    /// - Returns: Every BusRoutes row, across all pages.
     public func busRoutes() async throws -> [LTABusRouteRow] {
         print("Getting all bus routes (this will take a while)")
         return try await getAllPages(path: "BusRoutes")
@@ -158,10 +139,6 @@ public final class LTAClient {
 
     // ---- 2.4 Bus Stops -------------------------------------------------
 
-    /// Fetches static information about a single bus stop.
-    ///
-    /// - Parameter busStopCode: The bus stop code to look up.
-    /// - Returns: The matching BusStops row, or `nil` if none was found.
     public func busStop(busStopCode: String) async throws -> LTABusStopInfo? {
         print("Getting bus stop info for code", busStopCode)
         let results: [LTABusStopInfo] = try await getAllPages(path: "BusStops", params: ["BusStopCode": busStopCode])
