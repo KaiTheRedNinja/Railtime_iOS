@@ -74,6 +74,8 @@ extension JourneyManager {
     }
 
     private func getBusContext(_ busRangesToQuery: [String : [JourneyManager.StopRangeRequest]]) async throws {
+        guard let estimator else { return }
+
         struct JourneyBusLegContextWithId {
             var contextId: JourneyLegContextID
             var context: JourneyBusLeg.Context
@@ -98,7 +100,7 @@ extension JourneyManager {
                 }
 
                 taskGroup.addTask {
-                    let rawEstimatesForRanges = try await self.estimator.track(
+                    let rawEstimatesForRanges = try await estimator.track(
                         stopRangesOfInterest: stopRanges.map { ($0.startCode, $0.endCode) },
                         serviceNo: serviceNo
                     )
@@ -133,7 +135,7 @@ extension JourneyManager {
         try await withThrowingTaskGroup(of: JourneyIntermediateBusNodeContextWithId?.self, returning: Void.self) { taskGroup in
             for stopCode in stopCodes {
                 taskGroup.addTask {
-                    if let stopInfo = try await self.estimator.data.getStopInfo(busStopCode: stopCode) {
+                    if let stopInfo = try await estimator.data.getStopInfo(busStopCode: stopCode) {
                         return .init(contextId: stopCode, context: stopInfo)
                     } else {
                         return nil
@@ -149,6 +151,8 @@ extension JourneyManager {
     }
 
     private func getTrainContext(_ mrtRangesToQuery: [String : [JourneyManager.StopRangeRequest]]) async throws {
+        guard let estimator else { return }
+
         struct JourneyTrainLegContextWithId {
             var contextId: JourneyLegContextID
             var context: JourneyTrainLeg.Context

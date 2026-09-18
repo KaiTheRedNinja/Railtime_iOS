@@ -1,4 +1,5 @@
 import Foundation
+import ZIPFoundation
 
 // --------------------------------------------------------------------------
 // Disk cache for non-live data (BusRoutes / BusServices / BusStops)
@@ -68,7 +69,7 @@ public final class DiskCache {
 
     /// Computes the on-disk path for a given category/key pair, creating the
     /// category directory if needed.
-    private func path(category: String, key: String) -> URL {
+    func path(category: String, key: String) -> URL {
         let safeKey = sanitizedCacheKey(key)
         let directory = root.appendingPathComponent(category, isDirectory: true)
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -233,5 +234,44 @@ public final class CachedDataSource {
             cache.write(category: "stops", key: busStopCode, data: info)
         }
         return info
+    }
+
+    /// Get the MRT stop and schedule information
+    public func getMrtSchedleInfo() async throws {
+        let destinationURL = cache.root
+            .appending(path: "mrt/gtfs")
+
+        if FileManager.default.fileExists(atPath: destinationURL.path()) {
+            // use that instead
+            print("File already exists!")
+        } else {
+            guard let url = try await client.mrtSchedule() else {
+                print("Could not get MRT URL!")
+                return
+            }
+            // download and move
+            let (tempURL, response) = try await URLSession.shared.download(from: url)
+            let downloadLocation = FileManager.default.temporaryDirectory
+                .appendingPathComponent("gtfs_archive.zip")
+            guard let httpResponse = response as? HTTPURLResponse,
+                  (200...299).contains(httpResponse.statusCode) else {
+                throw URLError(.badServerResponse)
+            }
+            if FileManager.default.fileExists(atPath: downloadLocation.path) {
+                try FileManager.default.removeItem(at: downloadLocation)
+            }
+            try FileManager.default.moveItem(at: tempURL, to: downloadLocation)
+
+            // unzip
+            try FileManager.default.createDirectory(
+                at: destinationURL,
+                withIntermediateDirectories: true
+            )
+
+            try FileManager.default.unzipItem(
+                at: downloadLocation,
+                to: destinationURL
+            )
+        }
     }
 }
