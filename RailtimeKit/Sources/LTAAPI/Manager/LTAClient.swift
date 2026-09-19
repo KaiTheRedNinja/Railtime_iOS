@@ -145,4 +145,19 @@ public final class LTAClient {
         let results: [LTABusStopInfo] = try await getAllPages(path: "BusStops", params: ["BusStopCode": busStopCode])
         return results.first
     }
+
+    // ---- 2.11 Train service alerts ------------------------------------------
+
+    public func trainServiceAlerts() async throws -> LTATrainAlertsResponse? {
+        let results: LTATrainAlertsResponse? = try await get(path: "TrainServiceAlerts")
+        return results
+    }
+
+    // ---- 2.24 Station crowd density (realtime) --------------------------------------------
+
+    public func trainStationCrowdDensity(trainLine: String) async throws -> LTAPCDRealTimeResponse? {
+        print("Getting crowd density for train line \(trainLine)")
+        let results: LTAPCDRealTimeResponse? = try await get(path: "PCDRealTime", params: ["TrainLine": trainLine])
+        return results
+    }
 }

@@ -145,6 +145,8 @@ public final class LTADataSource {
         return nil
     }
 
+    // MARK: Saving bulk data to cache
+
     /// Saves an external bulk list of MRT stops to the cache
     public func saveMRTStopsToCache(_ stops: [LTATrainStopInfo]) {
         for stopInfo in stops {
