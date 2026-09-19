@@ -31,16 +31,16 @@ public final class LTADataSource {
     /// The underlying API client.
     public let client: LTAClient
     /// The on-disk cache for non-live (BusRoutes/BusServices/BusStops) data.
-    public let cache: DiskCache
-    /// In-memory cache for the current run, keyed by (bus stop code, service
-    /// number).
-    private var shortTermCache: [ShortTermCacheKey: (fetchedAt: Date, data: LTABusArrivalResponse)] = [:]
+    public let diskCache: DiskCache
+    /// The in-memory cache for live data
+    public let memoryCache: MemoryCache
 
-    /// Creates a cached data source wrapping `client`, using `cache` for
+    /// Creates a cached data source wrapping `client`, using `diskCache` for
     /// its on-disk non-live cache.
-    public init(client: LTAClient, cache: DiskCache) {
+    public init(client: LTAClient, diskCache: DiskCache, memoryCache: MemoryCache) {
         self.client = client
-        self.cache = cache
+        self.diskCache = diskCache
+        self.memoryCache = memoryCache
     }
 
     /// Returns the live BusArrival data for a stop/service.
@@ -54,13 +54,13 @@ public final class LTADataSource {
     ///   - serviceNo: If provided, restricts the response to this service.
     /// - Returns: The live BusArrival response.
     public func getBusArrival(busStopCode: String, serviceNo: String? = nil) async throws -> LTABusArrivalResponse {
-        let cacheKey = ShortTermCacheKey(busStopCode: busStopCode, serviceNo: serviceNo)
-        if let cached = shortTermCache[cacheKey], Date().timeIntervalSince(cached.fetchedAt) < 5 {
-            return cached.data
+        let cacheKey = "\(busStopCode)_\(serviceNo ?? "X")"
+        if let cached: LTABusArrivalResponse = memoryCache.read(category: "busArrival", key: cacheKey, expiry: 5) {
+            return cached
         }
 
         let data = try await client.busArrival(busStopCode: busStopCode, serviceNo: serviceNo)
-        shortTermCache[cacheKey] = (Date(), data)
+        memoryCache.write(category: "busArrival", key: cacheKey, data: data)
         return data
     }
 
@@ -72,7 +72,7 @@ public final class LTADataSource {
     ///   exist.
     public func getServiceRoutes(serviceNo: String) async throws -> [LTABusRouteRow] {
         print("Getting service routes for", serviceNo)
-        if let cached: [LTABusRouteRow] = cache.read(category: "routes", key: serviceNo) {
+        if let cached: [LTABusRouteRow] = diskCache.read(category: "routes", key: serviceNo) {
             return cached
         }
 
@@ -82,7 +82,7 @@ public final class LTADataSource {
             byService[row.serviceNo, default: []].append(row)
         }
         for (svc, rows) in byService {
-            cache.write(category: "routes", key: svc, data: rows)
+            diskCache.write(category: "routes", key: svc, data: rows)
         }
         return byService[serviceNo] ?? []
     }
@@ -95,11 +95,11 @@ public final class LTADataSource {
     ///   exist.
     public func getServiceInfo(serviceNo: String) async throws -> LTABusServiceInfo? {
         print("Getting service info for", serviceNo)
-        if let cached: [LTABusServiceInfo] = cache.read(category: "services", key: serviceNo) {
+        if let cached: [LTABusServiceInfo] = diskCache.read(category: "services", key: serviceNo) {
             return cached.first
         }
         let rows = try await client.busServices(serviceNo: serviceNo)
-        cache.write(category: "services", key: serviceNo, data: rows)
+        diskCache.write(category: "services", key: serviceNo, data: rows)
         return rows.first
     }
 
@@ -110,12 +110,12 @@ public final class LTADataSource {
     /// - Returns: The stop's info, or `nil` if the stop doesn't exist.
     public func getStopInfo(busStopCode: String) async throws -> LTABusStopInfo? {
         print("Getting stop info for", busStopCode)
-        if let cached: LTABusStopInfo = cache.read(category: "stops", key: busStopCode) {
+        if let cached: LTABusStopInfo = diskCache.read(category: "stops", key: busStopCode) {
             return cached
         }
         let info = try await client.busStop(busStopCode: busStopCode)
         if let info {
-            cache.write(category: "stops", key: busStopCode, data: info)
+            diskCache.write(category: "stops", key: busStopCode, data: info)
         }
         return info
     }
@@ -126,7 +126,7 @@ public final class LTADataSource {
     /// - Parameter mrtStopCode: The MRT stop code to look up.
     /// - Returns: The stop's info, or `nil` if the stop doesn't exist.
     public func getMRTStopInfo(mrtStopCode: String) -> LTATrainStopInfo? {
-        if let cached: LTATrainStopInfo = cache.read(category: "stops", key: mrtStopCode) {
+        if let cached: LTATrainStopInfo = diskCache.read(category: "stops", key: mrtStopCode) {
             return cached
         }
         return nil
@@ -139,7 +139,7 @@ public final class LTADataSource {
     /// - Returns: The routes for `serviceCode`, or `nil` if not found.
     public func getMRTServiceRoutes(serviceCode: String) async throws -> LTATrainRoutes? {
         print("Getting MRT service routes for", serviceCode)
-        if let cached: LTATrainRoutes = cache.read(category: "routes", key: serviceCode) {
+        if let cached: LTATrainRoutes = diskCache.read(category: "routes", key: serviceCode) {
             return cached
         }
         return nil
@@ -150,20 +150,20 @@ public final class LTADataSource {
     /// Saves an external bulk list of MRT stops to the cache
     public func saveMRTStopsToCache(_ stops: [LTATrainStopInfo]) {
         for stopInfo in stops {
-            cache.write(category: "stops", key: stopInfo.mrtStopCode, data: stopInfo)
+            diskCache.write(category: "stops", key: stopInfo.mrtStopCode, data: stopInfo)
         }
     }
     /// Saves an external bulk list of MRT stops to the cache
     public func saveMRTRoutesToCache(_ routes: [LTATrainRoutes]) {
         for routeInfo in routes {
-            cache.write(category: "routes", key: routeInfo.code, data: routeInfo)
+            diskCache.write(category: "routes", key: routeInfo.code, data: routeInfo)
         }
     }
 
     /// Saves an external bulk list of bus stops to the cache
     public func saveBusStopsToCache(_ stops: [LTABusStopInfo]) {
         for stopInfo in stops {
-            cache.write(category: "stops", key: stopInfo.busStopCode, data: stopInfo)
+            diskCache.write(category: "stops", key: stopInfo.busStopCode, data: stopInfo)
         }
     }
 
@@ -174,7 +174,7 @@ public final class LTADataSource {
             byService[row.serviceNo, default: []].append(row)
         }
         for (svc, rows) in byService {
-            cache.write(category: "routes", key: svc, data: rows)
+            diskCache.write(category: "routes", key: svc, data: rows)
         }
     }
 }

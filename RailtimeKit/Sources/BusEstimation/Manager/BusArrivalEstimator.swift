@@ -37,7 +37,11 @@ public final class BusArrivalEstimator {
     ) {
         self.client = client
         self.now = now ?? .now
-        self.data = LTADataSource(client: client, cache: DiskCache(root: cacheDir, ttl: cacheTTLHours * 3600))
+        self.data = LTADataSource(
+            client: client,
+            diskCache: DiskCache(root: cacheDir, ttl: cacheTTLHours * 3600),
+            memoryCache: MemoryCache(ttl: 5) // 5 second cache
+        )
     }
 }
 

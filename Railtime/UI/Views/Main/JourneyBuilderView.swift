@@ -144,7 +144,7 @@ struct JourneyBuilderView: View {
 
                         Button("Sample") {
                             guard let estimator = manager.estimator,
-                                  let sample = estimator.data.cache.read(
+                                  let sample = estimator.data.diskCache.read(
                                       category: "user_input",
                                       key: "sampleNodeContext",
                                       as: JourneyContextSample.self
@@ -174,7 +174,7 @@ struct JourneyBuilderView: View {
                         }
                         Button("Save as sample") {
                             if let estimator = manager.estimator {
-                                estimator.data.cache.write(
+                                estimator.data.diskCache.write(
                                     category: "user_input",
                                     key: "sampleNodeContext",
                                     data: JourneyContextSample(saveDate: .now, context: manager.context)
@@ -198,13 +198,13 @@ struct JourneyBuilderView: View {
             }
             .onAppear {
                 if let estimator = manager.estimator {
-                    let journey: Journey = estimator.data.cache.read(category: "user_input", key: "journey") ?? .emptyBusJourney()
+                    let journey: Journey = estimator.data.diskCache.read(category: "user_input", key: "journey") ?? .emptyBusJourney()
                     manager.journey = journey
                 }
             }
             .onReceive(manager.$journey) { output in
                 if let estimator = manager.estimator {
-                    estimator.data.cache.write(category: "user_input", key: "journey", data: manager.journey)
+                    estimator.data.diskCache.write(category: "user_input", key: "journey", data: manager.journey)
                 }
                 updateTask?.cancel()
                 updateTask = Task {
