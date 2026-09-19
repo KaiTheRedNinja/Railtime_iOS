@@ -1,5 +1,5 @@
 //
-//  LTAMRTRouteRow.swift
+//  LTAMRTRoutes.swift
 //  RailtimeKit
 //
 //  Created by Kai Quan Tay on 18/9/26.

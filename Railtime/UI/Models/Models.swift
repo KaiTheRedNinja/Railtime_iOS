@@ -598,39 +598,3 @@ struct LTABusRouteItem: Codable {
         case sunLastBus = "SUN_LastBus"
     }
 }
-
-struct LTAPCDRealTimeResponse: Codable {
-    let value: [LTAPCDRealTimeItem]?
-}
-
-struct LTAPCDRealTimeItem: Codable {
-    let station: String?
-    let crowdLevel: String?
-    
-    enum CodingKeys: String, CodingKey {
-        case station = "Station"
-        case crowdLevel = "CrowdLevel"
-    }
-}
-
-struct LTATrainAlertsResponse: Codable {
-    let value: LTATrainAlertValue?
-}
-
-struct LTATrainAlertValue: Codable {
-    let status: Int?
-    let message: [LTATrainAlertMessage]?
-    
-    enum CodingKeys: String, CodingKey {
-        case status = "Status"
-        case message = "Message"
-    }
-}
-
-struct LTATrainAlertMessage: Codable {
-    let content: String?
-    
-    enum CodingKeys: String, CodingKey {
-        case content = "Content"
-    }
-}
