@@ -73,7 +73,7 @@ struct BusStopHomeRow: View {
                                         .foregroundStyle(.primary)
                                     
                                     Circle()
-                                        .fill(next.load.color)
+                                        .fill(next.load?.color ?? .gray)
                                         .frame(width: 6, height: 6)
                                     
                                     if let mins = next.minutesRemaining {

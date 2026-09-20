@@ -194,59 +194,50 @@ struct StationLineCrowd: Identifiable {
 
 // MARK: - Bus Arrival Models
 
-enum BusLoad: String {
-    case seatsAvailable = "SEA"
-    case standingAvailable = "SDA"
-    case limitedStanding = "LSD"
-    case unknown = ""
-    
+extension LTANextBusInfo.Load {
     var displayText: String {
         switch self {
         case .seatsAvailable: return "Seats Available"
         case .standingAvailable: return "Standing Available"
         case .limitedStanding: return "Limited Standing"
-        case .unknown: return "No Data"
         }
     }
-    
+
     var color: Color {
         switch self {
         case .seatsAvailable: return .green
         case .standingAvailable: return .orange
         case .limitedStanding: return .red
-        case .unknown: return .gray
         }
     }
 }
 
-enum BusType: String {
-    case singleDeck = "SD"
-    case doubleDeck = "DD"
-    case articulated = "BD"
-    case unknown = ""
-    
+typealias BusLoad = LTANextBusInfo.Load
+
+extension LTANextBusInfo.BusVariant {
     var displayText: String {
         switch self {
         case .singleDeck: return "Single Deck"
         case .doubleDeck: return "Double Deck"
-        case .articulated: return "Bendy"
-        case .unknown: return "Bus"
+        case .bendy: return "Bendy"
         }
     }
 }
 
+typealias BusType = LTANextBusInfo.BusVariant
+
 struct BusTimingInfo: Identifiable, Hashable {
     let id = UUID()
     let rawArrival: String?
-    let load: BusLoad
-    let busType: BusType
+    let load: BusLoad?
+    let busType: BusType?
     let isWheelchairAccessible: Bool
     let destinationCode: String?
     
     init(rawArrival: String?, loadStr: String?, typeStr: String?, featureStr: String?, destinationCode: String? = nil) {
         self.rawArrival = rawArrival
-        self.load = BusLoad(rawValue: loadStr ?? "") ?? .unknown
-        self.busType = BusType(rawValue: typeStr ?? "") ?? .unknown
+        self.load = BusLoad(rawValue: loadStr ?? "")
+        self.busType = BusType(rawValue: typeStr ?? "")
         self.isWheelchairAccessible = (featureStr == "WAB")
         self.destinationCode = destinationCode
     }

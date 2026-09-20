@@ -1,4 +1,5 @@
 import SwiftUI
+import LTAAPI
 
 // MARK: - Timing Badge Component
 
@@ -11,7 +12,7 @@ struct TimingBadge: View {
             HStack(spacing: 4) {
                 // Occupancy Dot
                 Circle()
-                    .fill(timing.load.color)
+                    .fill(timing.load?.color ?? .gray)
                     .frame(width: 8, height: 8)
                 
                 // Timing text
