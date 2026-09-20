@@ -36,6 +36,34 @@ public struct LTABusRouteRow: Codable {
     /// Scheduled last-bus time on Sundays/public holidays.
     public let sunLastBus: TimeOfDay?
 
+    public init(
+        serviceNo: String,
+        `operator`: String,
+        direction: Int,
+        stopSequence: Int,
+        busStopCode: String,
+        distance: Double,
+        wdFirstBus: TimeOfDay?,
+        wdLastBus: TimeOfDay?,
+        satFirstBus: TimeOfDay?,
+        satLastBus: TimeOfDay?,
+        sunFirstBus: TimeOfDay?,
+        sunLastBus: TimeOfDay?
+    ) {
+        self.serviceNo = serviceNo
+        self.operator = `operator`
+        self.direction = direction
+        self.stopSequence = stopSequence
+        self.busStopCode = busStopCode
+        self.distance = distance
+        self.wdFirstBus = wdFirstBus
+        self.wdLastBus = wdLastBus
+        self.satFirstBus = satFirstBus
+        self.satLastBus = satLastBus
+        self.sunFirstBus = sunFirstBus
+        self.sunLastBus = sunLastBus
+    }
+
     public enum CodingKeys: String, CodingKey {
         case serviceNo = "ServiceNo"
         case `operator` = "Operator"

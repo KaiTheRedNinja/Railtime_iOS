@@ -221,12 +221,8 @@ public final class LTADataSource {
     }
 
     /// Saves an external bulk list of bus routes to the cache
-    public func saveBulkRoutesToCache(_ routes: [LTABusRouteRow]) {
-        var byService: [String: [LTABusRouteRow]] = [:]
-        for row in routes {
-            byService[row.serviceNo, default: []].append(row)
-        }
-        for (svc, rows) in byService {
+    public func saveBulkRoutesToCache(_ routes: [String: [LTABusRouteRow]]) {
+        for (svc, rows) in routes {
             diskCache.write(category: "routes", key: svc, data: rows)
         }
     }
