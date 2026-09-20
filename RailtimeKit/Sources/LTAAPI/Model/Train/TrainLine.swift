@@ -65,6 +65,16 @@ public enum TrainLine: Equatable, Codable {
         }
     }
 
+    /// Creates a line from either a station code
+    public init?(stationCode: String) {
+        if let value = TrainLine(
+            String(
+                stationCode[stationCode.startIndex..<stationCode.index(stationCode.startIndex, offsetBy: 2)]
+            )
+        ) { self = value }
+        return nil
+    }
+
     public init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
         let string = try container.decode(String.self)

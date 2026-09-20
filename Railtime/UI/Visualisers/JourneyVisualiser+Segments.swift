@@ -163,7 +163,7 @@ extension JourneyVisualiser {
                         verticalScale: verticalScale,
                         horizontalScale: horizontalScale,
                         ttGraphSize: .init(
-                            width: geometrySize.width - Sizing.stopLineAndLabelsWidth,
+                            width: max(0, geometrySize.width - Sizing.stopLineAndLabelsWidth),
                             height: max(0, geometrySize.height - max(0, group.startingHeight - scrollPosition.y))
                         ),
                         scrollPosition: .init(

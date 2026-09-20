@@ -7,6 +7,7 @@
 
 import BusEstimation
 import CoreLocation
+import LTAAPI
 
 extension JourneyManager {
     /// Obtains the full edge context for the `journey`
@@ -150,7 +151,7 @@ extension JourneyManager {
         }
     }
 
-    private func getTrainContext(_ mrtRangesToQuery: [String : [JourneyManager.StopRangeRequest]]) async throws {
+    private func getTrainContext(_ mrtRangesToQuery: [String : [JourneyManager.StopRangeRequest]]) throws {
         guard let estimator else { return }
 
         struct JourneyTrainLegContextWithId {
@@ -163,73 +164,45 @@ extension JourneyManager {
             var context: JourneyTrainStopNode.Context
         }
 
-        // estimate each leg in parallel
-        var stopCodes: [String] = []
-        try await withThrowingTaskGroup(of: [JourneyTrainLegContextWithId].self, returning: Void.self) { taskGroup in
-            for (serviceNo, stopRanges) in mrtRangesToQuery {
-                // add a temporary empty context for each range
-                for stopRange in stopRanges {
-                    context.edgeContext[stopRange.contextId] = JourneyTrainLeg.Context(
-                        startCode: stopRange.startCode,
-                        endCode: stopRange.endCode,
-                        stopEstimations: []
-                    )
-                }
+        // estimate each leg. No need parallel, since no async calls are made.
+        var stopCodes: Set<String> = []
 
-                taskGroup.addTask {
-                    // TODO: actually project the estimations
-                    let rawEstimatesForRanges: [[TrainStopArrivalEstimates]] = .init(repeating: [], count: stopRanges.count)
-                    for stopRange in stopRanges {
-                    }
-//                    try await self.estimator.track(
-//                        stopRangesOfInterest: stopRanges.map { ($0.startCode, $0.endCode) },
-//                        serviceNo: serviceNo
-//                    )
+        for (serviceNo, stopRanges) in mrtRangesToQuery {
+            guard let routes = estimator.data.getMRTServiceRoutes(serviceCode: serviceNo) else { continue }
+            for range in stopRanges {
+                for (_, stopOrder) in routes.directions {
+                    guard let startStationIndex = stopOrder.firstIndex(of: range.startCode),
+                          let endStationIndex = stopOrder.lastIndex(of: range.endCode),
+                          startStationIndex < endStationIndex
+                    else { return }
 
-                    var estimatesForRanges: [JourneyTrainLegContextWithId] = []
-                    for (stopRange, rawEstimatesForRange) in zip(stopRanges, rawEstimatesForRanges) {
-                        estimatesForRanges.append(
-                            .init(
-                                contextId: stopRange.contextId,
-                                context: .init(
-                                    startCode: stopRange.startCode,
-                                    endCode: stopRange.endCode,
-                                    stopEstimations: rawEstimatesForRange
-                                )
-                            )
+                    let stops = stopOrder[startStationIndex...endStationIndex]
+                    let totalDeltaTime = TimeDelta.mins(Double(stops.count - 1) * 2)
+                    let stopEstimations = stops.enumerated().map { (index, stop) -> TrainStopArrivalEstimates in
+                        .init(
+                            stopId: stop,
+                            deltaTime: TimeDelta.mins(Double(index) * 2) - totalDeltaTime,
+                            deltaError: .zero,
+                            estimates: [] // TODO: see if we want to add estimates
                         )
                     }
 
-                    return estimatesForRanges
-                }
-            }
+                    let context = JourneyTrainLeg.Context(
+                        startCode: range.startCode,
+                        endCode: range.endCode,
+                        stopEstimations: stopEstimations
+                    )
+                    self.context.edgeContext[range.contextId] = context
 
-            for try await resultGroup in taskGroup {
-                for result in resultGroup {
-                    context.edgeContext[result.contextId] = result.context
-                    stopCodes.append(contentsOf: result.context.stopEstimations.map { $0.stopId })
+                    stopCodes.formUnion(stops)
                 }
             }
         }
 
         // get details for each stop in parallel
-        try await withThrowingTaskGroup(of: JourneyIntermediateTrainNodeContextWithId?.self, returning: Void.self) { taskGroup in
-            for stopCode in stopCodes {
-                taskGroup.addTask {
-                    // TODO: actually get information about the stop
-                    return nil
-//                    if let stopInfo = try await self.estimator.data.getStopInfo(busStopCode: stopCode) {
-//                        return .init(contextId: stopCode, context: stopInfo)
-//                    } else {
-//                        return nil
-//                    }
-                }
-            }
-
-            for try await result in taskGroup {
-                guard let result else { continue }
-                context.nodeContext[result.contextId] = result.context
-            }
+        for stopCode in stopCodes {
+            guard let stop = estimator.data.getMRTStopInfo(mrtStopCode: stopCode) else { continue }
+            context.nodeContext[stopCode] = stop
         }
     }
 

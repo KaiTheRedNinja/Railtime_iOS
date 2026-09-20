@@ -149,7 +149,7 @@ public final class LTADataSource {
     ///
     /// - Parameter serviceCode: The service number to look up routes for.
     /// - Returns: The routes for `serviceCode`, or `nil` if not found.
-    public func getMRTServiceRoutes(serviceCode: String) async throws -> LTATrainRoutes? {
+    public func getMRTServiceRoutes(serviceCode: String) -> LTATrainRoutes? {
         print("Getting MRT service routes for", serviceCode)
         if let cached: LTATrainRoutes = diskCache.read(category: "routes", key: serviceCode) {
             return cached
