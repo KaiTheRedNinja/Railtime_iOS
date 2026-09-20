@@ -345,58 +345,9 @@ class LTAService {
         self.allBusStops = load([LTABusStopInfo].self, fileName: "bus_stops") ?? []
 
         // load the stations into cache
-        dataSource.saveMRTStopsToCache(
-            allStations.map {
-                .init(
-                    id: $0.id,
-                    description: $0.name,
-                    latitude: $0.coordinate.latitude,
-                    longitude: $0.coordinate.longitude,
-                    lines: $0.lines,
-                    exits: $0.exits.map {
-                        .init(
-                            code: $0.code,
-                            description: $0.description,
-                            latitude: $0.latitude,
-                            longitude: $0.longitude
-                        )
-                    },
-                    chineseName: $0.chineseName,
-                    tamilName: $0.tamilName
-                )
-            }
-        )
-        dataSource.saveBusStopsToCache(
-            allBusStops.map {
-                .init(
-                    busStopCode: $0.id,
-                    roadName: $0.roadName,
-                    description: $0.name,
-                    latitude: $0.coordinate.latitude,
-                    longitude: $0.coordinate.longitude
-                )
-            })
+        dataSource.saveMRTStopsToCache(allStations)
+        dataSource.saveBusStopsToCache(allBusStops)
         dataSource.saveMRTRoutesToCache(allMRTRoutes)
-        dataSource.saveBulkRoutesToCache(
-            preseededBusRoutes.mapValues(
-                { preseeded in
-                    preseeded.stops.map { stop in
-                        LTABusRouteRow(
-                            serviceNo: preseeded.serviceNo,
-                            operator: preseeded.operatorName ?? "UNKNOWN",
-                            direction: stop.direction,
-                            stopSequence: stop.stopSequence,
-                            busStopCode: stop.busStopCode,
-                            distance: stop.distance ?? 0,
-                            wdFirstBus: .init(hhmmString: stop.wdFirstBus ?? ""),
-                            wdLastBus: .init(hhmmString: stop.wdLastBus ?? ""),
-                            satFirstBus: .init(hhmmString: stop.satFirstBus ?? ""),
-                            satLastBus: .init(hhmmString: stop.satLastBus ?? ""),
-                            sunFirstBus: .init(hhmmString: stop.sunFirstBus ?? ""),
-                            sunLastBus: .init(hhmmString: stop.sunLastBus ?? "")
-                        )
-                    }
-                })
-        )
+        dataSource.saveBulkRoutesToCache(preseededBusRoutes.mapValues({ $0.stops }))
     }
 }
