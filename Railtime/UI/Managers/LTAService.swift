@@ -345,18 +345,27 @@ class LTAService {
         self.allBusStops = load([LTABusStopInfo].self, fileName: "bus_stops") ?? []
 
         // load the stations into cache
-        dataSource.saveMRTStopsToCache(allStations.map {
-            .init(
-                id: $0.id,
-                description: $0.name,
-                latitude: $0.coordinate.latitude,
-                longitude: $0.coordinate.longitude,
-                lines: $0.lines,
-                exits: $0.exits.map {
-                    .init(code: $0.code, description: $0.description)
-                }
-            )
-        })
+        dataSource.saveMRTStopsToCache(
+            allStations.map {
+                .init(
+                    id: $0.id,
+                    description: $0.name,
+                    latitude: $0.coordinate.latitude,
+                    longitude: $0.coordinate.longitude,
+                    lines: $0.lines,
+                    exits: $0.exits.map {
+                        .init(
+                            code: $0.code,
+                            description: $0.description,
+                            latitude: $0.latitude,
+                            longitude: $0.longitude
+                        )
+                    },
+                    chineseName: $0.chineseName,
+                    tamilName: $0.tamilName
+                )
+            }
+        )
         dataSource.saveBusStopsToCache(
             allBusStops.map {
                 .init(

@@ -73,47 +73,13 @@ extension LTABusStopInfo: @retroactive Identifiable {
 
 typealias BusStop = LTABusStopInfo
 
-struct StationExit: Identifiable, Hashable, Codable {
-    var id: String { code }
-    let code: String // e.g. "Exit A", "Exit B", "Exit 1"
-    let description: String // e.g. "ION Orchard, Tang Plaza, Wheelock Place"
-    let latitude: Double?
-    let longitude: Double?
-    
-    enum CodingKeys: String, CodingKey {
-        case code
-        case description
-        case latitude
-        case longitude
-    }
-    
-    init(code: String, description: String, latitude: Double? = nil, longitude: Double? = nil) {
-        self.code = code
-        self.description = description
-        self.latitude = latitude
-        self.longitude = longitude
-    }
-    
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.code = try container.decode(String.self, forKey: .code)
-        self.description = try container.decode(String.self, forKey: .description)
-        self.latitude = try container.decodeIfPresent(Double.self, forKey: .latitude)
-        self.longitude = try container.decodeIfPresent(Double.self, forKey: .longitude)
-    }
-    
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(code, forKey: .code)
-        try container.encode(description, forKey: .description)
-        try container.encodeIfPresent(latitude, forKey: .latitude)
-        try container.encodeIfPresent(longitude, forKey: .longitude)
-    }
-    
+extension LTATrainStopInfo.Exit: @retroactive Identifiable {
+    public var id: String { code }
+
     var sfSymbolName: String {
         let trimmed = code.replacingOccurrences(of: "Exit", with: "", options: .caseInsensitive)
-                          .trimmingCharacters(in: .whitespacesAndNewlines)
-                          .lowercased()
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
         if let firstChar = trimmed.first {
             if firstChar.isLetter || firstChar.isNumber {
                 return "\(firstChar).circle.fill"
@@ -121,7 +87,7 @@ struct StationExit: Identifiable, Hashable, Codable {
         }
         return "door.left.hand.open"
     }
-    
+
     func coordinate(for station: Station, index: Int, total: Int) -> CLLocationCoordinate2D {
         if let lat = latitude, let lon = longitude {
             return CLLocationCoordinate2D(latitude: lat, longitude: lon)
@@ -137,88 +103,24 @@ struct StationExit: Identifiable, Hashable, Codable {
     }
 }
 
-struct Station: Identifiable, Hashable, Codable {
-    let id: String // Station code (e.g. "NS22/TE14")
-    let name: String // Station name (e.g. "Orchard")
-    let coordinate: CLLocationCoordinate2D
-    let lines: [String]
-    let exits: [StationExit]
-    let chineseName: String?
-    let tamilName: String?
-    
-    enum CodingKeys: String, CodingKey {
-        case id
-        case name
-        case coordinate
-        case latitude
-        case longitude
-        case lines
-        case exits
-        case chineseName
-        case tamilName
+typealias StationExit = LTATrainStopInfo.Exit
+
+extension LTATrainStopInfo: @retroactive Identifiable {
+    public var id: String { mrtStopCode }
+
+    var name: String { description ?? "N/A" }
+
+    var coordinate: CLLocationCoordinate2D {
+        .init(latitude: latitude, longitude: longitude)
     }
-    
-    init(
-        id: String,
-        name: String,
-        coordinate: CLLocationCoordinate2D,
-        lines: [String],
-        exits: [StationExit] = [],
-        chineseName: String? = nil,
-        tamilName: String? = nil
-    ) {
-        self.id = id
-        self.name = name
-        self.coordinate = coordinate
-        self.lines = lines
-        self.exits = exits
-        self.chineseName = chineseName
-        self.tamilName = tamilName
-    }
-    
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = try container.decode(String.self, forKey: .id)
-        self.name = try container.decode(String.self, forKey: .name)
-        self.lines = try container.decode([String].self, forKey: .lines)
-        self.exits = try container.decodeIfPresent([StationExit].self, forKey: .exits) ?? []
-        self.chineseName = try container.decodeIfPresent(String.self, forKey: .chineseName)
-        self.tamilName = try container.decodeIfPresent(String.self, forKey: .tamilName)
-        
-        if let lat = try container.decodeIfPresent(Double.self, forKey: .latitude),
-           let lon = try container.decodeIfPresent(Double.self, forKey: .longitude) {
-            self.coordinate = CLLocationCoordinate2D(latitude: lat, longitude: lon)
-        } else if let coord = try container.decodeIfPresent(CLLocationCoordinate2D.self, forKey: .coordinate) {
-            self.coordinate = coord
-        } else {
-            throw DecodingError.keyNotFound(
-                CodingKeys.latitude,
-                DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Missing latitude/longitude or coordinate properties")
-            )
-        }
-    }
-    
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(name, forKey: .name)
-        try container.encode(coordinate, forKey: .coordinate)
-        try container.encode(lines, forKey: .lines)
-        try container.encode(exits, forKey: .exits)
-        try container.encodeIfPresent(chineseName, forKey: .chineseName)
-        try container.encodeIfPresent(tamilName, forKey: .tamilName)
-    }
-    
-    static func == (lhs: Station, rhs: Station) -> Bool { lhs.id == rhs.id }
-    func hash(into hasher: inout Hasher) { hasher.combine(id) }
-    
+
     func distance(from refCoordinate: CLLocationCoordinate2D?) -> Double? {
         guard let refCoordinate = refCoordinate else { return nil }
         let refLoc = CLLocation(latitude: refCoordinate.latitude, longitude: refCoordinate.longitude)
-        let stationLoc = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        let stationLoc = CLLocation(latitude: latitude, longitude: longitude)
         return refLoc.distance(from: stationLoc)
     }
-    
+
     func formattedDistance(from refCoordinate: CLLocationCoordinate2D?) -> String? {
         guard let meters = distance(from: refCoordinate) else { return nil }
         let km = meters / 1000.0
@@ -228,15 +130,17 @@ struct Station: Identifiable, Hashable, Codable {
             return String(format: "%.1f km", km)
         }
     }
-    
+
     var isLRT: Bool {
         lines.contains { ["BP", "SE", "SW", "PE", "PW", "STC", "PTC"].contains($0) }
     }
-    
+
     var iconName: String {
         isLRT ? "lrt" : "mrt"
     }
 }
+
+typealias Station = LTATrainStopInfo
 
 enum StationCrowdLevel: String, Codable {
     case low = "l"
@@ -497,82 +401,4 @@ enum TransitItem: Hashable {
 struct BusServiceDetail: Hashable {
     let serviceNo: String
     let originStopCode: String?
-}
-
-// MARK: - LTA API Responses
-
-struct LTABusArrivalResponse: Codable {
-    let busStopCode: String?
-    let services: [LTABusServiceItem]?
-    
-    enum CodingKeys: String, CodingKey {
-        case busStopCode = "BusStopCode"
-        case services = "Services"
-    }
-}
-
-struct LTABusServiceItem: Codable {
-    let serviceNo: String
-    let busOperator: String?
-    let nextBus: LTABusTimingItem?
-    let nextBus2: LTABusTimingItem?
-    let nextBus3: LTABusTimingItem?
-    
-    enum CodingKeys: String, CodingKey {
-        case serviceNo = "ServiceNo"
-        case busOperator = "Operator"
-        case nextBus = "NextBus"
-        case nextBus2 = "NextBus2"
-        case nextBus3 = "NextBus3"
-    }
-}
-
-struct LTABusTimingItem: Codable {
-    let estimatedArrival: String?
-    let latitude: String?
-    let longitude: String?
-    let load: String?
-    let feature: String?
-    let type: String?
-    let destinationCode: String?
-    
-    enum CodingKeys: String, CodingKey {
-        case estimatedArrival = "EstimatedArrival"
-        case latitude = "Latitude"
-        case longitude = "Longitude"
-        case load = "Load"
-        case feature = "Feature"
-        case type = "Type"
-        case destinationCode = "DestinationCode"
-    }
-}
-
-struct LTABusRouteItem: Codable {
-    let serviceNo: String
-    let busOperator: String?
-    let direction: Int
-    let stopSequence: Int
-    let busStopCode: String
-    let distance: Double?
-    let wdFirstBus: String?
-    let wdLastBus: String?
-    let satFirstBus: String?
-    let satLastBus: String?
-    let sunFirstBus: String?
-    let sunLastBus: String?
-    
-    enum CodingKeys: String, CodingKey {
-        case serviceNo = "ServiceNo"
-        case busOperator = "Operator"
-        case direction = "Direction"
-        case stopSequence = "StopSequence"
-        case busStopCode = "BusStopCode"
-        case distance = "Distance"
-        case wdFirstBus = "WD_FirstBus"
-        case wdLastBus = "WD_LastBus"
-        case satFirstBus = "SAT_FirstBus"
-        case satLastBus = "SAT_LastBus"
-        case sunFirstBus = "SUN_FirstBus"
-        case sunLastBus = "SUN_LastBus"
-    }
 }

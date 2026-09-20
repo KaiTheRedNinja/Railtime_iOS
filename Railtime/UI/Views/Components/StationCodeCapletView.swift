@@ -1,4 +1,5 @@
 import SwiftUI
+import LTAAPI
 
 // MARK: - Station Code Caplet View (Interchange Capsule Badge)
 
@@ -100,20 +101,5 @@ func colorForCode(_ code: String) -> Color {
     case "DT": return Color(red: 0.0, green: 0.37, blue: 0.77)
     case "TE": return Color(red: 0.62, green: 0.36, blue: 0.15)
     default: return Color(red: 0.45, green: 0.52, blue: 0.49)
-    }
-}
-
-#Preview {
-    VStack(spacing: 12) {
-        StationCodeCapletView(station: Station(id: "NS22", name: "Orchard", coordinate: .init(), lines: ["NS"]))
-        StationCodeCapletView(station: Station(id: "NS22/TE14", name: "Orchard Interchange", coordinate: .init(), lines: ["NS", "TE"]))
-        StationCodeCapletView(station: Station(id: "NS24/NE6/CC1", name: "Dhoby Ghaut Interchange", coordinate: .init(), lines: ["NS", "NE", "CC"]))
-        
-        HStack(spacing: 8) {
-            SingleCodeCapletView(code: "NS1")
-            SingleCodeCapletView(code: "EW24")
-            StationExitIconView(exitCode: "Exit A")
-            StationExitIconView(exitCode: "Exit 1")
-        }
     }
 }
