@@ -37,6 +37,14 @@ public final class MemoryCache {
         self.cache = [:]
     }
 
+    /// Returns the keys in a category, or `nil` if the category does not exist.
+    public func keys(inCategory category: String) -> [String]? {
+        if let keys = cache[category]?.keys {
+            return Array(keys)
+        }
+        return nil
+    }
+
     /// Returns the cached payload for `category`/`key`, or `nil` if
     /// missing/stale/corrupt.
     ///

@@ -120,6 +120,12 @@ public final class LTADataSource {
         return info
     }
 
+    /// Returns all bus stop IDs in the cache
+    public func getAllStopIDs() -> [String]? {
+        // contains only numbers
+        return diskCache.keys(inCategory: "stops")?.filter { !$0.contains(where: { !$0.isNumber }) }
+    }
+
     /// Returns static MRT stops information for an `mrtStopCode`. This ONLY uses on-disk cache - use
     /// `saveMRTStopsToCache` to bulk-save from an external source.
     ///
@@ -143,6 +149,12 @@ public final class LTADataSource {
             return cached
         }
         return nil
+    }
+
+    /// Returns all MRT stop IDs in the cache
+    public func getAllMRTStopIDs() -> [String]? {
+        // contains a non-number
+        return diskCache.keys(inCategory: "stops")?.filter { $0.contains(where: { !$0.isNumber }) }
     }
 
     /// Returns the train service alerts, or nothing if there is not currently a disruption.

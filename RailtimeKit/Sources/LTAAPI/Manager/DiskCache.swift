@@ -52,6 +52,12 @@ public final class DiskCache {
         return directory.appendingPathComponent("\(safeKey).json")
     }
 
+    /// Returns the keys in a category, or `nil` if the category does not exist.
+    public func keys(inCategory category: String) -> [String]? {
+        let directory = root.appendingPathComponent(category, isDirectory: true)
+        return try? FileManager.default.contentsOfDirectory(atPath: directory.path())
+    }
+
     /// Returns the cached payload for `category`/`key`, or `nil` if
     /// missing/stale/corrupt.
     ///
