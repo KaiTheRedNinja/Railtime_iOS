@@ -126,6 +126,12 @@ public final class LTADataSource {
         return diskCache.keys(inCategory: "stops")?.filter { !$0.contains(where: { !$0.isNumber }) }
     }
 
+    /// Returns all bus services in the cache
+    public func getAllBusServices() -> [String]? {
+        // contains numbers
+        return diskCache.keys(inCategory: "routes")?.filter { $0.contains(where: { $0.isNumber }) }
+    }
+
     /// Returns static MRT stops information for an `mrtStopCode`. This ONLY uses on-disk cache - use
     /// `saveMRTStopsToCache` to bulk-save from an external source.
     ///

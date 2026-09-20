@@ -24,8 +24,7 @@ class LTAService {
 
     private(set) var busStopsById: [String: BusStop] = [:]
     private(set) var sortedStationsByLength: [Station] = []
-    
-    var preseededBusRoutes: [String: PreseededBusService] = [:]
+
     var trainServiceAlert: String? = nil
     var isTrainStatusNormal: Bool = true
     var isLoadingStops: Bool = false
@@ -252,13 +251,11 @@ class LTAService {
         if let values = load(MRTRoutesContents.self, fileName: "mrt_routes")?.routes.values {
             self.allMRTRoutes = Array(values)
         }
-        self.preseededBusRoutes = load([String: PreseededBusService].self, fileName: "bus_routes") ?? [:]
         self.allBusStops = load([LTABusStopInfo].self, fileName: "bus_stops") ?? []
 
         // load the stations into cache
         dataSource.saveMRTStopsToCache(allStations)
         dataSource.saveBusStopsToCache(allBusStops)
         dataSource.saveMRTRoutesToCache(allMRTRoutes)
-        dataSource.saveBulkRoutesToCache(preseededBusRoutes.mapValues({ $0.stops }))
     }
 }

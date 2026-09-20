@@ -273,19 +273,6 @@ struct BusArrival: Identifiable, Hashable {
 }
 
 // MARK: - Bus Service Route & Preseeded Models
-
-struct PreseededBusService: Codable {
-    let serviceNo: String
-    let operatorName: String?
-    let stops: [LTABusRouteRow]
-    
-    enum CodingKeys: String, CodingKey {
-        case serviceNo
-        case operatorName = "operator"
-        case stops
-    }
-}
-
 struct BusRouteStop: Identifiable, Hashable {
     var id: String { "\(direction)_\(stopSequence)_\(busStopCode)" }
 

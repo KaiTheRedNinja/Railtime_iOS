@@ -83,7 +83,7 @@ struct HomeView: View {
         let clean = searchText.trimmingCharacters(in: .whitespaces).uppercased()
         guard !clean.isEmpty else { return [] }
         
-        let allKeys = Array(ltaService.preseededBusRoutes.keys)
+        let allKeys = ltaService.dataSource.getAllBusServices() ?? []
         let matches = allKeys.filter { $0.localizedCaseInsensitiveContains(clean) }
         
         return Array(matches.sorted { a, b in
