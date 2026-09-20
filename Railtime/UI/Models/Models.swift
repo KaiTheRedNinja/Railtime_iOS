@@ -288,48 +288,27 @@ struct PreseededBusService: Codable {
 
 struct BusRouteStop: Identifiable, Hashable {
     var id: String { "\(direction)_\(stopSequence)_\(busStopCode)" }
-    let serviceNo: String
-    let busStopCode: String
-    let stopSequence: Int
-    let direction: Int
-    let distance: Double?
-    let busStop: BusStop?
-    let nearbyStation: Station?
-    let wdFirstBus: String?
-    let wdLastBus: String?
-    let satFirstBus: String?
-    let satLastBus: String?
-    let sunFirstBus: String?
-    let sunLastBus: String?
-    
-    init(
-        serviceNo: String,
-        busStopCode: String,
-        stopSequence: Int,
-        direction: Int,
-        distance: Double?,
-        busStop: BusStop?,
-        nearbyStation: Station?,
-        wdFirstBus: String? = nil,
-        wdLastBus: String? = nil,
-        satFirstBus: String? = nil,
-        satLastBus: String? = nil,
-        sunFirstBus: String? = nil,
-        sunLastBus: String? = nil
-    ) {
-        self.serviceNo = serviceNo
-        self.busStopCode = busStopCode
-        self.stopSequence = stopSequence
-        self.direction = direction
-        self.distance = distance
+
+    var stopInfo: LTABusRouteRow
+    var busStop: BusStop?
+    var nearbyStation: Station?
+
+    var serviceNo: String { stopInfo.serviceNo }
+    var busStopCode: String { stopInfo.busStopCode }
+    var stopSequence: Int { stopInfo.stopSequence }
+    var direction: Int { stopInfo.direction }
+    var distance: Double? { stopInfo.distance }
+    var wdFirstBus: String? { stopInfo.wdFirstBus?.hhmmOriginal }
+    var wdLastBus: String? { stopInfo.wdLastBus?.hhmmOriginal }
+    var satFirstBus: String? { stopInfo.satFirstBus?.hhmmOriginal }
+    var satLastBus: String? { stopInfo.satLastBus?.hhmmOriginal }
+    var sunFirstBus: String? { stopInfo.sunFirstBus?.hhmmOriginal }
+    var sunLastBus: String? { stopInfo.sunLastBus?.hhmmOriginal }
+
+    init(stopInfo: LTABusRouteRow, busStop: BusStop? = nil, nearbyStation: Station? = nil) {
         self.busStop = busStop
         self.nearbyStation = nearbyStation
-        self.wdFirstBus = wdFirstBus
-        self.wdLastBus = wdLastBus
-        self.satFirstBus = satFirstBus
-        self.satLastBus = satLastBus
-        self.sunFirstBus = sunFirstBus
-        self.sunLastBus = sunLastBus
+        self.stopInfo = stopInfo
     }
 }
 

@@ -126,107 +126,18 @@ class LTAService {
     func fetchBusRoute(for serviceNo: String) async -> BusServiceRoute? {
         guard let results = try? await dataSource.getServiceRoutes(serviceNo: serviceNo) else { return nil }
 
-        let dir1Items = results.filter { $0.direction == 1 }.sorted { $0.stopSequence < $1.stopSequence }
-        let dir2Items = results.filter { $0.direction == 2 }.sorted { $0.stopSequence < $1.stopSequence }
-
-        let dir1Stops = dir1Items.map { item -> BusRouteStop in
+        let stops = results.map { item -> BusRouteStop in
             let stop = self.busStopsById[item.busStopCode]
             let station = self.findNearbyStation(for: stop, code: item.busStopCode)
-            return BusRouteStop(
-                serviceNo: serviceNo,
-                busStopCode: item.busStopCode,
-                stopSequence: item.stopSequence,
-                direction: 1,
-                distance: item.distance,
-                busStop: stop,
-                nearbyStation: station,
-                wdFirstBus: item.wdFirstBus?.hhmmOriginal,
-                wdLastBus: item.wdLastBus?.hhmmOriginal,
-                satFirstBus: item.satFirstBus?.hhmmOriginal,
-                satLastBus: item.satLastBus?.hhmmOriginal,
-                sunFirstBus: item.sunFirstBus?.hhmmOriginal,
-                sunLastBus: item.sunLastBus?.hhmmOriginal
-            )
+            return BusRouteStop(stopInfo: item, busStop: stop, nearbyStation: station)
         }
 
-        let dir2Stops = dir2Items.map { item -> BusRouteStop in
-            let stop = self.busStopsById[item.busStopCode]
-            let station = self.findNearbyStation(for: stop, code: item.busStopCode)
-            return BusRouteStop(
-                serviceNo: serviceNo,
-                busStopCode: item.busStopCode,
-                stopSequence: item.stopSequence,
-                direction: 2,
-                distance: item.distance,
-                busStop: stop,
-                nearbyStation: station,
-                wdFirstBus: item.wdFirstBus?.hhmmOriginal,
-                wdLastBus: item.wdLastBus?.hhmmOriginal,
-                satFirstBus: item.satFirstBus?.hhmmOriginal,
-                satLastBus: item.satLastBus?.hhmmOriginal,
-                sunFirstBus: item.sunFirstBus?.hhmmOriginal,
-                sunLastBus: item.sunLastBus?.hhmmOriginal
-            )
-        }
+        let dir1Stops = stops.filter { $0.direction == 1 }.sorted { $0.stopSequence < $1.stopSequence }
+        let dir2Stops = stops.filter { $0.direction == 2 }.sorted { $0.stopSequence < $1.stopSequence }
 
         return BusServiceRoute(
             serviceNo: serviceNo,
             operatorName: results.first!.operator,
-            direction1Stops: dir1Stops,
-            direction2Stops: dir2Stops
-        )
-    }
-    
-    private func fetchLiveBusRoute(for serviceNo: String) async -> BusServiceRoute? {
-        guard let routeItems = try? await dataSource.getServiceRoutes(serviceNo: serviceNo) else { return nil }
-
-        let operatorName = routeItems.first?.operator ?? "SMRT / SBST"
-        let dir1Items = routeItems.filter { $0.direction == 1 }.sorted { $0.stopSequence < $1.stopSequence }
-        let dir2Items = routeItems.filter { $0.direction == 2 }.sorted { $0.stopSequence < $1.stopSequence }
-
-        let dir1Stops = dir1Items.map { item -> BusRouteStop in
-            let stop = self.busStopsById[item.busStopCode]
-            let station = self.findNearbyStation(for: stop, code: item.busStopCode)
-            return BusRouteStop(
-                serviceNo: serviceNo,
-                busStopCode: item.busStopCode,
-                stopSequence: item.stopSequence,
-                direction: 1,
-                distance: item.distance,
-                busStop: stop,
-                nearbyStation: station,
-                wdFirstBus: item.wdFirstBus?.hhmmOriginal,
-                wdLastBus: item.wdLastBus?.hhmmOriginal,
-                satFirstBus: item.satFirstBus?.hhmmOriginal,
-                satLastBus: item.satLastBus?.hhmmOriginal,
-                sunFirstBus: item.sunFirstBus?.hhmmOriginal,
-                sunLastBus: item.sunLastBus?.hhmmOriginal
-            )
-        }
-        
-        let dir2Stops = dir2Items.map { item -> BusRouteStop in
-            let stop = self.busStopsById[item.busStopCode]
-            let station = self.findNearbyStation(for: stop, code: item.busStopCode)
-            return BusRouteStop(
-                serviceNo: serviceNo,
-                busStopCode: item.busStopCode,
-                stopSequence: item.stopSequence,
-                direction: 2,
-                distance: item.distance,
-                busStop: stop,
-                nearbyStation: station,
-                wdFirstBus: item.wdFirstBus?.hhmmOriginal,
-                wdLastBus: item.wdLastBus?.hhmmOriginal,
-                satFirstBus: item.satFirstBus?.hhmmOriginal,
-                satLastBus: item.satLastBus?.hhmmOriginal,
-                sunFirstBus: item.sunFirstBus?.hhmmOriginal,
-                sunLastBus: item.sunLastBus?.hhmmOriginal
-            )
-        }
-        
-        return BusServiceRoute(
-            serviceNo: serviceNo,
-            operatorName: operatorName,
             direction1Stops: dir1Stops,
             direction2Stops: dir2Stops
         )

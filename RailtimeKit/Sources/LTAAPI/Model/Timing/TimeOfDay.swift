@@ -12,7 +12,7 @@ import Foundation
 ///
 /// `TimeOfDay` intentionally does not conform to `AdditiveArithmetic` or `Comparable` as day boundaries
 /// can mess up operations if same-day assumptions are implicitly made.
-public struct TimeOfDay: Codable, CustomDebugStringConvertible {
+public struct TimeOfDay: Codable, CustomDebugStringConvertible, Hashable {
     /// The raw number of seconds since the start of the day (i.e. midnight)
     public var secondsSinceMidnight: TimeInterval
 
