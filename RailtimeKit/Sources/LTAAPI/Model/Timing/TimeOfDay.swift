@@ -27,6 +27,8 @@ public struct TimeOfDay: Codable, CustomDebugStringConvertible {
     public var hhmmss: String { "\(String(format: "%02d", hh)):\(String(format: "%02d", mm)):\(String(format: "%02d", ss))" }
     /// The date formatted as a `hh:mm` string
     public var hhmm: String { "\(String(format: "%02d", hh)):\(String(format: "%02d", mm))" }
+    /// The date formatted as a `HHmm` string, as originally supplied by the LTA API
+    public var hhmmOriginal: String { "\(String(format: "%02d", hh))\(String(format: "%02d", mm))" }
 
     /// The debug description
     public var debugDescription: String { "\(hhmmss), secondsSinceMidnight = \(secondsSinceMidnight)" }

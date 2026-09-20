@@ -182,10 +182,10 @@ public final class LTADataSource {
         return response.value
     }
 
-    /// Returns the crowdedness for every MRT line for a given MRT stop. Returns an empty dictionary
+    /// Returns the crowdedness for every MRT line for a given MRT stop codes, slash-split. Returns an empty dictionary
     /// if certain line estimates could not be found.
-    public func getMRTLineCrowd(stop: LTATrainStopInfo) async throws -> [TrainLine: LTAPCDRealTimeItem] {
-        let stopCodes = stop.mrtStopCode.split(separator: "/")
+    public func getMRTLineCrowd(stopCodes: String) async throws -> [TrainLine: LTAPCDRealTimeItem] {
+        let stopCodes = stopCodes.split(separator: "/")
         var result: [TrainLine: LTAPCDRealTimeItem] = [:]
         for code in stopCodes {
             let lineCode = code[code.startIndex..<code.index(code.startIndex, offsetBy: 2)]

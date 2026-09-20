@@ -20,7 +20,7 @@ public enum TrainLine: Equatable, Codable {
     case punggol
 
     /// The two-letter prefix that goes before a station, eg. "EW8"
-    var stationCodePrefix: String {
+    public var stationCodePrefix: String {
         switch self {
         case .northSouth: "NS"
         case .eastWest: "EW"
@@ -35,7 +35,7 @@ public enum TrainLine: Equatable, Codable {
     }
 
     /// The three-to-four-letter acronym for the line itself
-    var lineAcronym: String {
+    public var lineAcronym: String {
         switch self {
         case .northSouth: "NSL"
         case .eastWest: "EWL"

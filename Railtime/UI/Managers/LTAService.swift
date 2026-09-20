@@ -8,20 +8,7 @@ import BusEstimation
 
 @Observable
 class LTAService {
-    var apiKey: String {
-        let accountKey = UserDefaults.standard.string(forKey: "LTA_ACCOUNT_KEY") ?? ""
-        if !accountKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            return accountKey
-        }
-        let key = UserDefaults.standard.string(forKey: "LTA_API_KEY") ?? ""
-        if !key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            return key
-        }
-        if let envKey = ProcessInfo.processInfo.environment["LTA_ACCOUNT_KEY"], !envKey.isEmpty {
-            return envKey
-        }
-        return "19hQsIO6RjOhqlAVh4DRKw=="
-    }
+    var dataSource: LTADataSource
     
     var allBusStops: [BusStop] = [] {
         didSet {
@@ -44,6 +31,18 @@ class LTAService {
     var isLoadingStops: Bool = false
     
     init() {
+        let apiKey = (
+            UserDefaults.standard.string(forKey: "LTA_ACCOUNT_KEY")
+            ?? UserDefaults.standard.string(forKey: "LTA_API_KEY")
+            ?? ProcessInfo.processInfo.environment["LTA_ACCOUNT_KEY"]
+            ?? "19hQsIO6RjOhqlAVh4DRKw=="
+        ).trimmingCharacters(in: .whitespacesAndNewlines)
+        dataSource = .init(
+            client: try! LTAClient(accountKey: apiKey),
+            diskCache: DiskCache(root: "lta_cache", ttl: 24.0 * 30 * 3600), // 30 days
+            memoryCache: MemoryCache(ttl: 5) // 5 second cache
+        )
+
         loadPreseededStations()
         loadPreseededBusStops()
         loadPreseededBusRoutes()
@@ -88,102 +87,67 @@ class LTAService {
     // MARK: - Fetch Station Platform Crowd Levels
     
     func fetchStationCrowdLevels(for station: Station) async -> [StationLineCrowd] {
-        let codes = station.id.split(separator: "/").map { String($0).trimmingCharacters(in: .whitespaces) }
-        var lineCrowds: [StationLineCrowd] = []
-        
-        for stnCode in codes {
-            let trainLineParam: String? = {
-                if stnCode.hasPrefix("NS") { return "NSL" }
-                if stnCode.hasPrefix("EW") { return "EWL" }
-                if stnCode.hasPrefix("NE") { return "NEL" }
-                if stnCode.hasPrefix("CC") || stnCode.hasPrefix("CE") { return "CCL" }
-                if stnCode.hasPrefix("DT") { return "DTL" }
-                if stnCode.hasPrefix("TE") { return "TEL" }
-                if stnCode.hasPrefix("BP") { return "BPL" }
-                if stnCode.hasPrefix("SE") || stnCode.hasPrefix("SW") { return "SLRT" }
-                if stnCode.hasPrefix("PE") || stnCode.hasPrefix("PW") { return "PLRT" }
-                return nil
-            }()
-            
-            guard let lineParam = trainLineParam,
-                  let url = URL(string: "https://datamall2.mytransport.sg/ltaodataservice/PCDRealTime?TrainLine=\(lineParam)") else {
-                continue
-            }
-            
-            var request = URLRequest(url: url)
-            request.setValue(apiKey, forHTTPHeaderField: "AccountKey")
-            request.setValue("application/json", forHTTPHeaderField: "accept")
-            
-            do {
-                let (data, response) = try await URLSession.shared.data(for: request)
-                guard (response as? HTTPURLResponse)?.statusCode == 200 else { continue }
-                
-                let decoded = try JSONDecoder().decode(LTAPCDRealTimeResponse.self, from: data)
-                if let items = decoded.value,
-                   let match = items.first(where: { $0.station == stnCode }),
-                   let rawLevel = match.crowdLevel {
-                    let level = StationCrowdLevel(rawValue: rawLevel) ?? .unknown
-                    let prefix = String(stnCode.prefix(2))
-                    lineCrowds.append(StationLineCrowd(lineCode: prefix, stationCode: stnCode, crowdLevel: level))
-                }
-            } catch {
-                print("Error fetching crowd level for \(stnCode): \(error)")
-            }
-        }
-        
-        return lineCrowds
+        let results = try? await dataSource.getMRTLineCrowd(stopCodes: station.id)
+
+        return results?.compactMap { (line, result) in
+            guard let station = result.station, let crowdLevel = result.crowdLevel else { return nil }
+            return StationLineCrowd(
+                lineCode: line.stationCodePrefix,
+                stationCode: station,
+                crowdLevel: .init(rawValue: crowdLevel) ?? .unknown
+            )
+        } ?? []
     }
     
     // MARK: - Fetch Live Bus Arrivals
     
     func fetchBusArrivals(for stopId: String) async -> [BusArrival] {
-        guard let url = URL(string: "https://datamall2.mytransport.sg/ltaodataservice/v3/BusArrival?BusStopCode=\(stopId)") else {
-            return []
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.setValue(apiKey, forHTTPHeaderField: "AccountKey")
-        request.setValue("application/json", forHTTPHeaderField: "accept")
-        
-        do {
-            let (data, response) = try await URLSession.shared.data(for: request)
-            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-                return []
-            }
-            
-            let decoded = try JSONDecoder().decode(LTABusArrivalResponse.self, from: data)
-            guard let services = decoded.services else { return [] }
-            
-            return services.map { service in
-                let nextBusInfo = service.nextBus.flatMap {
-                    BusTimingInfo(rawArrival: $0.estimatedArrival, loadStr: $0.load, typeStr: $0.type, featureStr: $0.feature, destinationCode: $0.destinationCode)
-                }
-                let nextBus2Info = service.nextBus2.flatMap {
-                    BusTimingInfo(rawArrival: $0.estimatedArrival, loadStr: $0.load, typeStr: $0.type, featureStr: $0.feature, destinationCode: $0.destinationCode)
-                }
-                let nextBus3Info = service.nextBus3.flatMap {
-                    BusTimingInfo(rawArrival: $0.estimatedArrival, loadStr: $0.load, typeStr: $0.type, featureStr: $0.feature, destinationCode: $0.destinationCode)
-                }
-                
-                let destCode = service.nextBus?.destinationCode ?? service.nextBus2?.destinationCode ?? service.nextBus3?.destinationCode
-                let destName = destCode.flatMap { code in
-                    self.busStopsById[code]?.name
-                }
-                
-                return BusArrival(
-                    serviceNo: service.serviceNo,
-                    operatorName: service.busOperator,
-                    nextBus: nextBusInfo,
-                    subsequentBus: nextBus2Info,
-                    thirdBus: nextBus3Info,
-                    destinationCode: destCode,
-                    destinationName: destName
+        guard let results = try? await dataSource.getBusArrival(busStopCode: stopId) else { return [] }
+        let services = results.services
+
+        return services.map { service in
+            let nextBusInfo = service.nextBus.flatMap {
+                BusTimingInfo(
+                    rawArrival: $0.estimatedArrival,
+                    loadStr: $0.load?.rawValue,
+                    typeStr: $0.type?.rawValue,
+                    featureStr: $0.feature,
+                    destinationCode: $0.destinationCode
                 )
             }
-        } catch {
-            print("Error fetching bus arrivals for \(stopId): \(error)")
-            return []
+            let nextBus2Info = service.nextBus2.flatMap {
+                BusTimingInfo(
+                    rawArrival: $0.estimatedArrival,
+                    loadStr: $0.load?.rawValue,
+                    typeStr: $0.type?.rawValue,
+                    featureStr: $0.feature,
+                    destinationCode: $0.destinationCode
+                )
+            }
+            let nextBus3Info = service.nextBus3.flatMap {
+                BusTimingInfo(
+                    rawArrival: $0.estimatedArrival,
+                    loadStr: $0.load?.rawValue,
+                    typeStr: $0.type?.rawValue,
+                    featureStr: $0.feature,
+                    destinationCode: $0.destinationCode
+                )
+            }
+
+            let destCode = service.nextBus?.destinationCode ?? service.nextBus2?.destinationCode ?? service.nextBus3?.destinationCode
+            let destName = destCode.flatMap { code in
+                self.busStopsById[code]?.name
+            }
+
+            return BusArrival(
+                serviceNo: service.serviceNo,
+                operatorName: service.operator,
+                nextBus: nextBusInfo,
+                subsequentBus: nextBus2Info,
+                thirdBus: nextBus3Info,
+                destinationCode: destCode,
+                destinationName: destName
+            )
         }
     }
     
@@ -259,42 +223,12 @@ class LTAService {
     }
     
     private func fetchLiveBusRoute(for serviceNo: String) async -> BusServiceRoute? {
-        var routeItems: [LTABusRouteItem] = []
-        var skip = 0
-        var found = false
-        
-        while skip < 35000 {
-            guard let url = URL(string: "https://datamall2.mytransport.sg/ltaodataservice/BusRoutes?$skip=\(skip)") else { break }
-            var request = URLRequest(url: url)
-            request.setValue(apiKey, forHTTPHeaderField: "AccountKey")
-            request.setValue("application/json", forHTTPHeaderField: "accept")
-            
-            do {
-                let (data, response) = try await URLSession.shared.data(for: request)
-                guard (response as? HTTPURLResponse)?.statusCode == 200 else { break }
-                let decoded = try JSONDecoder().decode(LTABusRoutesResponse.self, from: data)
-                if decoded.value.isEmpty { break }
-                
-                let matches = decoded.value.filter { $0.serviceNo.lowercased() == serviceNo.lowercased() }
-                if !matches.isEmpty {
-                    routeItems.append(contentsOf: matches)
-                    found = true
-                } else if found {
-                    break
-                }
-                skip += 500
-            } catch {
-                print("Error fetching bus route page at skip \(skip): \(error)")
-                break
-            }
-        }
-        
-        guard !routeItems.isEmpty else { return nil }
-        
-        let operatorName = routeItems.first?.busOperator ?? "SMRT / SBST"
+        guard let routeItems = try? await dataSource.getServiceRoutes(serviceNo: serviceNo) else { return nil }
+
+        let operatorName = routeItems.first?.operator ?? "SMRT / SBST"
         let dir1Items = routeItems.filter { $0.direction == 1 }.sorted { $0.stopSequence < $1.stopSequence }
         let dir2Items = routeItems.filter { $0.direction == 2 }.sorted { $0.stopSequence < $1.stopSequence }
-        
+
         let dir1Stops = dir1Items.map { item -> BusRouteStop in
             let stop = self.busStopsById[item.busStopCode]
             let station = self.findNearbyStation(for: stop, code: item.busStopCode)
@@ -306,12 +240,12 @@ class LTAService {
                 distance: item.distance,
                 busStop: stop,
                 nearbyStation: station,
-                wdFirstBus: item.wdFirstBus,
-                wdLastBus: item.wdLastBus,
-                satFirstBus: item.satFirstBus,
-                satLastBus: item.satLastBus,
-                sunFirstBus: item.sunFirstBus,
-                sunLastBus: item.sunLastBus
+                wdFirstBus: item.wdFirstBus?.hhmmOriginal,
+                wdLastBus: item.wdLastBus?.hhmmOriginal,
+                satFirstBus: item.satFirstBus?.hhmmOriginal,
+                satLastBus: item.satLastBus?.hhmmOriginal,
+                sunFirstBus: item.sunFirstBus?.hhmmOriginal,
+                sunLastBus: item.sunLastBus?.hhmmOriginal
             )
         }
         
@@ -326,12 +260,12 @@ class LTAService {
                 distance: item.distance,
                 busStop: stop,
                 nearbyStation: station,
-                wdFirstBus: item.wdFirstBus,
-                wdLastBus: item.wdLastBus,
-                satFirstBus: item.satFirstBus,
-                satLastBus: item.satLastBus,
-                sunFirstBus: item.sunFirstBus,
-                sunLastBus: item.sunLastBus
+                wdFirstBus: item.wdFirstBus?.hhmmOriginal,
+                wdLastBus: item.wdLastBus?.hhmmOriginal,
+                satFirstBus: item.satFirstBus?.hhmmOriginal,
+                satLastBus: item.satLastBus?.hhmmOriginal,
+                sunFirstBus: item.sunFirstBus?.hhmmOriginal,
+                sunLastBus: item.sunLastBus?.hhmmOriginal
             )
         }
         
@@ -431,42 +365,24 @@ class LTAService {
         guard !isLoadingStops else { return }
         isLoadingStops = true
         defer { isLoadingStops = false }
-        
+
+        guard let allStops = dataSource.getAllStopIDs() else { return }
         var fetchedStops: [BusStop] = []
-        var skip = 0
-        var hasMore = true
-        
-        while hasMore && skip < 6000 {
-            guard let url = URL(string: "https://datamall2.mytransport.sg/ltaodataservice/BusStops?$skip=\(skip)") else { break }
-            var request = URLRequest(url: url)
-            request.setValue(apiKey, forHTTPHeaderField: "AccountKey")
-            request.setValue("application/json", forHTTPHeaderField: "accept")
-            
-            do {
-                let (data, response) = try await URLSession.shared.data(for: request)
-                guard (response as? HTTPURLResponse)?.statusCode == 200 else { break }
-                
-                let decoded = try JSONDecoder().decode(LTABusStopsResponse.self, from: data)
-                if decoded.value.isEmpty {
-                    hasMore = false
-                } else {
-                    let pageStops = decoded.value.map { item in
-                        BusStop(
-                            id: item.busStopCode,
-                            name: item.description,
-                            roadName: item.roadName,
-                            coordinate: CLLocationCoordinate2D(latitude: item.latitude, longitude: item.longitude)
-                        )
-                    }
-                    fetchedStops.append(contentsOf: pageStops)
-                    skip += 500
-                }
-            } catch {
-                print("Error fetching live bus stops page at skip \(skip): \(error)")
-                break
-            }
+
+        for stopCode in allStops {
+            guard let stop = try? await dataSource.getStopInfo(busStopCode: stopCode) else { continue }
+            fetchedStops.append(
+                .init(
+                    id: stop.busStopCode,
+                    name: stop.description ?? "N/A",
+                    roadName: stop.roadName ?? "N/A",
+                    coordinate: .init(
+                        latitude: stop.latitude,
+                        longitude: stop.longitude
+                    )
+                )
+            )
         }
-        
         if !fetchedStops.isEmpty {
             await MainActor.run {
                 self.allBusStops = fetchedStops
@@ -477,27 +393,14 @@ class LTAService {
     // MARK: - Fetch Train Service Alerts
     
     func fetchTrainServiceAlerts() async {
-        guard let url = URL(string: "https://datamall2.mytransport.sg/ltaodataservice/TrainServiceAlerts") else { return }
-        var request = URLRequest(url: url)
-        request.setValue(apiKey, forHTTPHeaderField: "AccountKey")
-        request.setValue("application/json", forHTTPHeaderField: "accept")
-        
-        do {
-            let (data, response) = try await URLSession.shared.data(for: request)
-            guard (response as? HTTPURLResponse)?.statusCode == 200 else { return }
-            
-            let decoded = try JSONDecoder().decode(LTATrainAlertsResponse.self, from: data)
-            if let val = decoded.value {
-                let status = val.status ?? 1
-                let firstContent = val.message?.first?.content
-                
-                await MainActor.run {
-                    self.isTrainStatusNormal = (status == 1)
-                    self.trainServiceAlert = (firstContent?.isEmpty == false) ? firstContent : nil
-                }
-            }
-        } catch {
-            print("Error fetching train alerts: \(error)")
+        guard let alerts = try? await dataSource.getMRTAlerts() else { return }
+
+        let status = alerts.status ?? 1
+        let firstContent = alerts.message?.first?.content
+
+        await MainActor.run {
+            self.isTrainStatusNormal = (status == 1)
+            self.trainServiceAlert = (firstContent?.isEmpty == false) ? firstContent : nil
         }
     }
     
