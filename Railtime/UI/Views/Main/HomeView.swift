@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreLocation
+import LTAAPI
 
 // MARK: - Home View
 
@@ -68,7 +69,7 @@ struct HomeView: View {
             let matches = ltaService.allBusStops.filter {
                 $0.name.localizedCaseInsensitiveContains(cleanSearch) ||
                 $0.id.localizedCaseInsensitiveContains(cleanSearch) ||
-                $0.roadName.localizedCaseInsensitiveContains(cleanSearch)
+                ($0.roadName ?? "").localizedCaseInsensitiveContains(cleanSearch)
             }
             let sorted = matches.sorted {
                 ($0.distance(from: center) ?? Double.infinity) < ($1.distance(from: center) ?? Double.infinity)

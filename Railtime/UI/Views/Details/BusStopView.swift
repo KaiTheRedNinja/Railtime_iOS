@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreLocation
+import LTAAPI
 
 // MARK: - Bus Stop View (Live Bus Arrivals)
 
@@ -96,7 +97,7 @@ struct BusStopView: View {
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
                         
-                        Text("\(busStop.roadName) • \(busStop.id)")
+                        Text("\(busStop.roadName ?? "") • \(busStop.id)")
                             .font(.subheadline)
                             .foregroundStyle(.white.opacity(0.75))
                     }

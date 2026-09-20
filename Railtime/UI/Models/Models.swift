@@ -39,19 +39,18 @@ extension CLLocationCoordinate2D: @retroactive Hashable {
 
 // MARK: - Bus Stop & Station Models
 
-struct BusStop: Identifiable, Hashable, Codable {
-    let id: String // Bus stop code e.g. "09048"
-    let name: String // e.g. "Orchard Stn/Tang Plaza"
-    let roadName: String // e.g. "Orchard Rd"
-    let coordinate: CLLocationCoordinate2D
-    
+extension LTABusStopInfo: @retroactive Identifiable {
+    public var id: String { busStopCode }
+    public var name: String { description ?? "N/A" }
+    public var coordinate: CLLocationCoordinate2D { .init(latitude: latitude, longitude: longitude) }
+
     func distance(from refCoordinate: CLLocationCoordinate2D?) -> Double? {
         guard let refCoordinate = refCoordinate else { return nil }
         let refLoc = CLLocation(latitude: refCoordinate.latitude, longitude: refCoordinate.longitude)
         let stopLoc = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
         return refLoc.distance(from: stopLoc)
     }
-    
+
     func formattedDistance(from refCoordinate: CLLocationCoordinate2D?) -> String? {
         guard let meters = distance(from: refCoordinate) else { return nil }
         let km = meters / 1000.0
@@ -61,16 +60,18 @@ struct BusStop: Identifiable, Hashable, Codable {
             return String(format: "%.1f km", km)
         }
     }
-    
+
     var isInterchange: Bool {
         let lower = name.lowercased()
         return lower.contains(" int") || lower.contains(" interchange") || lower.contains(" ter") || lower.contains(" terminal") || lower.hasSuffix(" int")
     }
-    
+
     var iconName: String {
         isInterchange ? "bus_int" : "bus"
     }
 }
+
+typealias BusStop = LTABusStopInfo
 
 struct StationExit: Identifiable, Hashable, Codable {
     var id: String { code }
@@ -544,30 +545,6 @@ struct LTABusTimingItem: Codable {
         case type = "Type"
         case destinationCode = "DestinationCode"
     }
-}
-
-struct LTABusStopsResponse: Codable {
-    let value: [LTABusStopItem]
-}
-
-struct LTABusStopItem: Codable {
-    let busStopCode: String
-    let roadName: String
-    let description: String
-    let latitude: Double
-    let longitude: Double
-    
-    enum CodingKeys: String, CodingKey {
-        case busStopCode = "BusStopCode"
-        case roadName = "RoadName"
-        case description = "Description"
-        case latitude = "Latitude"
-        case longitude = "Longitude"
-    }
-}
-
-struct LTABusRoutesResponse: Codable {
-    let value: [LTABusRouteItem]
 }
 
 struct LTABusRouteItem: Codable {

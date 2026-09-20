@@ -293,17 +293,7 @@ class LTAService {
 
         for stopCode in allStops {
             guard let stop = try? await dataSource.getStopInfo(busStopCode: stopCode) else { continue }
-            fetchedStops.append(
-                .init(
-                    id: stop.busStopCode,
-                    name: stop.description ?? "N/A",
-                    roadName: stop.roadName ?? "N/A",
-                    coordinate: .init(
-                        latitude: stop.latitude,
-                        longitude: stop.longitude
-                    )
-                )
-            )
+            fetchedStops.append(stop)
         }
         if !fetchedStops.isEmpty {
             await MainActor.run {
@@ -352,14 +342,7 @@ class LTAService {
             self.allMRTRoutes = Array(values)
         }
         self.preseededBusRoutes = load([String: PreseededBusService].self, fileName: "bus_routes") ?? [:]
-        self.allBusStops = load([LTABusStopItem].self, fileName: "bus_stops")?.map { item in
-            BusStop(
-                id: item.busStopCode,
-                name: item.description,
-                roadName: item.roadName,
-                coordinate: CLLocationCoordinate2D(latitude: item.latitude, longitude: item.longitude)
-            )
-        } ?? []
+        self.allBusStops = load([LTABusStopInfo].self, fileName: "bus_stops") ?? []
 
         // load the stations into cache
         dataSource.saveMRTStopsToCache(allStations.map {
