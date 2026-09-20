@@ -145,6 +145,47 @@ public final class LTADataSource {
         return nil
     }
 
+    /// Returns the train service alerts, or nothing if there is not currently a disruption.
+    public func getMRTAlerts() async throws -> LTATrainAlertValue? {
+        // 1 minute expiry
+        if let cached: LTATrainAlertsResponse = memoryCache.read(category: "mrtAlerts", key: "all", expiry: 60) {
+            return cached.value
+        }
+        let response = try await client.trainServiceAlerts()
+        if let response {
+            memoryCache.write(category: "mrtAlerts", key: "all", data: response)
+        }
+        return response?.value
+    }
+
+    /// Returns the crowdedness for every stop in a given MRT line
+    public func getMRTLineCrowd(line: TrainLine) async throws -> [LTAPCDRealTimeItem]? {
+        // 10 minute expiry
+        if let cached: LTAPCDRealTimeResponse = memoryCache.read(category: "mrtCrowd", key: line.lineAcronym) {
+            return cached.value
+        }
+        let response = try await client.trainStationCrowdDensity(trainLine: line.lineAcronym)
+        guard let response else { return nil }
+        memoryCache.write(category: "mrtCrowd", key: line.lineAcronym, data: response)
+        return response.value
+    }
+
+    /// Returns the crowdedness for every MRT line for a given MRT stop. Returns an empty dictionary
+    /// if certain line estimates could not be found.
+    public func getMRTLineCrowd(stop: LTATrainStopInfo) async throws -> [TrainLine: LTAPCDRealTimeItem] {
+        let stopCodes = stop.mrtStopCode.split(separator: "/")
+        var result: [TrainLine: LTAPCDRealTimeItem] = [:]
+        for code in stopCodes {
+            let lineCode = code[code.startIndex..<code.index(code.startIndex, offsetBy: 2)]
+            guard let line = TrainLine(String(lineCode)),
+                  let lineCrowd = try await getMRTLineCrowd(line: line),
+                  let thisStopLineCrowd = lineCrowd.first(where: { code == ($0.station ?? "N/A") })
+            else { continue }
+            result[line] = thisStopLineCrowd
+        }
+        return result
+    }
+
     // MARK: Saving bulk data to cache
 
     /// Saves an external bulk list of MRT stops to the cache

@@ -34,7 +34,14 @@ public struct LTATrainStopInfo: Equatable, Codable {
         }
     }
 
-    public init(id: String, description: String?, latitude: Double, longitude: Double, lines: [String], exits: [Exit]) {
+    public init(
+        id: String,
+        description: String?,
+        latitude: Double,
+        longitude: Double,
+        lines: [String],
+        exits: [Exit]
+    ) {
         self.id = id
         self.description = description
         self.latitude = latitude

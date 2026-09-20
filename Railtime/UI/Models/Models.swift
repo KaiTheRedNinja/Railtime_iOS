@@ -1,6 +1,7 @@
 import Foundation
 import CoreLocation
 import SwiftUI
+import LTAAPI
 
 // MARK: - CoreLocation Extensions for Codable
 
