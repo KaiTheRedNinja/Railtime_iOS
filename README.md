@@ -20,3 +20,11 @@ Railtime uses a MVVM architecture:
 - `API`: LTAClient wraps LTA DataMall's REST API
 - `BusEstimation`: A (mostly) stateless manager that can estimate bus timings given the LTA API, but only on a single route
 - `Journey`: A stateful manager that holds the journey, and also "context" which is derived from Estimation.
+
+## Todo
+- [ ] Show error visually in bus arrival timings
+- [ ] Hoist state for selected bus/train
+- [ ] Choose selected bus/train in JourneyManager
+- [ ] Merge mergeable contents together, and show alternate routes as a part of it
+- [ ] Add a way to hide alternate routes
+- [ ] Only display transfers when they are actually better than the current one
