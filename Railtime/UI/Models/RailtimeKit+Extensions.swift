@@ -186,6 +186,25 @@ extension LTATrainStopInfo: @retroactive Identifiable {
 
 typealias Station = LTATrainStopInfo
 
+extension LTATrainRoutes {
+    /// The unique routes for a train line. A route is considered non-unique if:
+    ///  - All of its stops are a subset of the stops of another route
+    ///  - All of its stops are the same as the stops of another route
+    var uniqueRoutes: [[String]] {
+        var unique: [[String]] = []
+        var covered: Set<String> = []
+
+        for route in directions.values.sorted(by: { $0.count > $1.count }) {
+            let stops = Set(route)
+            if stops.isSubset(of: covered) { continue }
+            covered.formUnion(stops)
+            unique.append(route)
+        }
+
+        return unique
+    }
+}
+
 // MARK: - Bus Arrival Models
 
 extension LTANextBusInfo.Load {

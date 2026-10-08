@@ -15,11 +15,15 @@ class LTAService {
             rebuildBusStopsById()
         }
     }
+    private(set) var spatialIndex: BusStopSpatialIndex = .init(stops: [])
     var allStations: [Station] = [] {
         didSet {
             sortedStationsByLength = allStations.sorted { $0.name.count > $1.name.count }
+
+            allStationsById = .init(uniqueKeysWithValues: allStations.map { ($0.id, $0) })
         }
     }
+    private(set) var allStationsById: [Station.ID: Station] = [:]
     var allMRTRoutes: [LTATrainRoutes] = []
 
     private(set) var busStopsById: [String: BusStop] = [:]
@@ -52,6 +56,8 @@ class LTAService {
             dict[stop.id] = stop
         }
         self.busStopsById = dict
+
+        spatialIndex = BusStopSpatialIndex(stops: allBusStops, indexCellSize: 0.01)
     }
     
     // MARK: - Fetch Station Platform Crowd Levels
@@ -257,5 +263,220 @@ class LTAService {
         dataSource.saveMRTStopsToCache(allStations)
         dataSource.saveBusStopsToCache(allBusStops)
         dataSource.saveMRTRoutesToCache(allMRTRoutes)
+    }
+}
+
+// MARK: - Spatial Index
+
+final class BusStopSpatialIndex {
+    private struct GridKey: Hashable {
+        let x: Int
+        let y: Int
+    }
+
+    // The index grid should be relatively fine.
+    // This is independent from display precision.
+    private let indexCellSize: Double
+
+    private var buckets: [GridKey: [BusStop]] = [:]
+
+    init(
+        stops: [BusStop],
+        indexCellSize: Double = 0.005
+    ) {
+        self.indexCellSize = indexCellSize
+
+        buckets.reserveCapacity(stops.count)
+
+        for stop in stops {
+            let key = indexKey(for: stop.coordinate)
+            buckets[key, default: []].append(stop)
+        }
+    }
+
+    // MARK: - Basic Query
+
+    /// Returns every bus stop inside the visible region.
+    func stops(
+        around center: CLLocationCoordinate2D,
+        visibleDelta: Double
+    ) -> [BusStop] {
+
+        return stops(
+            minLatitude: center.latitude - visibleDelta,
+            maxLatitude: center.latitude + visibleDelta,
+            minLongitude: center.longitude - visibleDelta,
+            maxLongitude: center.longitude + visibleDelta
+        )
+    }
+
+    // MARK: - Precision Query
+
+    /// Returns a representative subset of bus stops.
+    ///
+    /// `precision` controls how close two returned stops are allowed
+    /// to be in latitude/longitude space.
+    ///
+    /// Larger precision = fewer annotations.
+    ///
+    /// For example:
+    ///
+    /// precision = 0.001° ≈ 110m latitude
+    /// precision = 0.002° ≈ 220m latitude
+    /// precision = 0.005° ≈ 550m latitude
+    ///
+    func stops(
+        around center: CLLocationCoordinate2D,
+        visibleDelta: Double,
+        precision: Double
+    ) -> [BusStop] {
+
+        guard precision > 0 else {
+            return stops(
+                around: center,
+                visibleDelta: visibleDelta
+            )
+        }
+
+        let minLatitude = center.latitude - visibleDelta
+        let maxLatitude = center.latitude + visibleDelta
+        let minLongitude = center.longitude - visibleDelta
+        let maxLongitude = center.longitude + visibleDelta
+
+        return stops(
+            minLatitude: minLatitude,
+            maxLatitude: maxLatitude,
+            minLongitude: minLongitude,
+            maxLongitude: maxLongitude,
+            precision: precision
+        )
+    }
+
+    // MARK: - Internal Queries
+
+    private func stops(
+        minLatitude: Double,
+        maxLatitude: Double,
+        minLongitude: Double,
+        maxLongitude: Double
+    ) -> [BusStop] {
+
+        let minX = Int(floor(minLongitude / indexCellSize))
+        let maxX = Int(floor(maxLongitude / indexCellSize))
+
+        let minY = Int(floor(minLatitude / indexCellSize))
+        let maxY = Int(floor(maxLatitude / indexCellSize))
+
+        var result: [BusStop] = []
+
+        for x in minX...maxX {
+            for y in minY...maxY {
+
+                let key = GridKey(x: x, y: y)
+
+                guard let bucket = buckets[key] else {
+                    continue
+                }
+
+                for stop in bucket {
+                    let lat = stop.coordinate.latitude
+                    let lon = stop.coordinate.longitude
+
+                    if lat >= minLatitude &&
+                        lat <= maxLatitude &&
+                        lon >= minLongitude &&
+                        lon <= maxLongitude {
+
+                        result.append(stop)
+                    }
+                }
+            }
+        }
+
+        return result
+    }
+
+    private func stops(
+        minLatitude: Double,
+        maxLatitude: Double,
+        minLongitude: Double,
+        maxLongitude: Double,
+        precision: Double
+    ) -> [BusStop] {
+        var start = Date()
+
+        // This is the important part.
+        //
+        // The precision grid is separate from the index grid.
+        //
+        // Multiple index cells can therefore map into the same
+        // precision cell.
+
+        let minX = Int(floor(minLongitude / indexCellSize))
+        let maxX = Int(floor(maxLongitude / indexCellSize))
+
+        let minY = Int(floor(minLatitude / indexCellSize))
+        let maxY = Int(floor(maxLatitude / indexCellSize))
+
+        var representatives: [GridKey: BusStop] = [:]
+
+        for x in minX...maxX {
+            for y in minY...maxY {
+
+                let key = GridKey(x: x, y: y)
+
+                guard let bucket = buckets[key] else {
+                    continue
+                }
+
+                for stop in bucket {
+
+                    let lat = stop.coordinate.latitude
+                    let lon = stop.coordinate.longitude
+
+                    guard lat >= minLatitude,
+                          lat <= maxLatitude,
+                          lon >= minLongitude,
+                          lon <= maxLongitude
+                            else {
+                        continue
+                    }
+
+                    // Map the coordinate into a coarser
+                    // precision grid.
+                    let precisionX = Int(floor(lon / precision))
+                    let precisionY = Int(floor(lat / precision))
+
+                    let precisionKey = GridKey(
+                        x: precisionX,
+                        y: precisionY
+                    )
+
+                    // We already have a representative for this
+                    // precision cell, so skip this stop.
+                    if representatives[precisionKey] != nil {
+                        continue
+                    }
+
+                    representatives[precisionKey] = stop
+                }
+            }
+        }
+
+        print("Found \(representatives.values.count) stops in \(Date.now.timeIntervalSince(start)) seconds")
+
+        return Array(representatives.values)
+    }
+
+    // MARK: - Index
+
+    private func indexKey(
+        for coordinate: CLLocationCoordinate2D
+    ) -> GridKey {
+
+        GridKey(
+            x: Int(floor(coordinate.longitude / indexCellSize)),
+            y: Int(floor(coordinate.latitude / indexCellSize))
+        )
     }
 }

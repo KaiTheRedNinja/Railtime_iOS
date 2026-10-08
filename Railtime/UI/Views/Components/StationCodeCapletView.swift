@@ -38,6 +38,45 @@ struct StationCodeCapletView: View {
     }
 }
 
+struct StationCodeMiniCapletView: View {
+    let station: Station
+    let width: CGFloat = 10
+
+    var body: some View {
+        let radius = width/2
+        let segmentAngle: Angle = Angle.degrees(360) / CGFloat(station.lines.count)
+        let center = CGPoint(x: radius, y: radius)
+
+        HStack(spacing: 0) {
+            ForEach(Array(station.lines.enumerated()), id: \.offset) { index, code in
+                if station.lines.count == 1 {
+                    Circle()
+                        .foregroundStyle(colorForCode(code))
+                } else {
+                    Path { path in
+                        path.move(to: center)
+
+                        let startAngle = segmentAngle * CGFloat(index)
+                        let endAngle = segmentAngle * CGFloat(index + 1)
+
+                        path.addLine(to: .init(x: center.x + cos(startAngle.radians), y: center.y + sin(startAngle.radians)))
+                        path.addArc(center: center, radius: radius, startAngle: startAngle, endAngle: endAngle, clockwise: true)
+                        path.addLine(to: center)
+                    }
+                    .foregroundStyle(colorForCode(code))
+                }
+            }
+        }
+        .frame(width: width, height: width)
+        .clipShape(Capsule())
+        .overlay(
+            Capsule()
+                .stroke(Color.white, lineWidth: 2)
+        )
+        .shadow(color: .black.opacity(0.25), radius: 2, x: 0, y: 1)
+    }
+}
+
 // MARK: - Single Station Code Caplet View (Large individual caplet)
 
 struct SingleCodeCapletView: View {
