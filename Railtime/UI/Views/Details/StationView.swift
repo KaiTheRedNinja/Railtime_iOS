@@ -32,178 +32,15 @@ struct StationView: View {
     
     var body: some View {
         List {
-            // MARK: - 1. Merged Platform Crowd Levels & Frequency Information
-            Section {
-                if isLoadingCrowd {
-                    HStack(spacing: 12) {
-                        ProgressView()
-                            .controlSize(.small)
-                        Text("Fetching live platform crowd levels...")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(.vertical, 4)
-                } else if crowdLevels.isEmpty {
-                    let codes = station.id.split(separator: "/").map { String($0) }
-                    ForEach(codes, id: \.self) { stnCode in
-                        let prefix = String(stnCode.prefix(2)).uppercased()
-                        HStack(spacing: 12) {
-                            SingleCodeCapletView(code: stnCode)
-                            
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(fullLineName(prefix))
-                                    .font(.subheadline)
-                                    .fontWeight(.semibold)
-                                Text("Plenty of space on platform")
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                            }
-                            
-                            Spacer()
-                            
-                            VStack(alignment: .trailing, spacing: 3) {
-                                Text("Low Crowd")
-                                    .font(.caption2)
-                                    .fontWeight(.bold)
-                                    .foregroundStyle(.green)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 3)
-                                    .background(Color.green.opacity(0.12))
-                                    .clipShape(Capsule())
-                                
-                                Text("2-3 mins")
-                                    .font(.caption2)
-                                    .fontWeight(.medium)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                        .padding(.vertical, 3)
-                    }
-                } else {
-                    ForEach(crowdLevels) { crowd in
-                        HStack(spacing: 12) {
-                            SingleCodeCapletView(code: crowd.stationCode)
-                            
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(fullLineName(crowd.lineCode))
-                                    .font(.subheadline)
-                                    .fontWeight(.semibold)
-                                Text(crowd.crowdLevel.subtitleText)
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                            }
-                            
-                            Spacer()
-                            
-                            VStack(alignment: .trailing, spacing: 3) {
-                                Text(crowd.crowdLevel.displayText)
-                                    .font(.caption2)
-                                    .fontWeight(.bold)
-                                    .foregroundStyle(crowd.crowdLevel.color)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 3)
-                                    .background(crowd.crowdLevel.color.opacity(0.12))
-                                    .clipShape(Capsule())
-                                
-                                Text("2-3 mins")
-                                    .font(.caption2)
-                                    .fontWeight(.medium)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                        .padding(.vertical, 3)
-                    }
-                }
-            } header: {
-                Text("Platform Crowd & Frequency")
-            }
-            
-            // MARK: - 2. Compact Station Exits & Landmarks List
-            if !station.exits.isEmpty {
-                Section("Exits") {
-                    ForEach(station.exits) { exit in
-                        HStack(alignment: .center, spacing: 12) {
-                            StationExitIconView(exitCode: exit.code, size: 26)
-                            
-                            Text(exit.description)
-                                .font(.subheadline)
-                                .foregroundStyle(.primary)
-                                .lineLimit(2)
-                        }
-                        .padding(.vertical, 2)
-                    }
-                }
-            }
-            
-            // MARK: - 3. Surrounding Bus Stops
-            Section("Surrounding Bus Stops") {
-                ForEach(surroundingBusStops) { stop in
-                    NavigationLink(value: stop) {
-                        BusStopHomeRow(
-                            stop: stop,
-                            ltaService: ltaService,
-                            effectiveCenter: effectiveCenter,
-                            onTapDistance: {
-                                onTapDistance?(stop.coordinate, .busStop(stop))
-                            }
-                        )
-                    }
-                }
-            }
-            
-            // MARK: - 4. First & Last Train Schedules
-            Section("First & Last Train Schedules") {
-                ForEach(trainSchedules) { lineSched in
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack(spacing: 8) {
-                            Circle()
-                                .fill(colorForLine(lineSched.lineCode))
-                                .frame(width: 8, height: 8)
-                            Text(lineSched.lineName)
-                                .font(.subheadline)
-                                .fontWeight(.bold)
-                        }
-                        
-                        ForEach(lineSched.directions) { dir in
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text(dir.destination)
-                                    .font(.subheadline)
-                                    .fontWeight(.semibold)
-                                    .foregroundStyle(.primary)
-                                
-                                HStack(spacing: 12) {
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text("First Train")
-                                            .font(.caption2)
-                                            .foregroundStyle(.secondary)
-                                        Text("\(dir.weekdayFirst) (Sun: \(dir.sundayFirst))")
-                                            .font(.caption)
-                                            .fontWeight(.bold)
-                                            .foregroundStyle(.blue)
-                                    }
-                                    
-                                    Spacer()
-                                    
-                                    VStack(alignment: .trailing, spacing: 2) {
-                                        Text("Last Train")
-                                            .font(.caption2)
-                                            .foregroundStyle(.secondary)
-                                        Text(dir.dailyLast)
-                                            .font(.caption)
-                                            .fontWeight(.bold)
-                                            .foregroundStyle(.red)
-                                    }
-                                }
-                            }
-                            .padding(10)
-                            .background(Color(.secondarySystemGroupedBackground))
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
-                        }
-                    }
-                    .padding(.vertical, 2)
-                }
-            }
+            crowdAndFrequencyView
+
+            exitsView
+
+            nearbyBusStopsView
+
+            scheduleView
         }
+        .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -229,43 +66,7 @@ struct StationView: View {
         }
         // MARK: - Edge-to-Edge Header Area
         .safeAreaInset(edge: .top, spacing: 0) {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 12) {
-                    StationCodeCapletView(station: station, fontSize: 18, horizontalPadding: 10, verticalPadding: 6)
-                    
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(station.name)
-                            .font(.title)
-                            .fontWeight(.bold)
-                            .foregroundStyle(.white)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
-                        
-                        if station.chineseName != nil || station.tamilName != nil {
-                            HStack(spacing: 8) {
-                                if let zh = station.chineseName {
-                                    Text(zh)
-                                        .font(.body)
-                                        .foregroundStyle(Color(red: 1.0, green: 1.0, blue: 1.0, opacity: 0.75))
-                                        .tracking(5)
-                                }
-                                if let ta = station.tamilName {
-                                    Text(ta)
-                                        .font(.body)
-                                        .foregroundStyle(Color(red: 1.0, green: 1.0, blue: 1.0, opacity: 0.75))
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                        }
-                    }
-                    Spacer()
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.top, 12)
-            .padding(.bottom, 24)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.black)
+            topHeader
         }
         .task {
             isLoadingCrowd = true
@@ -273,7 +74,227 @@ struct StationView: View {
             isLoadingCrowd = false
         }
     }
-    
+
+    var topHeader: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top, spacing: 12) {
+                StationCodeCapletView(station: station, fontSize: 18, horizontalPadding: 10, verticalPadding: 6)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(station.name)
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+
+                    if station.chineseName != nil || station.tamilName != nil {
+                        HStack(spacing: 8) {
+                            if let zh = station.chineseName {
+                                Text(zh)
+                                    .font(.body)
+                                    .foregroundStyle(Color(red: 1.0, green: 1.0, blue: 1.0, opacity: 0.75))
+                                    .tracking(5)
+                            }
+                            if let ta = station.tamilName {
+                                Text(ta)
+                                    .font(.body)
+                                    .foregroundStyle(Color(red: 1.0, green: 1.0, blue: 1.0, opacity: 0.75))
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+
+                Spacer()
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 12)
+        .padding(.bottom, 24)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.black)
+    }
+
+    var crowdAndFrequencyView: some View {
+        // MARK: - 1. Merged Platform Crowd Levels & Frequency Information
+        Section {
+            if isLoadingCrowd {
+                HStack(spacing: 12) {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text("Fetching live platform crowd levels...")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.vertical, 4)
+            } else if crowdLevels.isEmpty {
+                let codes = station.id.split(separator: "/").map { String($0) }
+                ForEach(codes, id: \.self) { stnCode in
+                    let prefix = String(stnCode.prefix(2)).uppercased()
+                    HStack(spacing: 12) {
+                        SingleCodeCapletView(code: stnCode)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(fullLineName(prefix))
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                            Text("Plenty of space on platform")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Spacer()
+
+                        VStack(alignment: .trailing, spacing: 3) {
+                            Text("Low Crowd")
+                                .font(.caption2)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.green)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .background(Color.green.opacity(0.12))
+                                .clipShape(Capsule())
+
+                            Text("2-3 mins")
+                                .font(.caption2)
+                                .fontWeight(.medium)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding(.vertical, 3)
+                }
+            } else {
+                ForEach(crowdLevels) { crowd in
+                    HStack(spacing: 12) {
+                        SingleCodeCapletView(code: crowd.stationCode)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(fullLineName(crowd.lineCode))
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                            Text(crowd.crowdLevel.subtitleText)
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Spacer()
+
+                        VStack(alignment: .trailing, spacing: 3) {
+                            Text(crowd.crowdLevel.displayText)
+                                .font(.caption2)
+                                .fontWeight(.bold)
+                                .foregroundStyle(crowd.crowdLevel.color)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .background(crowd.crowdLevel.color.opacity(0.12))
+                                .clipShape(Capsule())
+
+                            Text("2-3 mins")
+                                .font(.caption2)
+                                .fontWeight(.medium)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding(.vertical, 3)
+                }
+            }
+        } header: {
+            Text("Platform Crowd & Frequency")
+        }
+    }
+
+    @ViewBuilder
+    var exitsView: some View {
+        // MARK: - 2. Compact Station Exits & Landmarks List
+        if !station.exits.isEmpty {
+            Section("Exits") {
+                ForEach(station.exits) { exit in
+                    HStack(alignment: .center, spacing: 12) {
+                        StationExitIconView(exitCode: exit.code, size: 26)
+
+                        Text(exit.description)
+                            .font(.subheadline)
+                            .foregroundStyle(.primary)
+                            .lineLimit(2)
+                    }
+                }
+            }
+        }
+    }
+
+    var nearbyBusStopsView: some View {
+        // MARK: - 3. Surrounding Bus Stops
+        Section("Surrounding Bus Stops") {
+            ForEach(surroundingBusStops) { stop in
+                NavigationLink(value: stop) {
+                    BusStopHomeRow(
+                        stop: stop,
+                        ltaService: ltaService,
+                        effectiveCenter: effectiveCenter,
+                        onTapDistance: {
+                            onTapDistance?(stop.coordinate, .busStop(stop))
+                        }
+                    )
+                }
+            }
+        }
+    }
+
+    var scheduleView: some View {
+        // MARK: - 4. First & Last Train Schedules
+        Section("First & Last Train Schedules") {
+            ForEach(trainSchedules) { lineSched in
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 8) {
+                        Circle()
+                            .fill(colorForLine(lineSched.lineCode))
+                            .frame(width: 8, height: 8)
+                        Text(lineSched.lineName)
+                            .font(.subheadline)
+                            .fontWeight(.bold)
+                    }
+
+                    ForEach(lineSched.directions) { dir in
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(dir.destination)
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(.primary)
+
+                            HStack(spacing: 12) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("First Train")
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
+                                    Text("\(dir.weekdayFirst) (Sun: \(dir.sundayFirst))")
+                                        .font(.caption)
+                                        .fontWeight(.bold)
+                                        .foregroundStyle(.blue)
+                                }
+
+                                Spacer()
+
+                                VStack(alignment: .trailing, spacing: 2) {
+                                    Text("Last Train")
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
+                                    Text(dir.dailyLast)
+                                        .font(.caption)
+                                        .fontWeight(.bold)
+                                        .foregroundStyle(.red)
+                                }
+                            }
+                        }
+                        .padding(10)
+                        .background(Color(.secondarySystemGroupedBackground))
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                    }
+                }
+                .padding(.vertical, 2)
+            }
+        }
+    }
+
     private func generateTrainSchedules(for station: Station) -> [LineTrainSchedule] {
         var result: [LineTrainSchedule] = []
         let rawCodes = station.id.split(separator: "/").map { String($0).trimmingCharacters(in: .whitespaces) }

@@ -57,6 +57,7 @@ struct BusStopView: View {
                 }
             }
         }
+        .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
