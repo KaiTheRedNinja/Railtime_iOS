@@ -51,6 +51,45 @@ extension LTABusStopInfo: @retroactive Identifiable {
         return refLoc.distance(from: stopLoc)
     }
 
+    /// Returns one of the following:
+    /// - `"N"` for North
+    /// - `"NE"` for North-East
+    /// - `"E"` for East
+    /// - `"SE"` for South-East
+    /// - `"S"` for South
+    /// - `"SW"` for South-West
+    /// - `"W"` for West
+    /// - `"NW"` for North-West
+    func direction(from refCoordinate: CLLocationCoordinate2D) -> String {
+        var direction = ""
+
+        // determine the bearing from lat1 to lat2
+        let lat1 = refCoordinate.latitude * .pi / 180
+        let lon1 = refCoordinate.longitude * .pi / 180
+        let lat2 = self.latitude * .pi / 180
+        let lon2 = self.longitude * .pi / 180
+        let dLon = lon2 - lon1
+
+        let y = sin(dLon) * cos(lat2)
+        let x = cos(lat1) * sin(lat2) -
+        sin(lat1) * cos(lat2) * cos(dLon)
+
+        let radiansBearing = atan2(y, x)
+        let degreesBearing = radiansBearing * 180 / .pi
+
+        let bearing = (degreesBearing + 360).truncatingRemainder(dividingBy: 360)
+
+        // correspond it to a direction
+        let directions = [
+            "N", "NE", "E", "SE",
+            "S", "SW", "W", "NW"
+        ]
+
+        // each "slice" is 45 degrees, adding 22.5 centers the slice (otherwise north would be between slices 0 and 7)
+        let index = Int((bearing + 22.5) / 45.0) % 8
+        return directions[index]
+    }
+
     func formattedDistance(from refCoordinate: CLLocationCoordinate2D?) -> String? {
         guard let meters = distance(from: refCoordinate) else { return nil }
         let km = meters / 1000.0

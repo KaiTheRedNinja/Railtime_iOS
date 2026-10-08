@@ -123,88 +123,34 @@ struct HomeView: View {
     var body: some View {
         NavigationStack(path: $navigationPath) {
             VStack(spacing: 0) {
-                // MARK: - Search Bar & Top Actions
-                HStack(spacing: 8) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "magnifyingglass")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundStyle(.secondary)
-                        
-                        TextField("Search stations, stops, or bus numbers", text: $searchText)
-                            .font(.body)
-                            .textFieldStyle(.plain)
-                            .autocorrectionDisabled()
-                        
-                        if !searchText.isEmpty {
-                            Button {
-                                searchText = ""
-                            } label: {
-                                Image(systemName: "xmark.circle.fill")
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 10)
-                    .background(Color(.systemGray6))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                    
-                    // MARK: - Plan Journey Button
-                    Button {
-                        showJourneyPlanner = true
-                    } label: {
-                        Image(systemName: "arrow.triangle.turn.up.right.diamond.fill")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundStyle(.white)
-                            .padding(10)
-                            .background(Color.blue)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
-                    .accessibilityLabel("Plan Journey")
+                topBar
 
-                    // MARK: - Settings Button
-                    Button {
-                        showSettings = true
-                    } label: {
-                        Image(systemName: "gearshape.fill")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(.primary)
-                            .padding(10)
-                            .background(Color(.systemGray6))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
-                    .accessibilityLabel("Settings")
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 8)
-                .padding(.bottom, 8)
-                
                 List {
-                    // MARK: - Plan Journey Prominent Banner
-                    Section {
-                        Button {
-                            showJourneyPlanner = true
-                        } label: {
-                            HStack(spacing: 12) {
-                                Image(systemName: "figure.transit")
-                                    .font(.title3)
-                                    .foregroundStyle(.blue)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("Plan Journey")
-                                        .font(.headline)
-                                        .foregroundStyle(.primary)
-                                    Text("Custom trip planner & live bus timing estimator")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            .padding(.vertical, 2)
-                        }
-                    }
+//                    // MARK: - Plan Journey Prominent Banner
+//                    Section {
+//                        Button {
+//                            showJourneyPlanner = true
+//                        } label: {
+//                            HStack(spacing: 12) {
+//                                Image(systemName: "figure.transit")
+//                                    .font(.title3)
+//                                    .foregroundStyle(.blue)
+//                                VStack(alignment: .leading, spacing: 2) {
+//                                    Text("Plan Journey")
+//                                        .font(.headline)
+//                                        .foregroundStyle(.primary)
+//                                    Text("Custom trip planner & live bus timing estimator")
+//                                        .font(.caption)
+//                                        .foregroundStyle(.secondary)
+//                                }
+//                                Spacer()
+//                                Image(systemName: "chevron.right")
+//                                    .font(.caption)
+//                                    .foregroundStyle(.secondary)
+//                            }
+//                            .padding(.vertical, 2)
+//                        }
+//                    }
 
                     // IF DISRUPTED -> Show alert banner
                     if !ltaService.isTrainStatusNormal {
@@ -240,85 +186,9 @@ struct HomeView: View {
                         }
                     }
                     
-                    // Nearby MRT & LRT Stations (User-configured range)
-                    Section {
-                        if filteredStationsWithinRange.isEmpty {
-                            ContentUnavailableView("No Stations Found", systemImage: "tram", description: Text("No MRT/LRT stations within \(mrtRangeLabel)."))
-                        } else {
-                            ForEach(filteredStationsWithinRange) { station in
-                                NavigationLink(value: station) {
-                                    HStack(spacing: 10) {
-                                        StationCodeCapletView(station: station)
-                                        
-                                        VStack(alignment: .leading, spacing: 2) {
-                                            Text(station.name)
-                                                .font(.headline)
-                                                .lineLimit(1)
-                                                .minimumScaleFactor(0.8)
-                                        }
-                                        
-                                        Spacer(minLength: 4)
-                                        
-                                        if let distanceStr = station.formattedDistance(from: effectiveCenter) {
-                                            Button {
-                                                onTapDistance?(station.coordinate, .station(station))
-                                            } label: {
-                                                HStack(spacing: 3) {
-                                                    Image(systemName: "location.fill")
-                                                        .font(.caption2)
-                                                    Text(distanceStr)
-                                                        .font(.caption)
-                                                        .fontWeight(.semibold)
-                                                }
-                                                .padding(.horizontal, 8)
-                                                .padding(.vertical, 4)
-                                                .background(Color.blue.opacity(0.12))
-                                                .foregroundStyle(.blue)
-                                                .clipShape(Capsule())
-                                            }
-                                            .buttonStyle(.plain)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    } header: {
-                        HStack {
-                            Text("MRT & LRT Stations")
-                            Spacer()
-                            Text("within \(mrtRangeLabel)")
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    
-                    // Nearby Bus Stops (Adaptive to map center, strictly limited to 6 stops)
-                    Section {
-                        if filteredBusStops.isEmpty {
-                            ContentUnavailableView("No Bus Stops Found", systemImage: "bus", description: Text("Try adjusting your search criteria."))
-                        } else {
-                            ForEach(filteredBusStops) { stop in
-                                NavigationLink(value: stop) {
-                                    BusStopHomeRow(
-                                        stop: stop,
-                                        ltaService: ltaService,
-                                        effectiveCenter: effectiveCenter,
-                                        onTapDistance: {
-                                            onTapDistance?(stop.coordinate, .busStop(stop))
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    } header: {
-                        HStack {
-                            Text("Nearby Bus Stops")
-                            Spacer()
-                            Text("\(filteredBusStops.count) stops")
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
+                    nearbyMRTStops
+
+                    nearbyBusStops
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
@@ -353,6 +223,174 @@ struct HomeView: View {
                     originStopCode: detail.originStopCode,
                     ltaService: ltaService
                 )
+            }
+        }
+    }
+
+    var topBar: some View {
+        // MARK: - Search Bar & Top Actions
+        HStack(spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(.secondary)
+
+                TextField("Search stations, stops, or bus numbers", text: $searchText)
+                    .font(.body)
+                    .textFieldStyle(.plain)
+                    .autocorrectionDisabled()
+
+                if !searchText.isEmpty {
+                    Button {
+                        searchText = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(Color(.systemGray6))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+
+            // MARK: - Plan Journey Button
+            Button {
+                showJourneyPlanner = true
+            } label: {
+                Image(systemName: "arrow.triangle.turn.up.right.diamond.fill")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(.white)
+                    .padding(10)
+                    .background(Color.blue)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+            .accessibilityLabel("Plan Journey")
+
+            // MARK: - Settings Button
+            Button {
+                showSettings = true
+            } label: {
+                Image(systemName: "gearshape.fill")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.primary)
+                    .padding(10)
+                    .background(Color(.systemGray6))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+            .accessibilityLabel("Settings")
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 8)
+        .padding(.bottom, 8)
+    }
+
+    var nearbyMRTStops: some View {
+        // Nearby MRT & LRT Stations (User-configured range)
+        Section {
+            if filteredStationsWithinRange.isEmpty {
+                HStack {
+                    Image(systemName: "tram")
+                        .resizable()
+                        .scaledToFit()
+                        .foregroundStyle(Color.secondary)
+                        .frame(width: 40, height: 40)
+
+                    VStack(alignment: .leading) {
+                        Text("No Stations Found")
+                            .font(.headline)
+                            .bold()
+                        Text("No MRT/LRT stations within \(mrtRangeLabel).")
+                    }
+                }
+            } else {
+                ForEach(filteredStationsWithinRange) { station in
+                    NavigationLink(value: station) {
+                        HStack(spacing: 10) {
+                            StationCodeCapletView(station: station)
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(station.name)
+                                    .font(.headline)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.8)
+                            }
+
+                            Spacer(minLength: 4)
+
+                            if let distanceStr = station.formattedDistance(from: effectiveCenter) {
+                                Button {
+                                    onTapDistance?(station.coordinate, .station(station))
+                                } label: {
+                                    HStack(spacing: 3) {
+                                        Image(systemName: "location.fill")
+                                            .font(.caption2)
+                                        Text(distanceStr)
+                                            .font(.caption)
+                                            .fontWeight(.semibold)
+                                    }
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Color.blue.opacity(0.12))
+                                    .foregroundStyle(.blue)
+                                    .clipShape(Capsule())
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
+                }
+            }
+        } header: {
+            HStack {
+                Text("MRT & LRT Stations")
+                Spacer()
+                Text("within \(mrtRangeLabel)")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    var nearbyBusStops: some View {
+        // Nearby Bus Stops (Adaptive to map center, strictly limited to 6 stops)
+        Section {
+            if filteredBusStops.isEmpty {
+                HStack {
+                    Image(systemName: "bus")
+                        .resizable()
+                        .scaledToFit()
+                        .foregroundStyle(Color.secondary)
+                        .frame(width: 40, height: 40)
+
+                    VStack(alignment: .leading) {
+                        Text("No Bus Stops Found")
+                            .font(.headline)
+                            .bold()
+                        Text("Try adjusting your search criteria")
+                    }
+                }
+            } else {
+                ForEach(filteredBusStops) { stop in
+                    NavigationLink(value: stop) {
+                        BusStopHomeRow(
+                            stop: stop,
+                            ltaService: ltaService,
+                            effectiveCenter: effectiveCenter,
+                            onTapDistance: {
+                                onTapDistance?(stop.coordinate, .busStop(stop))
+                            }
+                        )
+                    }
+                }
+            }
+        } header: {
+            HStack {
+                Text("Nearby Bus Stops")
+                Spacer()
+                Text("\(filteredBusStops.count) stops")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
             }
         }
     }

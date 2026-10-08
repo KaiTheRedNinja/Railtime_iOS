@@ -25,7 +25,7 @@ struct BusStopHomeRow: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(stop.name)
                         .font(.headline)
-                    Text("\(stop.roadName) • \(stop.id)")
+                    Text([stop.roadName, stop.id].compactMap { $0 }.joined(separator: "•"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -37,6 +37,9 @@ struct BusStopHomeRow: View {
                         onTapDistance?()
                     } label: {
                         HStack(spacing: 3) {
+                            Text(stop.direction(from: effectiveCenter))
+                                .font(.caption)
+                                .fontWeight(.semibold)
                             Image(systemName: "location.fill")
                                 .font(.caption2)
                             Text(distanceStr)
@@ -93,6 +96,13 @@ struct BusStopHomeRow: View {
                             }
                         }
                     }
+                }
+                .scrollClipDisabled()
+                .mask {
+                    // blur out 10px outside the bounds of the scroll view
+                    Rectangle()
+                        .padding(.all, -10)
+                        .blur(radius: 10)
                 }
             }
         }

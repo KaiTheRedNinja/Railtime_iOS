@@ -22,9 +22,10 @@ Railtime uses a MVVM architecture:
 - `Journey`: A stateful manager that holds the journey, and also "context" which is derived from Estimation.
 
 ## Todo
-- [ ] Show error visually in bus arrival timings
-- [ ] Hoist state for selected bus/train
-- [ ] Choose selected bus/train in JourneyManager
-- [ ] Merge mergeable contents together, and show alternate routes as a part of it
-- [ ] Add a way to hide alternate routes
-- [ ] Only display transfers when they are actually better than the current one
+- [ ] Figure out how to optimise the display of things on maps UI
+- [ ] A\* algorithm
+  - [ ] Centralised list of bus and train stops
+  - [ ] Figure out how to get the A\* algo working in the first place
+- [ ] Get all addresses?
+- [ ] Create UI for specifying navigation start/end
+- [ ] Create UI for showing routes based on Xyrus's design

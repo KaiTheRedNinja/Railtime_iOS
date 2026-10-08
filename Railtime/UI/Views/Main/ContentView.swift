@@ -92,6 +92,14 @@ struct ContentView: View {
     var body: some View {
         ZStack(alignment: .topLeading) {
             Map(position: $position, selection: $selectedTransitItem) {
+                Annotation("Center", coordinate: effectiveCenter) {
+                    Image(systemName: "plus")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 10, height: 10)
+                }
+                .tag("Center")
+
                 UserAnnotation()
                 
                 // Render MRT / LRT Stations on map (Zoom >= mrtZoomThreshold%)
