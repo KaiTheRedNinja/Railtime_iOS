@@ -42,6 +42,34 @@ struct OffsetScrollView<Content: View>: View {
     }
 }
 
+struct OffsetList<Content: View>: View {
+    var offset: Binding<CGFloat>
+    var insets: Binding<EdgeInsets>?
+    var content: Content
+
+    public init(offset: Binding<CGFloat>, insets: Binding<EdgeInsets>? = nil, @ViewBuilder content: () -> Content) {
+        self.offset = offset
+        self.insets = insets
+        self.content = content()
+    }
+
+    var body: some View {
+        List {
+            content
+        }
+        .onScrollGeometryChange(for: CGFloat.self) { geometry in
+            geometry.contentOffset.y
+        } action: { oldValue, newValue in
+            offset.wrappedValue = newValue
+        }
+        .onScrollGeometryChange(for: EdgeInsets.self) { geometry in
+            geometry.contentInsets
+        } action: { oldValue, newValue in
+            insets?.wrappedValue = newValue
+        }
+    }
+}
+
 struct ViewOffsetKey: PreferenceKey {
     typealias Value = CGPoint
     static var defaultValue = CGPoint.zero
