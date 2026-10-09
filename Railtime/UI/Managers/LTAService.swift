@@ -76,58 +76,6 @@ class LTAService {
         } ?? []
     }
     
-    // MARK: - Fetch Live Bus Arrivals
-    
-    func fetchBusArrivals(for stopId: String) async -> [BusArrival] {
-        guard let results = try? await dataSource.getBusArrival(busStopCode: stopId) else { return [] }
-        let services = results.services
-
-        return services.map { service in
-            let nextBusInfo = service.nextBus.flatMap {
-                BusTimingInfo(
-                    rawArrival: $0.estimatedArrival,
-                    loadStr: $0.load?.rawValue,
-                    typeStr: $0.type?.rawValue,
-                    featureStr: $0.feature,
-                    destinationCode: $0.destinationCode
-                )
-            }
-            let nextBus2Info = service.nextBus2.flatMap {
-                BusTimingInfo(
-                    rawArrival: $0.estimatedArrival,
-                    loadStr: $0.load?.rawValue,
-                    typeStr: $0.type?.rawValue,
-                    featureStr: $0.feature,
-                    destinationCode: $0.destinationCode
-                )
-            }
-            let nextBus3Info = service.nextBus3.flatMap {
-                BusTimingInfo(
-                    rawArrival: $0.estimatedArrival,
-                    loadStr: $0.load?.rawValue,
-                    typeStr: $0.type?.rawValue,
-                    featureStr: $0.feature,
-                    destinationCode: $0.destinationCode
-                )
-            }
-
-            let destCode = service.nextBus?.destinationCode ?? service.nextBus2?.destinationCode ?? service.nextBus3?.destinationCode
-            let destName = destCode.flatMap { code in
-                self.busStopsById[code]?.name
-            }
-
-            return BusArrival(
-                serviceNo: service.serviceNo,
-                operatorName: service.operator,
-                nextBus: nextBusInfo,
-                subsequentBus: nextBus2Info,
-                thirdBus: nextBus3Info,
-                destinationCode: destCode,
-                destinationName: destName
-            )
-        }
-    }
-    
     // MARK: - Fetch Bus Route Data
     func fetchBusRoute(for serviceNo: String) async -> BusServiceRoute? {
         guard let results = try? await dataSource.getServiceRoutes(serviceNo: serviceNo) else { return nil }

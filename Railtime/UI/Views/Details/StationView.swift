@@ -1,6 +1,7 @@
 import SwiftUI
 import CoreLocation
 import LTAAPI
+import Combine
 
 // MARK: - Station View
 
@@ -13,7 +14,11 @@ struct StationView: View {
     
     @State private var crowdLevels: [StationLineCrowd] = []
     @State private var isLoadingCrowd: Bool = true
-    
+    @State private var now: Date = .now
+
+    // Update the duration shown on screen every second
+    var etaRefreshTimer = Timer.publish(every: 1, on: .main, in: .default).autoconnect()
+
     private var surroundingBusStops: [BusStop] {
         ltaService.allBusStops
             .sorted {
@@ -72,6 +77,9 @@ struct StationView: View {
             isLoadingCrowd = true
             crowdLevels = await ltaService.fetchStationCrowdLevels(for: station)
             isLoadingCrowd = false
+        }
+        .onReceive(etaRefreshTimer) { _ in
+            self.now = .now
         }
     }
 
@@ -233,7 +241,8 @@ struct StationView: View {
                         effectiveCenter: effectiveCenter,
                         onTapDistance: {
                             onTapDistance?(stop.coordinate, .busStop(stop))
-                        }
+                        },
+                        now: now
                     )
                 }
             }

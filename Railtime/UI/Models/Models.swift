@@ -65,54 +65,6 @@ struct BusServiceArrivals: Identifiable {
     var id: String { serviceNo }
 }
 
-@available(*, deprecated, renamed: "BusArrivalEstimate", message: "Use the type from BusEstimation instead")
-struct BusTimingInfo: Identifiable, Hashable {
-    let id = UUID()
-    let rawArrival: String?
-    let load: BusLoad?
-    let busType: BusType?
-    let isWheelchairAccessible: Bool
-    let destinationCode: String?
-    
-    init(rawArrival: String?, loadStr: String?, typeStr: String?, featureStr: String?, destinationCode: String? = nil) {
-        self.rawArrival = rawArrival
-        self.load = BusLoad(rawValue: loadStr ?? "")
-        self.busType = BusType(rawValue: typeStr ?? "")
-        self.isWheelchairAccessible = (featureStr == "WAB")
-        self.destinationCode = destinationCode
-    }
-    
-    var minutesRemaining: Int? {
-        guard let raw = rawArrival, !raw.isEmpty else { return nil }
-        
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        var arrivalDate = formatter.date(from: raw)
-        
-        if arrivalDate == nil {
-            formatter.formatOptions = [.withInternetDateTime]
-            arrivalDate = formatter.date(from: raw)
-        }
-        
-        guard let date = arrivalDate else { return nil }
-        let diff = date.timeIntervalSinceNow
-        let mins = Int(ceil(diff / 60.0))
-        return max(0, mins)
-    }
-}
-
-@available(*, deprecated, renamed: "BusServiceArrivals", message: "Use the proper wrapper type instead")
-struct BusArrival: Identifiable, Hashable {
-    var id: String { serviceNo }
-    let serviceNo: String
-    let operatorName: String?
-    let nextBus: BusTimingInfo?
-    let subsequentBus: BusTimingInfo?
-    let thirdBus: BusTimingInfo?
-    let destinationCode: String?
-    let destinationName: String?
-}
-
 // MARK: - Bus Service Route & Preseeded Models
 struct BusRouteStop: Identifiable, Hashable {
     var id: String { "\(direction)_\(stopSequence)_\(busStopCode)" }

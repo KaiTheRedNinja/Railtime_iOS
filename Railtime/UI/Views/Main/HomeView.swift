@@ -1,6 +1,7 @@
 import SwiftUI
 import CoreLocation
 import LTAAPI
+import Combine
 
 // MARK: - Home View
 
@@ -14,7 +15,11 @@ struct HomeView: View {
     @State private var searchText = ""
     @State private var showJourneyPlanner = false
     @State private var showSettings = false
-    
+    @State private var now: Date = .now
+
+    // Update the duration shown on screen every second
+    var etaRefreshTimer = Timer.publish(every: 1, on: .main, in: .default).autoconnect()
+
     @AppStorage("mrtStationRangeMeters") private var mrtRangeMeters: Int = 1000
     
     private var mrtRangeLabel: String {
@@ -225,6 +230,9 @@ struct HomeView: View {
                 )
             }
         }
+        .onReceive(etaRefreshTimer) { _ in
+            self.now = .now
+        }
     }
 
     var topBar: some View {
@@ -379,7 +387,8 @@ struct HomeView: View {
                             effectiveCenter: effectiveCenter,
                             onTapDistance: {
                                 onTapDistance?(stop.coordinate, .busStop(stop))
-                            }
+                            },
+                            now: now
                         )
                     }
                 }

@@ -1,6 +1,7 @@
 import SwiftUI
 import CoreLocation
 import LTAAPI
+import BusEstimation
 
 // MARK: - Bus Stop Home Row View (With Live Frequency Info)
 
@@ -9,8 +10,9 @@ struct BusStopHomeRow: View {
     var ltaService: LTAService
     var effectiveCenter: CLLocationCoordinate2D
     var onTapDistance: (() -> Void)?
-    
-    @State private var arrivals: [BusArrival] = []
+    let now: Date
+
+    @State private var arrivals: [BusArrivalEstimate] = []
     @State private var isLoading = true
     
     var body: some View {
@@ -69,31 +71,25 @@ struct BusStopHomeRow: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 6) {
                         ForEach(arrivals.prefix(6)) { arrival in
-                            if let next = arrival.nextBus {
-                                HStack(spacing: 4) {
-                                    Text(arrival.serviceNo)
-                                        .fontWeight(.bold)
-                                        .foregroundStyle(.primary)
-                                    
-                                    Circle()
-                                        .fill(next.load?.color ?? .gray)
-                                        .frame(width: 6, height: 6)
-                                    
-                                    if let mins = next.minutesRemaining {
-                                        Text(mins == 0 ? "Arr" : "\(mins)m")
-                                            .fontWeight(.semibold)
-                                            .foregroundStyle(mins == 0 ? .green : .secondary)
-                                    } else {
-                                        Text("-")
-                                            .foregroundStyle(.secondary)
-                                    }
-                                }
-                                .font(.caption2)
-                                .padding(.horizontal, 7)
-                                .padding(.vertical, 3)
-                                .background(Color(.secondarySystemFill))
-                                .clipShape(RoundedRectangle(cornerRadius: 6))
+                            HStack(spacing: 4) {
+                                Text(arrival.busServiceNo)
+                                    .fontWeight(.bold)
+                                    .foregroundStyle(.primary)
+
+                                Circle()
+                                    .fill(arrival.metadata.load?.color ?? .gray)
+                                    .frame(width: 6, height: 6)
+
+                                let mins = Int((arrival.eta.timeIntervalSince(now) / 60).rounded(.towardZero))
+                                Text(mins == 0 ? "Arr" : "\(mins)m")
+                                    .fontWeight(.semibold)
+                                    .foregroundStyle(mins == 0 ? .green : .secondary)
                             }
+                            .font(.caption2)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 3)
+                            .background(Color(.secondarySystemFill))
+                            .clipShape(RoundedRectangle(cornerRadius: 6))
                         }
                     }
                 }
@@ -114,7 +110,9 @@ struct BusStopHomeRow: View {
     
     private func loadArrivals() async {
         isLoading = true
-        arrivals = await ltaService.fetchBusArrivals(for: stop.id)
+        if let estimates = try? await ltaService.estimator.getSingleStop(code: stop.id, serviceNo: nil) {
+            self.arrivals = estimates.flatMap { $0.estimates }.sorted(by: { $0.eta < $1.eta })
+        }
         isLoading = false
     }
 }
