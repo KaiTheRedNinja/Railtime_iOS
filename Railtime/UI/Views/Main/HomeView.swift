@@ -262,18 +262,18 @@ struct HomeView: View {
             .background(Color(.systemGray6))
             .clipShape(RoundedRectangle(cornerRadius: 12))
 
-            // MARK: - Plan Journey Button
-            Button {
-                showJourneyPlanner = true
-            } label: {
-                Image(systemName: "arrow.triangle.turn.up.right.diamond.fill")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(.white)
-                    .padding(10)
-                    .background(Color.blue)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-            }
-            .accessibilityLabel("Plan Journey")
+//            // MARK: - Plan Journey Button
+//            Button {
+//                showJourneyPlanner = true
+//            } label: {
+//                Image(systemName: "arrow.triangle.turn.up.right.diamond.fill")
+//                    .font(.system(size: 16, weight: .bold))
+//                    .foregroundStyle(.white)
+//                    .padding(10)
+//                    .background(Color.blue)
+//                    .clipShape(RoundedRectangle(cornerRadius: 12))
+//            }
+//            .accessibilityLabel("Plan Journey")
 
             // MARK: - Settings Button
             Button {
