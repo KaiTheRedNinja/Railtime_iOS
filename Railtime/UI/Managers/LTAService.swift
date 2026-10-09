@@ -8,8 +8,9 @@ import BusEstimation
 
 @Observable
 class LTAService {
-    var dataSource: LTADataSource
-    
+    var dataSource: LTADataSource { estimator.data }
+    var estimator: BusArrivalEstimator
+
     var allBusStops: [BusStop] = [] {
         didSet {
             rebuildBusStopsById()
@@ -40,10 +41,10 @@ class LTAService {
             ?? ProcessInfo.processInfo.environment["LTA_ACCOUNT_KEY"]
             ?? "19hQsIO6RjOhqlAVh4DRKw=="
         ).trimmingCharacters(in: .whitespacesAndNewlines)
-        dataSource = .init(
+        estimator = .init(
             client: try! LTAClient(accountKey: apiKey),
-            diskCache: DiskCache(root: "lta_cache", ttl: 24.0 * 30 * 3600), // 30 days
-            memoryCache: MemoryCache(ttl: 5) // 5 second cache
+            cacheDir: "lta_cache",
+            cacheTTLHours: 24.0 * 30
         )
 
         loadPreseededData()

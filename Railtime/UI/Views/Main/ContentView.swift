@@ -262,21 +262,21 @@ struct ContentView: View {
             }
         }
         .preferredColorScheme(preferredColorScheme)
-//        .sheet(isPresented: .constant(true)) {
-//            HomeView(
-//                ltaService: ltaService,
-//                locationManager: locationManager,
-//                effectiveCenter: effectiveCenter,
-//                navigationPath: $navigationPath,
-//                onTapDistance: { coord, item in
-//                    selectAndNavigateTo(item: item)
-//                }
-//            )
-//            .presentationBackgroundInteraction(.enabled)
-//            .presentationDetents([.fraction(0.25), .fraction(0.5), .large], selection: $sheetSelection)
-//            .interactiveDismissDisabled()
-//            .presentationCornerRadius(24)
-//        }
+        .sheet(isPresented: .constant(true)) {
+            HomeView(
+                ltaService: ltaService,
+                locationManager: locationManager,
+                effectiveCenter: effectiveCenter,
+                navigationPath: $navigationPath,
+                onTapDistance: { coord, item in
+                    selectAndNavigateTo(item: item)
+                }
+            )
+            .presentationBackgroundInteraction(.enabled)
+            .presentationDetents([.fraction(0.25), .fraction(0.5), .large], selection: $sheetSelection)
+            .interactiveDismissDisabled()
+            .presentationCornerRadius(24)
+        }
         .toolbar(.hidden, for: .navigationBar)
         .task {
             await ltaService.fetchTrainServiceAlerts()

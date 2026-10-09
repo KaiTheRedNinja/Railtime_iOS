@@ -1,10 +1,12 @@
 import SwiftUI
+import BusEstimation
 
 // MARK: - Bus Arrival Row View
 
 struct BusArrivalRow: View {
-    let arrival: BusArrival
-    
+    let arrival: BusServiceArrivals
+    let now: Date
+
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .center) {
@@ -33,20 +35,13 @@ struct BusArrivalRow: View {
                 
                 // Live Arrivals
                 HStack(spacing: 12) {
-                    if let next = arrival.nextBus {
-                        TimingBadge(timing: next, isNext: true)
-                    } else {
+                    ForEach(arrival.arrivals, id: \.id) { arrival in
+                        TimingBadge(timing: arrival, now: now)
+                    }
+                    if arrival.arrivals.isEmpty {
                         Text("No data")
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                    }
-                    
-                    if let subsequent = arrival.subsequentBus {
-                        TimingBadge(timing: subsequent, isNext: false)
-                    }
-                    
-                    if let third = arrival.thirdBus {
-                        TimingBadge(timing: third, isNext: false)
                     }
                 }
             }

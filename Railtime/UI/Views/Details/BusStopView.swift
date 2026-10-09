@@ -1,6 +1,8 @@
 import SwiftUI
 import CoreLocation
 import LTAAPI
+import Combine
+import BusEstimation
 
 // MARK: - Bus Stop View (Live Bus Arrivals)
 
@@ -10,11 +12,18 @@ struct BusStopView: View {
     var locationManager: LocationManager
     var effectiveCenter: CLLocationCoordinate2D
     var onTapDistance: ((CLLocationCoordinate2D, TransitItem) -> Void)?
-    
-    @State private var arrivals: [BusArrival] = []
+
+    @State private var arrivals: [BusServiceArrivals] = []
     @State private var isLoading = true
     @State private var lastUpdated: Date? = nil
-    
+
+    @State private var now: Date = .now
+
+    // Update the duration shown on screen every second
+    var etaRefreshTimer = Timer.publish(every: 1, on: .main, in: .default).autoconnect()
+    // Re-poll the API every 2 minutes
+    var estimationRefreshTimer = Timer.publish(every: 60 * 2, on: .main, in: .default).autoconnect()
+
     var body: some View {
         List {
             Section {
@@ -32,7 +41,7 @@ struct BusStopView: View {
                 } else {
                     ForEach(arrivals) { arrival in
                         NavigationLink(value: BusServiceDetail(serviceNo: arrival.serviceNo, originStopCode: busStop.id)) {
-                            BusArrivalRow(arrival: arrival)
+                            BusArrivalRow(arrival: arrival, now: now)
                         }
                     }
                 }
@@ -117,11 +126,45 @@ struct BusStopView: View {
         .refreshable {
             await loadData()
         }
+        .onReceive(estimationRefreshTimer) { _ in
+            Task { await loadData() }
+        }
+        .onReceive(etaRefreshTimer) { _ in
+            self.now = .now
+        }
     }
     
     private func loadData() async {
         isLoading = arrivals.isEmpty
-        arrivals = await ltaService.fetchBusArrivals(for: busStop.id)
+        guard let rawArrivals = try? await ltaService.estimator.getSingleStop(code: busStop.id, serviceNo: nil) else {
+            print("Error getting arrivals")
+            return
+        }
+        self.arrivals = rawArrivals
+            .compactMap { arrival -> BusServiceArrivals? in
+                guard let first = arrival.estimates.first, // has a first item
+                      !arrival.estimates.dropFirst().contains(where: { $0.busServiceNo != first.busServiceNo }) // all services equal
+                else { return nil }
+
+                return BusServiceArrivals(
+                    stopId: arrival.stopId,
+                    serviceNo: first.busServiceNo,
+                    operatorName: nil,
+                    destinationCode: nil,
+                    destinationName: nil,
+                    arrivals: arrival.estimates
+                )
+            }
+            .sorted { lhs, rhs in
+                let lhsNo = Int(lhs.serviceNo.trimmingCharacters(in: .letters))
+                let rhsNo = Int(rhs.serviceNo.trimmingCharacters(in: .letters))
+
+                // if both have valid numbers and their numbers are not the same
+                if let lhsNo, let rhsNo, lhsNo != rhsNo { return lhsNo < rhsNo }
+                // if either have an invalid number or their numbers are the same (i.e. one is express
+                // one is not), sort by string
+                return lhs.serviceNo < rhs.serviceNo
+            }
         lastUpdated = Date()
         isLoading = false
     }

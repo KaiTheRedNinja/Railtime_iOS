@@ -2,6 +2,7 @@ import Foundation
 import CoreLocation
 import SwiftUI
 import LTAAPI
+import BusEstimation
 
 enum StationCrowdLevel: String, Codable {
     case low = "l"
@@ -53,6 +54,18 @@ struct StationLineCrowd: Identifiable {
     let crowdLevel: StationCrowdLevel
 }
 
+struct BusServiceArrivals: Identifiable {
+    var stopId: String
+    var serviceNo: String
+    var operatorName: String?
+    var destinationCode: String?
+    var destinationName: String?
+    var arrivals: [BusArrivalEstimate]
+
+    var id: String { serviceNo }
+}
+
+@available(*, deprecated, renamed: "BusArrivalEstimate", message: "Use the type from BusEstimation instead")
 struct BusTimingInfo: Identifiable, Hashable {
     let id = UUID()
     let rawArrival: String?
@@ -88,6 +101,7 @@ struct BusTimingInfo: Identifiable, Hashable {
     }
 }
 
+@available(*, deprecated, renamed: "BusServiceArrivals", message: "Use the proper wrapper type instead")
 struct BusArrival: Identifiable, Hashable {
     var id: String { serviceNo }
     let serviceNo: String

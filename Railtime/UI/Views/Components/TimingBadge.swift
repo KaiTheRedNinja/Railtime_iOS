@@ -1,45 +1,41 @@
 import SwiftUI
 import LTAAPI
+import BusEstimation
 
 // MARK: - Timing Badge Component
 
 struct TimingBadge: View {
-    let timing: BusTimingInfo
-    let isNext: Bool
-    
+    let timing: BusArrivalEstimate
+    let now: Date
+
     var body: some View {
         VStack(alignment: .trailing, spacing: 2) {
             HStack(spacing: 4) {
                 // Occupancy Dot
                 Circle()
-                    .fill(timing.load?.color ?? .gray)
+                    .fill(timing.metadata.load?.color ?? .gray)
                     .frame(width: 8, height: 8)
                 
                 // Timing text
-                if let mins = timing.minutesRemaining {
-                    if mins == 0 {
-                        Text("Arr")
-                            .font(isNext ? .title3 : .subheadline)
-                            .fontWeight(.bold)
-                            .foregroundStyle(.green)
-                    } else {
-                        Text("\(mins)")
-                            .font(isNext ? .title3 : .subheadline)
-                            .fontWeight(.semibold)
-                        Text("m")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
-                } else {
-                    Text("-")
+                let mins = Int((timing.eta.timeIntervalSince(now) / 60).rounded(.down))
+                if mins == 0 {
+                    Text("Arr")
                         .font(.subheadline)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.green)
+                } else {
+                    Text("\(mins)")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                    Text("m")
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
             }
             
             // Bus Features (Type & Wheelchair)
             HStack(spacing: 4) {
-                if timing.busType == .doubleDeck {
+                if timing.metadata.busType == .doubleDeck {
                     Text("DD")
                         .font(.system(size: 9, weight: .bold))
                         .padding(.horizontal, 3)
@@ -48,8 +44,9 @@ struct TimingBadge: View {
                         .foregroundStyle(.blue)
                         .cornerRadius(3)
                 }
-                
-                if timing.isWheelchairAccessible {
+
+                // wheelchair accessible
+                if timing.metadata.feature == "WAB" {
                     Image(systemName: "figure.roll")
                         .font(.system(size: 9))
                         .foregroundStyle(.blue)
