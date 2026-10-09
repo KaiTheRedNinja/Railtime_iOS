@@ -96,7 +96,7 @@ class LTAService {
             direction2Stops: dir2Stops
         )
     }
-    
+
     // MARK: - Station Matching Logic
     
     func findNearbyStation(for busStop: BusStop?, code: String) -> Station? {
@@ -212,6 +212,15 @@ class LTAService {
         dataSource.saveMRTStopsToCache(allStations)
         dataSource.saveBusStopsToCache(allBusStops)
         dataSource.saveMRTRoutesToCache(allMRTRoutes)
+        Task {
+            let startDate = Date.now
+            do {
+                try await dataSource.calculateAllServices()
+                print("Calculated all services for bus stops in \(Date.now.timeIntervalSince(startDate))s")
+            } catch {
+                print("Error calculating all services from cache: \(error), took \(Date.now.timeIntervalSince(startDate))s")
+            }
+        }
     }
 }
 

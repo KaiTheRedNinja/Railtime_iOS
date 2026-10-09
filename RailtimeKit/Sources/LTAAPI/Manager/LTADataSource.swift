@@ -76,6 +76,11 @@ public final class LTADataSource {
             return cached
         }
 
+        let byService = try await _getAndSaveServiceRoutesFromAPI()
+        return byService[serviceNo] ?? []
+    }
+
+    internal func _getAndSaveServiceRoutesFromAPI() async throws -> [String: [LTABusRouteRow]] {
         let allRows = try await client.busRoutes()
         var byService: [String: [LTABusRouteRow]] = [:]
         for row in allRows {
@@ -84,7 +89,7 @@ public final class LTADataSource {
         for (svc, rows) in byService {
             diskCache.write(category: "routes", key: svc, data: rows)
         }
-        return byService[serviceNo] ?? []
+        return byService
     }
 
     /// Returns static BusServices information for `serviceNo`, using the
@@ -130,6 +135,40 @@ public final class LTADataSource {
     public func getAllBusServices() -> [String]? {
         // contains numbers
         return diskCache.keys(inCategory: "routes")?.filter { $0.contains(where: { $0.isNumber }) }
+    }
+
+    /// Calculates and caches the services for all bus stops
+    public func calculateAllServices() async throws {
+        var stopDict: [String: Set<String>] = [:] // stop ID to bus services
+
+        var routeKeys = (diskCache.keys(inCategory: "routes") ?? []).filter { $0.contains(where: { $0.isNumber }) }
+        if routeKeys.isEmpty {
+            let byService = try await _getAndSaveServiceRoutesFromAPI()
+            routeKeys = Array(byService.keys)
+        }
+
+        for routeKey in routeKeys {
+            guard let cached: [LTABusRouteRow] = diskCache.read(category: "routes", key: routeKey) else {
+                continue
+            }
+
+            for row in cached {
+                stopDict[row.busStopCode, default: []].insert(row.serviceNo)
+            }
+        }
+
+        for (stopId, services) in stopDict {
+            diskCache.write(category: "stop_service_map", key: stopId, data: Array(services))
+        }
+    }
+
+    /// Determinse the services that service a given bus stop. Note that this reads only from cache and requires
+    /// `calculateAllServicesFromCache` to have been called previously.
+    ///
+    /// This returns services in a random order.
+    public func getServices(busStopCode: String) -> [String]? {
+        let cached: [String]? = diskCache.read(category: "stop_service_map", key: busStopCode)
+        return cached
     }
 
     /// Returns static MRT stops information for an `mrtStopCode`. This ONLY uses on-disk cache - use

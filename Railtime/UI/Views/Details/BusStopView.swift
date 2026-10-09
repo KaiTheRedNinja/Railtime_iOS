@@ -13,7 +13,9 @@ struct BusStopView: View {
     var effectiveCenter: CLLocationCoordinate2D
     var onTapDistance: ((CLLocationCoordinate2D, TransitItem) -> Void)?
 
+    @State private var services: [String] = []
     @State private var arrivals: [BusServiceArrivals] = []
+    @State private var sampleArrivals: [(serviceNo: String, eta: Date?, load: BusLoad?)] = []
     @State private var isLoading = true
     @State private var lastUpdated: Date? = nil
 
@@ -26,6 +28,34 @@ struct BusStopView: View {
 
     var body: some View {
         List {
+            Section {
+                WrappingHStack(alignment: .leading) {
+                    ForEach(sampleArrivals, id: \.serviceNo) { (serviceNo, eta, load) in
+                        HStack(spacing: 4) {
+                            Text(serviceNo)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.primary)
+
+                            if let load, let eta {
+                                Circle()
+                                    .fill(load.color)
+                                    .frame(width: 6, height: 6)
+
+                                let mins = Int((eta.timeIntervalSince(now) / 60).rounded(.towardZero))
+                                Text(mins <= 0 ? "Arr" : "\(mins)m")
+                                    .fontWeight(.semibold)
+                                    .foregroundStyle(mins == 0 ? .green : .secondary)
+                            }
+                        }
+                        .font(.caption2)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(Color(.secondarySystemFill))
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                    }
+                }
+            }
+
             Section {
                 if isLoading {
                     HStack(spacing: 12) {
@@ -140,6 +170,18 @@ struct BusStopView: View {
             print("Error getting arrivals")
             return
         }
+
+        func compareBusIDs(lhs: String, rhs: String) -> Bool {
+            let lhsNo = Int(lhs.trimmingCharacters(in: .letters))
+            let rhsNo = Int(rhs.trimmingCharacters(in: .letters))
+
+            // if both have valid numbers and their numbers are not the same
+            if let lhsNo, let rhsNo, lhsNo != rhsNo { return lhsNo < rhsNo }
+            // if either have an invalid number or their numbers are the same (i.e. one is express
+            // one is not), sort by string
+            return lhs < rhs
+        }
+
         self.arrivals = rawArrivals
             .compactMap { arrival -> BusServiceArrivals? in
                 guard let first = arrival.estimates.first, // has a first item
@@ -156,15 +198,19 @@ struct BusStopView: View {
                 )
             }
             .sorted { lhs, rhs in
-                let lhsNo = Int(lhs.serviceNo.trimmingCharacters(in: .letters))
-                let rhsNo = Int(rhs.serviceNo.trimmingCharacters(in: .letters))
-
-                // if both have valid numbers and their numbers are not the same
-                if let lhsNo, let rhsNo, lhsNo != rhsNo { return lhsNo < rhsNo }
-                // if either have an invalid number or their numbers are the same (i.e. one is express
-                // one is not), sort by string
-                return lhs.serviceNo < rhs.serviceNo
+                compareBusIDs(lhs: lhs.serviceNo, rhs: rhs.serviceNo)
             }
+        self.services = ltaService.dataSource.getServices(busStopCode: busStop.busStopCode)?.sorted(by: compareBusIDs) ?? []
+
+        self.sampleArrivals = []
+        for service in services {
+            guard let firstArrival = arrivals.first(where: { $0.serviceNo == service })?.arrivals.first else {
+                sampleArrivals.append((service, nil, nil))
+                continue
+            }
+            sampleArrivals.append((firstArrival.busServiceNo, firstArrival.eta, firstArrival.metadata.load))
+        }
+
         lastUpdated = Date()
         isLoading = false
     }

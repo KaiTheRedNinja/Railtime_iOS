@@ -12,7 +12,7 @@ struct BusStopHomeRow: View {
     var onTapDistance: (() -> Void)?
     let now: Date
 
-    @State private var arrivals: [BusArrivalEstimate] = []
+    @State private var sampleArrivals: [(serviceNo: String, eta: Date?, load: BusLoad?)] = []
     @State private var isLoading = true
     
     var body: some View {
@@ -67,38 +67,31 @@ struct BusStopHomeRow: View {
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
                 }
-            } else if !arrivals.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 6) {
-                        ForEach(arrivals.prefix(6)) { arrival in
-                            HStack(spacing: 4) {
-                                Text(arrival.busServiceNo)
-                                    .fontWeight(.bold)
-                                    .foregroundStyle(.primary)
+            } else if !sampleArrivals.isEmpty {
+                WrappingHStack(alignment: .leading) {
+                    ForEach(sampleArrivals, id: \.serviceNo) { (serviceNo, eta, load) in
+                        HStack(spacing: 4) {
+                            Text(serviceNo)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.primary)
 
+                            if let load, let eta {
                                 Circle()
-                                    .fill(arrival.metadata.load?.color ?? .gray)
+                                    .fill(load.color)
                                     .frame(width: 6, height: 6)
 
-                                let mins = Int((arrival.eta.timeIntervalSince(now) / 60).rounded(.towardZero))
-                                Text(mins == 0 ? "Arr" : "\(mins)m")
+                                let mins = Int((eta.timeIntervalSince(now) / 60).rounded(.towardZero))
+                                Text(mins <= 0 ? "Arr" : "\(mins)m")
                                     .fontWeight(.semibold)
                                     .foregroundStyle(mins == 0 ? .green : .secondary)
                             }
-                            .font(.caption2)
-                            .padding(.horizontal, 7)
-                            .padding(.vertical, 3)
-                            .background(Color(.secondarySystemFill))
-                            .clipShape(RoundedRectangle(cornerRadius: 6))
                         }
+                        .font(.caption2)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(Color(.secondarySystemFill))
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
                     }
-                }
-                .scrollClipDisabled()
-                .mask {
-                    // blur out 10px outside the bounds of the scroll view
-                    Rectangle()
-                        .padding(.all, -10)
-                        .blur(radius: 10)
                 }
             }
         }
@@ -110,8 +103,29 @@ struct BusStopHomeRow: View {
     
     private func loadArrivals() async {
         isLoading = true
+
+        func compareBusIDs(lhs: String, rhs: String) -> Bool {
+            let lhsNo = Int(lhs.trimmingCharacters(in: .letters))
+            let rhsNo = Int(rhs.trimmingCharacters(in: .letters))
+
+            // if both have valid numbers and their numbers are not the same
+            if let lhsNo, let rhsNo, lhsNo != rhsNo { return lhsNo < rhsNo }
+            // if either have an invalid number or their numbers are the same (i.e. one is express
+            // one is not), sort by string
+            return lhs < rhs
+        }
+
+        let services = ltaService.dataSource.getServices(busStopCode: stop.busStopCode)?.sorted(by: compareBusIDs) ?? []
+        self.sampleArrivals = services.map { ($0, nil, nil) }
+
         if let estimates = try? await ltaService.estimator.getSingleStop(code: stop.id, serviceNo: nil) {
-            self.arrivals = estimates.flatMap { $0.estimates }.sorted(by: { $0.eta < $1.eta })
+            self.sampleArrivals = estimates.compactMap { $0.estimates.first }.sorted(by: { $0.eta < $1.eta }).map {
+                ($0.busServiceNo, $0.eta, $0.metadata.load)
+            }
+            let servicesWithArrivals = Set(sampleArrivals.map { $0.serviceNo })
+            for service in services where !servicesWithArrivals.contains(service) {
+                sampleArrivals.append((service, nil, nil))
+            }
         }
         isLoading = false
     }
