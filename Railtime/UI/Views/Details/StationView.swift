@@ -10,7 +10,7 @@ struct StationView: View {
     var ltaService: LTAService
     var locationManager: LocationManager
     var effectiveCenter: CLLocationCoordinate2D
-    var onTapDistance: ((CLLocationCoordinate2D, TransitItem) -> Void)?
+    var onTapDistance: ((CLLocationCoordinate2D, TransitPathItem) -> Void)?
     
     @State private var crowdLevels: [StationLineCrowd] = []
     @State private var isLoadingCrowd: Bool = true
@@ -52,7 +52,7 @@ struct StationView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 if let dist = station.formattedDistance(from: effectiveCenter) {
                     Button {
-                        onTapDistance?(station.coordinate, .station(station))
+                        onTapDistance?(station.coordinate, .trainStop(station))
                     } label: {
                         HStack(spacing: 4) {
                             Image(systemName: "location.fill")
@@ -234,7 +234,7 @@ struct StationView: View {
         // MARK: - 3. Surrounding Bus Stops
         Section("Surrounding Bus Stops") {
             ForEach(surroundingBusStops) { stop in
-                NavigationLink(value: stop) {
+                NavigationLink(value: TransitPathItem.busStop(stop)) {
                     BusStopHomeRow(
                         stop: stop,
                         ltaService: ltaService,

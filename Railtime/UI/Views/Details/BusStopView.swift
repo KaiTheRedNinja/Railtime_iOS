@@ -11,7 +11,7 @@ struct BusStopView: View {
     var ltaService: LTAService
     var locationManager: LocationManager
     var effectiveCenter: CLLocationCoordinate2D
-    var onTapDistance: ((CLLocationCoordinate2D, TransitItem) -> Void)?
+    var onTapDistance: ((CLLocationCoordinate2D, TransitPathItem) -> Void)?
 
     @State private var services: [String] = []
     @State private var arrivals: [BusServiceArrivals] = []
@@ -70,7 +70,14 @@ struct BusStopView: View {
                     ContentUnavailableView("No Bus Services", systemImage: "bus", description: Text("No live arrival information available for this stop right now."))
                 } else {
                     ForEach(arrivals) { arrival in
-                        NavigationLink(value: BusServiceDetail(serviceNo: arrival.serviceNo, originStopCode: busStop.id)) {
+                        NavigationLink(
+                            value: TransitPathItem.busService(
+                                BusServiceDetail(
+                                    serviceNo: arrival.serviceNo,
+                                    originStopCode: busStop.id
+                                )
+                            )
+                        ) {
                             BusArrivalRow(arrival: arrival, now: now)
                         }
                     }

@@ -130,12 +130,21 @@ struct LineTrainSchedule: Identifiable, Hashable {
 
 // MARK: - Navigation & Map Models
 
-enum TransitItem: Hashable {
-    case station(Station)
-    case busStop(BusStop)
-}
-
 struct BusServiceDetail: Hashable {
     let serviceNo: String
     let originStopCode: String?
+}
+
+enum TransitPathItem: Hashable {
+    case busStop(LTABusStopInfo)
+    case trainStop(LTATrainStopInfo)
+    case busService(BusServiceDetail)
+
+    var coordinate: CLLocationCoordinate2D? {
+        switch self {
+        case .busStop(let lTABusStopInfo): lTABusStopInfo.coordinate
+        case .trainStop(let lTATrainStopInfo): lTATrainStopInfo.coordinate
+        case .busService: nil
+        }
+    }
 }

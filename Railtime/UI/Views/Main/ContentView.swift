@@ -9,10 +9,10 @@ struct ContentView: View {
     var ltaService: LTAService
     var locationManager: LocationManager
 
-    @State private var navigationPath = NavigationPath()
+    @State private var navigationPath: [TransitPathItem] = []
     @State private var sheetSelection: PresentationDetent = .fraction(0.25)
-    @State private var selectedTransitItem: TransitItem? = nil
-    
+    @State private var selectedTransitItem: TransitPathItem? = nil
+
     // Smooth camera state with debounced map center tracking to prevent 120Hz view re-evaluation
     @State private var position: MapCameraPosition = .automatic
     @State private var immediateMapCenter: CLLocationCoordinate2D? = nil
@@ -100,139 +100,16 @@ struct ContentView: View {
     var body: some View {
         ZStack(alignment: .topLeading) {
             Map(position: $position, selection: $selectedTransitItem) {
-                UserAnnotation()
-
                 // Render MRT / LRT Stations on map (Zoom >= mrtZoomThreshold%)
-                ForEach(ltaService.allStations) { station in
-                    Annotation(station.name, coordinate: station.coordinate) {
-                        if showMRTStations {
-                            StationCodeCapletView(station: station)
-                                .scaleEffect(stationCapletScale)
-                                .animation(.interactiveSpring(response: 0.3, dampingFraction: 0.85), value: stationCapletScale)
-                                .onTapGesture {
-                                    selectAndNavigateTo(item: .station(station))
-                                }
-                        } else {
-                            StationCodeMiniCapletView(station: station)
-                                .scaleEffect(stationCapletScale)
-                                .animation(.interactiveSpring(response: 0.3, dampingFraction: 0.85), value: stationCapletScale)
-                                .onTapGesture {
-                                    selectAndNavigateTo(item: .station(station))
-                                }
-                        }
-                    }
-                    .tag(TransitItem.station(station))
+                mrtAnnotations
 
-                    // Render Station Exit custom icons on map (Zoom >= exitsZoomThreshold%)
-                    if showExitIndicators {
-                        ForEach(Array(station.exits.enumerated()), id: \.element.code) { index, exit in
-                            let exitCoord = exit.coordinate(for: station, index: index, total: station.exits.count)
-                            Annotation("", coordinate: exitCoord) {
-                                StationExitIconView(exitCode: exit.code, size: 24)
-                                    .scaleEffect(detailIconScale)
-                                    .animation(.interactiveSpring(response: 0.3, dampingFraction: 0.85), value: detailIconScale)
-                                    .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
-                                    .onTapGesture {
-                                        selectAndNavigateTo(item: .station(station))
-                                    }
-                            }
-                            .tag("\(station.id)_exit_\(exit.code)")
-                        }
-                    }
-                }
+                busAnnotations
 
-                // Note that even though mrt routes have IDs, some show up multiple times (LRTs for example)
-                ForEach(ltaService.allMRTRoutes.enumerated(), id: \.offset) { (_, routes) in
-                    ForEach(routes.uniqueRoutes.enumerated(), id: \.offset) { (_, route) in
-                        MapPolyline(
-                            coordinates: route.compactMap { ltaService.allStationsById[$0]?.coordinate},
-                            contourStyle: .geodesic
-                        )
-                        .stroke(Color(rgb: routes.color, fallback: .gray), style: .init(lineWidth: 5, lineCap: .round, lineJoin: .round))
-                    }
-                }
-
-                // Render Bus Stops on Map (Zoom >= busStopsZoomThreshold%)
-                if showBusStops {
-                    ForEach(sortedBusStops) { stop in
-                        Annotation(stop.name, coordinate: stop.coordinate) {
-                            Image(stop.iconName)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 24, height: 24)
-                                .padding(5)
-                                .clipShape(Circle())
-                                .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
-                                .scaleEffect(detailIconScale)
-                                .animation(.interactiveSpring(response: 0.3, dampingFraction: 0.85), value: detailIconScale)
-                                .contentShape(Circle())
-                                .onTapGesture {
-                                    selectAndNavigateTo(item: .busStop(stop))
-                                }
-                        }
-                        .tag(TransitItem.busStop(stop))
-                    }
-                } else if showMRTStations {
-                    ForEach(sortedBusStops) { stop in
-                        Annotation(stop.name, coordinate: stop.coordinate) {
-                            Circle()
-                                .foregroundStyle(.blue)
-                                .frame(width: 10, height: 10)
-                                .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
-                                .scaleEffect(detailIconScale)
-                                .animation(.interactiveSpring(response: 0.3, dampingFraction: 0.85), value: detailIconScale)
-                                .onTapGesture {
-                                    selectAndNavigateTo(item: .busStop(stop))
-                                }
-                        }
-                        .tag(TransitItem.busStop(stop))
-                        .annotationTitles(.hidden)
-                    }
-                }
+                UserAnnotation()
             }
             .mapStyle(.standard(pointsOfInterest: .excludingAll))
             .onMapCameraChange(frequency: .continuous) { context in
-                let newCenter = context.camera.centerCoordinate
-                let newDistance = context.camera.distance
-
-                Task { @MainActor in
-                    self.immediateMapCenter = newCenter
-                    
-                    if self.hasInitialCameraSettled {
-                        if abs(newDistance - self.currentCameraDistance) > 1.0 {
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                self.isZooming = true
-                            }
-                            self.zoomHideTask?.cancel()
-                            self.zoomHideTask = Task {
-                                try? await Task.sleep(nanoseconds: 1_200_000_000)
-                                if !Task.isCancelled {
-                                    await MainActor.run {
-                                        withAnimation(.easeInOut(duration: 0.35)) {
-                                            self.isZooming = false
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        self.hasInitialCameraSettled = true
-                    }
-                    self.currentCameraDistance = newDistance
-                    
-                    // Debounce map updates by 1.5 seconds after panning stops
-                    guard cameraDebounceTask == nil else { return }
-
-                    self.cameraDebounceTask = Task {
-                        try? await Task.sleep(nanoseconds: 0_200_000_000) // 5Hz
-                        if !Task.isCancelled {
-                            await MainActor.run {
-                                self.debouncedMapCenter = newCenter
-                                self.cameraDebounceTask = nil
-                            }
-                        }
-                    }
-                }
+                updateCamera(context: context)
             }
             .mapControls {
                 MapUserLocationButton()
@@ -284,7 +161,7 @@ struct ContentView: View {
         }
         .onChange(of: selectedTransitItem) { _, newItem in
             if let item = newItem {
-                selectAndNavigateTo(item: item)
+                selectAndNavigateTo(item: item, atRoot: true)
                 selectedTransitItem = nil
             }
         }
@@ -300,8 +177,148 @@ struct ContentView: View {
                 }
             }
         }
+        .onChange(of: navigationPath) { _, newValue in
+//            _ = newValue.last
+        }
     }
-    
+
+    @MapContentBuilder
+    var mrtAnnotations: some MapContent {
+        // Note that even though mrt routes have IDs, some show up multiple times (LRTs for example)
+        ForEach(ltaService.allMRTRoutes.enumerated(), id: \.offset) { (_, routes) in
+            ForEach(routes.uniqueRoutes.enumerated(), id: \.offset) { (_, route) in
+                MapPolyline(
+                    coordinates: route.compactMap { ltaService.allStationsById[$0]?.coordinate},
+                    contourStyle: .geodesic
+                )
+                .stroke(Color(rgb: routes.color, fallback: .gray), style: .init(lineWidth: 5, lineCap: .round, lineJoin: .round))
+            }
+        }
+
+        ForEach(ltaService.allStations) { station in
+            // Render Station Exit custom icons on map (Zoom >= exitsZoomThreshold%)
+            if showExitIndicators {
+                ForEach(Array(station.exits.enumerated()), id: \.element.code) { index, exit in
+                    let exitCoord = exit.coordinate(for: station, index: index, total: station.exits.count)
+                    Annotation("", coordinate: exitCoord) {
+                        StationExitIconView(exitCode: exit.code, size: 24)
+                            .scaleEffect(detailIconScale)
+                            .animation(.interactiveSpring(response: 0.3, dampingFraction: 0.85), value: detailIconScale)
+                            .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
+                            .onTapGesture {
+                                selectAndNavigateTo(item: .trainStop(station), atRoot: true)
+                            }
+                    }
+                    .tag("\(station.id)_exit_\(exit.code)")
+                }
+            }
+
+            Annotation(station.name, coordinate: station.coordinate) {
+                if showMRTStations {
+                    StationCodeCapletView(station: station)
+                        .scaleEffect(stationCapletScale)
+                        .animation(.interactiveSpring(response: 0.3, dampingFraction: 0.85), value: stationCapletScale)
+                        .onTapGesture {
+                            selectAndNavigateTo(item: .trainStop(station), atRoot: true)
+                        }
+                } else {
+                    StationCodeMiniCapletView(station: station)
+                        .scaleEffect(stationCapletScale)
+                        .animation(.interactiveSpring(response: 0.3, dampingFraction: 0.85), value: stationCapletScale)
+                        .onTapGesture {
+                            selectAndNavigateTo(item: .trainStop(station), atRoot: true)
+                        }
+                }
+            }
+            .tag(TransitPathItem.trainStop(station))
+        }
+    }
+
+    @MapContentBuilder
+    var busAnnotations: some MapContent {
+        // Render Bus Stops on Map (Zoom >= busStopsZoomThreshold%)
+        if showBusStops {
+            ForEach(sortedBusStops) { stop in
+                Annotation(stop.name, coordinate: stop.coordinate) {
+                    Image(stop.iconName)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 24, height: 24)
+                        .padding(5)
+                        .clipShape(Circle())
+                        .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
+                        .scaleEffect(detailIconScale)
+                        .animation(.interactiveSpring(response: 0.3, dampingFraction: 0.85), value: detailIconScale)
+                        .contentShape(Circle())
+                        .onTapGesture {
+                            selectAndNavigateTo(item: .busStop(stop), atRoot: true)
+                        }
+                }
+                .tag(TransitPathItem.busStop(stop))
+            }
+        } else if showMRTStations {
+            ForEach(sortedBusStops) { stop in
+                Annotation(stop.name, coordinate: stop.coordinate) {
+                    Circle()
+                        .foregroundStyle(.blue)
+                        .frame(width: 10, height: 10)
+                        .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
+                        .scaleEffect(detailIconScale)
+                        .animation(.interactiveSpring(response: 0.3, dampingFraction: 0.85), value: detailIconScale)
+                        .onTapGesture {
+                            selectAndNavigateTo(item: .busStop(stop), atRoot: true)
+                        }
+                }
+                .tag(TransitPathItem.busStop(stop))
+                .annotationTitles(.hidden)
+            }
+        }
+    }
+
+    func updateCamera(context: MapCameraUpdateContext) {
+        let newCenter = context.camera.centerCoordinate
+        let newDistance = context.camera.distance
+
+        Task { @MainActor in
+            self.immediateMapCenter = newCenter
+
+            if self.hasInitialCameraSettled {
+                if abs(newDistance - self.currentCameraDistance) > 1.0 {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        self.isZooming = true
+                    }
+                    self.zoomHideTask?.cancel()
+                    self.zoomHideTask = Task {
+                        try? await Task.sleep(nanoseconds: 1_200_000_000)
+                        if !Task.isCancelled {
+                            await MainActor.run {
+                                withAnimation(.easeInOut(duration: 0.35)) {
+                                    self.isZooming = false
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                self.hasInitialCameraSettled = true
+            }
+            self.currentCameraDistance = newDistance
+
+            // Debounce map updates by 1.5 seconds after panning stops
+            guard cameraDebounceTask == nil else { return }
+
+            self.cameraDebounceTask = Task {
+                try? await Task.sleep(nanoseconds: 0_200_000_000) // 5Hz
+                if !Task.isCancelled {
+                    await MainActor.run {
+                        self.debouncedMapCenter = newCenter
+                        self.cameraDebounceTask = nil
+                    }
+                }
+            }
+        }
+    }
+
     private func zoomPercentage(_ distance: Double) -> Int {
         let minDist = 200.0   // 100% zoomed in
         let maxDist = 50000.0 // 0% zoomed out
@@ -313,21 +330,16 @@ struct ContentView: View {
         return max(0, min(100, percentage))
     }
     
-    private func selectAndNavigateTo(item: TransitItem) {
-        switch item {
-        case .station(let station):
+    private func selectAndNavigateTo(item: TransitPathItem, atRoot: Bool = false) {
+        if atRoot { navigationPath = [] }
+
+        navigationPath.append(item)
+
+        if let coordinate = item.coordinate {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.75)) {
-                position = .camera(MapCamera(centerCoordinate: station.coordinate, distance: 1200))
+                position = .camera(MapCamera(centerCoordinate: coordinate, distance: 1200))
                 sheetSelection = .large
             }
-            navigationPath.append(station)
-            
-        case .busStop(let stop):
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.75)) {
-                position = .camera(MapCamera(centerCoordinate: stop.coordinate, distance: 1000))
-                sheetSelection = .large
-            }
-            navigationPath.append(stop)
         }
     }
 }

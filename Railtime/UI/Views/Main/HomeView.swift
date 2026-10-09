@@ -9,9 +9,9 @@ struct HomeView: View {
     var ltaService: LTAService
     var locationManager: LocationManager
     var effectiveCenter: CLLocationCoordinate2D
-    @Binding var navigationPath: NavigationPath
-    var onTapDistance: ((CLLocationCoordinate2D, TransitItem) -> Void)?
-    
+    @Binding var navigationPath: [TransitPathItem]
+    var onTapDistance: ((CLLocationCoordinate2D, TransitPathItem) -> Void)?
+
     @State private var searchText = ""
     @State private var showJourneyPlanner = false
     @State private var showSettings = false
@@ -166,7 +166,14 @@ struct HomeView: View {
                     if !filteredBusServices.isEmpty {
                         Section("Bus Services") {
                             ForEach(filteredBusServices, id: \.self) { serviceNo in
-                                NavigationLink(value: BusServiceDetail(serviceNo: serviceNo, originStopCode: nil)) {
+                                NavigationLink(
+                                    value: TransitPathItem.busService(
+                                        BusServiceDetail(
+                                            serviceNo: serviceNo,
+                                            originStopCode: nil
+                                        )
+                                    )
+                                ) {
                                     HStack(spacing: 12) {
                                         Text(serviceNo)
                                             .font(.headline)
@@ -204,30 +211,31 @@ struct HomeView: View {
             .sheet(isPresented: $showSettings) {
                 SettingsView()
             }
-            .navigationDestination(for: Station.self) { station in
-                StationView(
-                    station: station,
-                    ltaService: ltaService,
-                    locationManager: locationManager,
-                    effectiveCenter: effectiveCenter,
-                    onTapDistance: onTapDistance
-                )
-            }
-            .navigationDestination(for: BusStop.self) { stop in
-                BusStopView(
-                    busStop: stop,
-                    ltaService: ltaService,
-                    locationManager: locationManager,
-                    effectiveCenter: effectiveCenter,
-                    onTapDistance: onTapDistance
-                )
-            }
-            .navigationDestination(for: BusServiceDetail.self) { detail in
-                BusServiceView(
-                    serviceNo: detail.serviceNo,
-                    originStopCode: detail.originStopCode,
-                    ltaService: ltaService
-                )
+            .navigationDestination(for: TransitPathItem.self) { item in
+                switch item {
+                case .trainStop(let station):
+                    StationView(
+                        station: station,
+                        ltaService: ltaService,
+                        locationManager: locationManager,
+                        effectiveCenter: effectiveCenter,
+                        onTapDistance: onTapDistance
+                    )
+                case .busStop(let stop):
+                    BusStopView(
+                        busStop: stop,
+                        ltaService: ltaService,
+                        locationManager: locationManager,
+                        effectiveCenter: effectiveCenter,
+                        onTapDistance: onTapDistance
+                    )
+                case .busService(let detail):
+                    BusServiceView(
+                        serviceNo: detail.serviceNo,
+                        originStopCode: detail.originStopCode,
+                        ltaService: ltaService
+                    )
+                }
             }
         }
         .onReceive(etaRefreshTimer) { _ in
@@ -313,7 +321,7 @@ struct HomeView: View {
                 }
             } else {
                 ForEach(filteredStationsWithinRange) { station in
-                    NavigationLink(value: station) {
+                    NavigationLink(value: TransitPathItem.trainStop(station)) {
                         HStack(spacing: 10) {
                             StationCodeCapletView(station: station)
 
@@ -328,7 +336,7 @@ struct HomeView: View {
 
                             if let distanceStr = station.formattedDistance(from: effectiveCenter) {
                                 Button {
-                                    onTapDistance?(station.coordinate, .station(station))
+                                    onTapDistance?(station.coordinate, .trainStop(station))
                                 } label: {
                                     HStack(spacing: 3) {
                                         Image(systemName: "location.fill")
@@ -380,7 +388,7 @@ struct HomeView: View {
                 }
             } else {
                 ForEach(filteredBusStops) { stop in
-                    NavigationLink(value: stop) {
+                    NavigationLink(value: TransitPathItem.busStop(stop)) {
                         BusStopHomeRow(
                             stop: stop,
                             ltaService: ltaService,
