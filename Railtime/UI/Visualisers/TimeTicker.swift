@@ -4,6 +4,7 @@
 //
 //  Created by Kai Quan Tay on 13/9/26.
 //
+/*
 
 import SwiftUI
 
@@ -69,3 +70,4 @@ struct TimeTicker: View {
         .opacity(isNow ? 1 : 0.5)
     }
 }
+*/

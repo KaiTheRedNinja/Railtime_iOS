@@ -5,6 +5,7 @@
 //  Created by Kai Quan Tay on 17/9/26.
 //
 
+/*
 import SwiftUI
 import Journey
 import LTAAPI
@@ -163,3 +164,4 @@ struct JourneyWalkVisualiser: View {
         }
     }
 }
+*/

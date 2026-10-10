@@ -16,10 +16,10 @@ let package = Package(
             name: "BusEstimation",
             targets: ["BusEstimation"]
         ),
-        .library(
-            name: "Journey",
-            targets: ["Journey"]
-        ),
+//        .library(
+//            name: "Journey",
+//            targets: ["Journey"]
+//        ),
     ],
     dependencies: [
         .package(
@@ -40,10 +40,10 @@ let package = Package(
             dependencies: ["LTAAPI"],
             swiftSettings: [.swiftLanguageMode(.v5)]
         ),
-        .target(
-            name: "Journey",
-            dependencies: ["BusEstimation", "LTAAPI"],
-            swiftSettings: [.swiftLanguageMode(.v5)]
-        ),
+//        .target(
+//            name: "Journey",
+//            dependencies: ["BusEstimation", "LTAAPI"],
+//            swiftSettings: [.swiftLanguageMode(.v5)]
+//        ),
     ]
 )

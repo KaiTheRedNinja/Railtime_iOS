@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		9342B67A3056EC5500EE1DFA /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 9342B6793056EC5500EE1DFA /* README.md */; };
 		93EC182B305ADB41001E59F5 /* BusEstimation in Frameworks */ = {isa = PBXBuildFile; productRef = 93EC182A305ADB41001E59F5 /* BusEstimation */; };
-		93EC182D305ADB41001E59F5 /* Journey in Frameworks */ = {isa = PBXBuildFile; productRef = 93EC182C305ADB41001E59F5 /* Journey */; };
 		93EC182F305ADB41001E59F5 /* LTAAPI in Frameworks */ = {isa = PBXBuildFile; productRef = 93EC182E305ADB41001E59F5 /* LTAAPI */; };
 /* End PBXBuildFile section */
 
@@ -33,7 +32,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				93EC182B305ADB41001E59F5 /* BusEstimation in Frameworks */,
-				93EC182D305ADB41001E59F5 /* Journey in Frameworks */,
 				93EC182F305ADB41001E59F5 /* LTAAPI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -88,7 +86,6 @@
 			name = Railtime;
 			packageProductDependencies = (
 				93EC182A305ADB41001E59F5 /* BusEstimation */,
-				93EC182C305ADB41001E59F5 /* Journey */,
 				93EC182E305ADB41001E59F5 /* LTAAPI */,
 			);
 			productName = Railtime;
@@ -371,10 +368,6 @@
 		93EC182A305ADB41001E59F5 /* BusEstimation */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = BusEstimation;
-		};
-		93EC182C305ADB41001E59F5 /* Journey */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = Journey;
 		};
 		93EC182E305ADB41001E59F5 /* LTAAPI */ = {
 			isa = XCSwiftPackageProductDependency;

@@ -13,7 +13,6 @@ struct HomeView: View {
     var onTapDistance: ((CLLocationCoordinate2D, TransitPathItem) -> Void)?
 
     @State private var searchText = ""
-    @State private var showJourneyPlanner = false
     @State private var showSettings = false
     @State private var now: Date = .now
 
@@ -204,9 +203,6 @@ struct HomeView: View {
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
-            }
-            .sheet(isPresented: $showJourneyPlanner) {
-                JourneyBuilderView()
             }
             .sheet(isPresented: $showSettings) {
                 SettingsView()
