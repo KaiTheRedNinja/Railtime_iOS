@@ -16,17 +16,16 @@ class LTAService {
             rebuildBusStopsById()
         }
     }
-    private(set) var spatialIndex: BusStopSpatialIndex = .init(stops: [])
     var allStations: [Station] = [] {
         didSet {
             sortedStationsByLength = allStations.sorted { $0.name.count > $1.name.count }
-
             allStationsById = .init(uniqueKeysWithValues: allStations.map { ($0.id, $0) })
         }
     }
-    private(set) var allStationsById: [Station.ID: Station] = [:]
     var allMRTRoutes: [LTATrainRoutes] = []
 
+    private(set) var spatialIndex: BusStopSpatialIndex = .init(stops: [])
+    private(set) var allStationsById: [Station.ID: Station] = [:]
     private(set) var busStopsById: [String: BusStop] = [:]
     private(set) var sortedStationsByLength: [Station] = []
 

@@ -9,15 +9,14 @@ import SwiftUI
 
 @main
 struct RailtimeApp: App {
-    @State private var ltaService = LTAService()
-    @State private var locationManager = LocationManager()
+    @State private var manager = TransitMapManager(
+        ltaService: LTAService(),
+        locationManager: LocationManager()
+    )
 
     var body: some Scene {
         WindowGroup {
-            ContentView(
-                ltaService: ltaService,
-                locationManager: locationManager
-            )
+            ContentView(manager: manager)
         }
     }
 }
