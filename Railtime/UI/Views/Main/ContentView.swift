@@ -8,25 +8,48 @@ import Combine
 struct ContentView: View {
     @ObservedObject var manager: TransitMapManager
 
+    var updateTimer = Timer.publish(every: 1/4, on: .main, in: .default).autoconnect()
+
     var body: some View {
         ZStack(alignment: .topLeading) {
-            Map(position: $manager.position, selection: $manager.selectedTransitItem) {
-                // Render MRT / LRT Stations on map (Zoom >= mrtZoomThreshold%)
-                mrtAnnotations
+            UIKitMapView(
+                controller: manager.mapController,
+                showsUserLocation: true,
+                showsCompass: true,
+                pointOfInterestFilter: .excludingAll,
+                continuousCameraUpdate: true
+            ) { context in
+                manager.updateCamera(camera: context.camera)
+            } annotationViewProvider: { mapView, annotation in
+                guard let annotation = annotation as? TransitAnnotation else { return nil }
+                mapView.register(HostingAnnotationView.self, forAnnotationViewWithReuseIdentifier: "HOSTING_ANNOTATION_VIEW")
 
-                busAnnotations
+                let view = mapView.dequeueReusableAnnotationView(
+                    withIdentifier: "HOSTING_ANNOTATION_VIEW",
+                    for: annotation
+                ) as! HostingAnnotationView
 
-                UserAnnotation()
+                if let station = annotation.underlying as? LTATrainStopInfo {
+                    view.configure(annotation: annotation) {
+                        TrainAnnotation(manager: manager, station: station)
+                    }
+                } else if let stop = annotation.underlying as? LTABusStopInfo {
+                    view.configure(annotation: annotation) {
+                        BusAnnotation(manager: manager, stop: stop)
+                    }
+                } else if let exit = annotation.underlying as? LTATrainStopInfo.Exit {
+                    view.configure(annotation: annotation) {
+                        ExitAnnotation(manager: manager, exit: exit)
+                    }
+                }
+
+                return view
+            } overlayRendererProvider: { mapView, overlay in
+                print("Requested overlay for \(overlay)")
+                return MKOverlayRenderer(overlay: overlay)
             }
-            .mapStyle(.standard(pointsOfInterest: .excludingAll))
-            .onMapCameraChange(frequency: .continuous) { context in
-                manager.updateCamera(context: context)
-            }
-            .mapControls {
-                MapUserLocationButton()
-                MapCompass()
-            }
-            
+            .ignoresSafeArea(.all, edges: .all)
+
             // MARK: - Subtle Floating Zoom Level Indicator Badge (%) - Top Left (Active Zooming Only)
             if manager.isZooming {
                 HStack(spacing: 4) {
@@ -91,6 +114,9 @@ struct ContentView: View {
                 .background {
                     Color.blue
                 }
+        }
+        .onReceive(updateTimer) { _ in
+            manager.updateAnnotations()
         }
     }
 
@@ -208,5 +234,71 @@ extension Color {
         let blue = Double(value & 0xFF) / 255.0
 
         self = Color(red: red, green: green, blue: blue)
+    }
+}
+
+struct TrainAnnotation: View {
+    @ObservedObject var manager: TransitMapManager
+    let station: LTATrainStopInfo
+
+    var body: some View {
+        Group {
+            if manager.showMRTStations {
+                StationCodeCapletView(station: station)
+            } else {
+                StationCodeMiniCapletView(station: station)
+            }
+        }
+        .scaleEffect(manager.stationCapletScale)
+        .animation(.interactiveSpring(response: 0.3, dampingFraction: 0.85), value: manager.stationCapletScale)
+        .onTapGesture {
+            manager.selectAndNavigateTo(item: .trainStop(station), atRoot: true)
+        }
+    }
+}
+
+struct BusAnnotation: View {
+    @ObservedObject var manager: TransitMapManager
+    let stop: LTABusStopInfo
+
+    var body: some View {
+        Group {
+            if manager.showBusStops {
+                Image(stop.iconName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 24, height: 24)
+                    .padding(5)
+                    .clipShape(Circle())
+                    .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
+                    .contentShape(Circle())
+            } else if manager.showMRTStations {
+                Circle()
+                    .foregroundStyle(.blue)
+                    .frame(width: 10, height: 10)
+                    .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
+            }
+        }
+        .scaleEffect(manager.detailIconScale)
+        .animation(.interactiveSpring(response: 0.3, dampingFraction: 0.85), value: manager.detailIconScale)
+        .onTapGesture {
+            manager.selectAndNavigateTo(item: .busStop(stop), atRoot: true)
+        }
+    }
+}
+
+struct ExitAnnotation: View {
+    @ObservedObject var manager: TransitMapManager
+    let exit: LTATrainStopInfo.Exit
+
+    var body: some View {
+        StationExitIconView(exitCode: exit.code, size: 24)
+            .scaleEffect(manager.detailIconScale)
+            .animation(.interactiveSpring(response: 0.3, dampingFraction: 0.85), value: manager.detailIconScale)
+            .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
+            .onTapGesture {
+                // TODO: make this work
+//                manager.selectAndNavigateTo(item: .trainStop(station), atRoot: true)
+            }
     }
 }

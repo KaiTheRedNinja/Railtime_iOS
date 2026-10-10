@@ -201,7 +201,25 @@ class LTAService {
             var routes: [String: LTATrainRoutes]
         }
 
-        self.allStations = load([Station].self, fileName: "stations") ?? []
+        // we need to re-map it to include lat and lon
+        self.allStations = (load([Station].self, fileName: "stations") ?? []).map { stopInfo in
+            LTATrainStopInfo(
+                id: stopInfo.id,
+                description: stopInfo.description,
+                latitude: stopInfo.latitude,
+                longitude: stopInfo.longitude,
+                lines: stopInfo.lines,
+                exits: stopInfo.exits.map {
+                    if $0.latitude == nil || $0.longitude == nil {
+                        .init(code: $0.code, description: $0.description, latitude: stopInfo.latitude, longitude: stopInfo.longitude)
+                    } else {
+                        $0
+                    }
+                },
+                chineseName: stopInfo.chineseName,
+                tamilName: stopInfo.tamilName
+            )
+        }
         if let values = load(MRTRoutesContents.self, fileName: "mrt_routes")?.routes.values {
             self.allMRTRoutes = Array(values)
         }

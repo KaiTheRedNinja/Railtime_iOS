@@ -13,6 +13,7 @@ import Combine
 class TransitMapManager: ObservableObject {
     var ltaService: LTAService
     var locationManager: LocationManager
+    var mapController: UIKitMapView.Controller
 
     @Published var navigationPath: [TransitPathItem] = []
     @Published var sheetSelection: PresentationDetent = .fraction(0.25)
@@ -30,6 +31,7 @@ class TransitMapManager: ObservableObject {
 
     private var cameraDebounceTask: Task<Void, Never>? = nil
     private var zoomHideTask: Task<Void, Never>? = nil
+    private var annotationObjects: [AnyHashable: any MKAnnotation] = [:]
 
     init(
         ltaService: LTAService,
@@ -37,6 +39,7 @@ class TransitMapManager: ObservableObject {
     ) {
         self.ltaService = ltaService
         self.locationManager = locationManager
+        self.mapController = .init()
 
         updateProperties()
     }
@@ -85,9 +88,9 @@ class TransitMapManager: ObservableObject {
         updateProperties()
     }
 
-    func updateCamera(context: MapCameraUpdateContext) {
-        let newCenter = context.camera.centerCoordinate
-        let newDistance = context.camera.distance
+    func updateCamera(camera: MKMapCamera) {
+        let newCenter = camera.centerCoordinate
+        let newDistance = camera.centerCoordinateDistance
 
         Task { @MainActor in
             if self.hasInitialCameraSettled {
@@ -111,21 +114,21 @@ class TransitMapManager: ObservableObject {
                 self.hasInitialCameraSettled = true
             }
             self.currentCameraDistance = newDistance
-            updateProperties()
+//            updateProperties()
 
             // Debounce map updates by 1.5 seconds after panning stops
-            guard cameraDebounceTask == nil else { return }
-
-            self.cameraDebounceTask = Task {
-                try? await Task.sleep(nanoseconds: 0_200_000_000) // 5Hz
-                if !Task.isCancelled {
-                    await MainActor.run {
+//            guard cameraDebounceTask == nil else { return }
+//
+//            self.cameraDebounceTask = Task {
+//                try? await Task.sleep(nanoseconds: 0_200_000_000) // 5Hz
+//                if !Task.isCancelled {
+//                    await MainActor.run {
                         self.effectiveCenter = newCenter
                         self.cameraDebounceTask = nil
                         updateProperties()
-                    }
-                }
-            }
+//                    }
+//                }
+//            }
         }
     }
 
@@ -137,6 +140,7 @@ class TransitMapManager: ObservableObject {
         hasCenteredOnUser = true
         withAnimation(.spring(response: 0.8, dampingFraction: 0.8)) {
             position = .camera(MapCamera(centerCoordinate: userLoc, distance: 1800))
+            mapController.setCamera(.init(lookingAtCenter: userLoc, fromDistance: 1800, pitch: 0, heading: 0))
         }
 
         updateProperties()
@@ -150,6 +154,7 @@ class TransitMapManager: ObservableObject {
         if let coordinate = item.coordinate {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.75)) {
                 position = .camera(MapCamera(centerCoordinate: coordinate, distance: 1200))
+                mapController.setCamera(.init(lookingAtCenter: coordinate, fromDistance: 1200, pitch: 0, heading: 0))
                 sheetSelection = .large
             }
         }
@@ -210,4 +215,68 @@ class TransitMapManager: ObservableObject {
             .sorted { $0.dist < $1.dist }
             .map { $0.item }
     }
+
+    func updateAnnotations() {
+        var newAnnotations: [AnyHashable: any MKAnnotation] = [:]
+        for station in ltaService.allStations {
+            let key = AnyHashable(station)
+            if let existing = annotationObjects[key] {
+                newAnnotations[key] = existing
+            } else {
+                newAnnotations[key] = TransitAnnotation(station)
+            }
+
+            if showExitIndicators {
+                for exit in station.exits {
+                    let key = AnyHashable(exit)
+                    if let existing = annotationObjects[key] {
+                        newAnnotations[key] = existing
+                    } else {
+                        newAnnotations[key] = TransitAnnotation(exit)
+                    }
+                }
+            }
+        }
+        for stop in sortedBusStops {
+            let key = AnyHashable(stop)
+            if let existing = annotationObjects[key] {
+                newAnnotations[key] = existing
+            } else {
+                newAnnotations[key] = TransitAnnotation(stop)
+            }
+        }
+        self.annotationObjects = newAnnotations
+
+        mapController.setAnnotations(newAnnotations.values)
+    }
+}
+
+protocol MKAnnotationStructProtocol: Hashable {
+    var coordinate: CLLocationCoordinate2D { get }
+    var title: String? { get }
+    var subtitle: String? { get }
+}
+extension LTABusStopInfo: MKAnnotationStructProtocol {
+    var title: String? { self.name }
+    var subtitle: String? { nil }
+}
+extension LTATrainStopInfo: MKAnnotationStructProtocol {
+    var title: String? { self.name }
+    var subtitle: String? { nil }
+}
+extension LTATrainStopInfo.Exit: MKAnnotationStructProtocol {
+    var title: String? { self.code }
+    var subtitle: String? { nil }
+}
+
+class TransitAnnotation: NSObject, MKAnnotation {
+    var underlying: any MKAnnotationStructProtocol
+
+    init(_ underlying: any MKAnnotationStructProtocol) {
+        self.underlying = underlying
+    }
+
+    var coordinate: CLLocationCoordinate2D { underlying.coordinate }
+    var title: String? { underlying.title }
+    var subtitle: String? { underlying.subtitle }
 }

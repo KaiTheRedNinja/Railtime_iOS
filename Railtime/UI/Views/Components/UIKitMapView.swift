@@ -4,9 +4,6 @@ import Combine
 
 // MARK: - UIKitMapView (SwiftUI wrapper around MKMapView)
 public struct UIKitMapView: UIViewRepresentable {
-    // Mirror SwiftUI Map's camera binding so existing state can be reused
-    @Binding private var position: MapCameraPosition
-
     // Configuration
     private let showsUserLocation: Bool
     private let showsCompass: Bool
@@ -16,26 +13,27 @@ public struct UIKitMapView: UIViewRepresentable {
     public let controller: Controller
 
     // Callbacks & providers
+    private let continuousCameraUpdate: Bool
     private let onCameraChange: ((CameraChangeContext) -> Void)?
     private let annotationViewProvider: ((MKMapView, MKAnnotation) -> MKAnnotationView?)?
     private let overlayRendererProvider: ((MKMapView, MKOverlay) -> MKOverlayRenderer)?
 
     // MARK: Init
     public init(
-        position: Binding<MapCameraPosition>,
         controller: Controller = Controller(),
         showsUserLocation: Bool = true,
         showsCompass: Bool = true,
         pointOfInterestFilter: MKPointOfInterestFilter? = .excludingAll,
+        continuousCameraUpdate: Bool = false,
         onCameraChange: ((CameraChangeContext) -> Void)? = nil,
         annotationViewProvider: ((MKMapView, MKAnnotation) -> MKAnnotationView?)? = nil,
         overlayRendererProvider: ((MKMapView, MKOverlay) -> MKOverlayRenderer)? = nil
     ) {
-        self._position = position
         self.controller = controller
         self.showsUserLocation = showsUserLocation
         self.showsCompass = showsCompass
         self.pointOfInterestFilter = pointOfInterestFilter
+        self.continuousCameraUpdate = continuousCameraUpdate
         self.onCameraChange = onCameraChange
         self.annotationViewProvider = annotationViewProvider
         self.overlayRendererProvider = overlayRendererProvider
@@ -63,7 +61,7 @@ public struct UIKitMapView: UIViewRepresentable {
                           overlayRendererProvider: overlayRendererProvider)
 
         // Apply initial camera position
-        context.coordinator.apply(position: position, to: mapView, animated: false)
+        context.coordinator.apply(position: .automatic, to: mapView, animated: false)
 
         return mapView
     }
@@ -80,8 +78,6 @@ public struct UIKitMapView: UIViewRepresentable {
         if mapView.pointOfInterestFilter != pointOfInterestFilter {
             mapView.pointOfInterestFilter = pointOfInterestFilter
         }
-
-        context.coordinator.apply(position: position, to: mapView, animated: false)
     }
 }
 
@@ -89,7 +85,6 @@ public struct UIKitMapView: UIViewRepresentable {
 public extension UIKitMapView {
     final class Coordinator: NSObject, MKMapViewDelegate {
         private let parent: UIKitMapView
-        private var isProgrammaticCameraChange = false
 
         init(_ parent: UIKitMapView) {
             self.parent = parent
@@ -98,7 +93,6 @@ public extension UIKitMapView {
 
         // Apply a SwiftUI MapCameraPosition to MKMapView
         func apply(position: MapCameraPosition, to mapView: MKMapView, animated: Bool) {
-            isProgrammaticCameraChange = true
             if let region = position.region { mapView.setRegion(region, animated: animated) }
             if let camera = position.camera {
                 mapView.setCamera(
@@ -111,36 +105,27 @@ public extension UIKitMapView {
                     animated: animated
                 )
             }
-            // Clear the programmatic flag on the next runloop to avoid suppressing legitimate user changes
-            DispatchQueue.main.async { [weak self] in self?.isProgrammaticCameraChange = false }
         }
 
         // MARK: MKMapViewDelegate
         public func mapView(_ mapView: MKMapView, regionWillChangeAnimated animated: Bool) {
-            // No-op; we report after changes for parity with SwiftUI's .onMapCameraChange(.continuous)
+            // no change
+        }
+
+        public func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
+            if parent.continuousCameraUpdate {
+                self.mapView(mapView, regionDidChangeAnimated: false)
+            }
         }
 
         public func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
-            // Update binding and notify callback
-            if !isProgrammaticCameraChange {
-                // Prefer camera to preserve pitch/heading
-                let currentCamera = mapView.camera
-                parent.controller.currentCamera = currentCamera
-                parent.controller.currentRegion = mapView.region
+            // Prefer camera to preserve pitch/heading
+            let currentCamera = mapView.camera
+            parent.controller.currentCamera = currentCamera
+            parent.controller.currentRegion = mapView.region
 
-                // Update the bound position so external state stays in sync
-                parent._position.wrappedValue = .camera(
-                    .init(
-                        centerCoordinate: currentCamera.centerCoordinate,
-                        distance: currentCamera.centerCoordinateDistance,
-                        heading: currentCamera.heading,
-                        pitch: currentCamera.pitch
-                    )
-                )
-
-                let context = CameraChangeContext(region: mapView.region, camera: currentCamera, animated: animated)
-                parent.onCameraChange?(context)
-            }
+            let context = CameraChangeContext(region: mapView.region, camera: currentCamera, animated: animated)
+            parent.onCameraChange?(context)
         }
 
         // Annotation view provider
@@ -228,7 +213,7 @@ public extension UIKitMapView {
         }
 
         // MARK: Annotation management
-        public func setAnnotations(_ annotations: [MKAnnotation], animated: Bool = false) {
+        public func setAnnotations(_ annotations: any Sequence<MKAnnotation>, animated: Bool = false) {
             guard let mapView else { return }
             let existing = Set(mapView.annotations.compactMap { $0 as? NSObject })
             let incoming = Set(annotations.compactMap { $0 as? NSObject })
@@ -257,14 +242,15 @@ public extension UIKitMapView {
 
         // MARK: Overlay management (e.g., polylines)
         public func setOverlays(_ overlays: [MKOverlay], level: MKOverlayLevel = .aboveRoads) {
-//            let existing: [String: any MKOverlay] = mapView.overlays.map { $0 })
-//            let incoming = Set(overlays.map { $0 })
-//
-//            let toRemove = existing.subtracting(incoming).map { $0 }
-//            let toAdd = incoming.subtracting(existing).map { $0 }
-//
-//            if !toRemove.isEmpty { mapView.removeOverlays(toRemove) }
-//            if !toAdd.isEmpty { mapView.addOverlays(toAdd, level: level) }
+            guard let mapView else { return }
+            let existing = Set(mapView.overlays.map { $0 as? NSObject })
+            let incoming = Set(overlays.map { $0 as? NSObject })
+
+            let toRemove = existing.subtracting(incoming).compactMap { $0 as? MKOverlay }
+            let toAdd = incoming.subtracting(existing).compactMap { $0 as? MKOverlay }
+
+            if !toRemove.isEmpty { mapView.removeOverlays(toRemove) }
+            if !toAdd.isEmpty { mapView.addOverlays(toAdd, level: level) }
             removeAllOverlays()
             addOverlays(overlays, level: level)
         }
@@ -356,3 +342,95 @@ private extension Set where Element: NSObject {
      }
  }
 */
+
+final class HostingAnnotationView: MKAnnotationView {
+
+    private var hostingController: UIHostingController<AnyView>?
+
+    override init(
+        annotation: MKAnnotation?,
+        reuseIdentifier: String?
+    ) {
+        super.init(
+            annotation: annotation,
+            reuseIdentifier: reuseIdentifier
+        )
+
+        backgroundColor = .clear
+        canShowCallout = true
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    func configure<Content: View>(
+        annotation: MKAnnotation,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.annotation = annotation
+
+        let rootView = AnyView(content())
+
+        if let hostingController {
+            hostingController.rootView = rootView
+        } else {
+            let controller = UIHostingController(rootView: rootView)
+            controller.view.backgroundColor = .clear
+            controller.view.isOpaque = false
+            controller.view.translatesAutoresizingMaskIntoConstraints = false
+
+            addSubview(controller.view)
+
+            NSLayoutConstraint.activate([
+                controller.view.leadingAnchor.constraint(
+                    equalTo: leadingAnchor
+                ),
+                controller.view.trailingAnchor.constraint(
+                    equalTo: trailingAnchor
+                ),
+                controller.view.topAnchor.constraint(
+                    equalTo: topAnchor
+                ),
+                controller.view.bottomAnchor.constraint(
+                    equalTo: bottomAnchor
+                )
+            ])
+
+            hostingController = controller
+        }
+
+        setNeedsLayout()
+        layoutIfNeeded()
+        updateSize()
+    }
+
+    private func updateSize() {
+        guard let hostedView = hostingController?.view else {
+            return
+        }
+
+        let size = hostedView.systemLayoutSizeFitting(
+            UIView.layoutFittingCompressedSize
+        )
+
+        guard size.width.isFinite,
+              size.height.isFinite,
+              size.width > 0,
+              size.height > 0 else {
+            return
+        }
+
+        bounds = CGRect(origin: .zero, size: size)
+        centerOffset = CGPoint(x: 0, y: -size.height / 2)
+    }
+
+    override func prepareForReuse() {
+        super.prepareForReuse()
+
+        // Clear the previous annotation's state.
+        annotation = nil
+        canShowCallout = true
+    }
+}

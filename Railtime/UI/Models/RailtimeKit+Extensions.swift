@@ -119,6 +119,13 @@ typealias BusStop = LTABusStopInfo
 
 extension LTATrainStopInfo.Exit: @retroactive Identifiable {
     public var id: String { code }
+    public var coordinate: CLLocationCoordinate2D {
+        if let latitude, let longitude {
+            .init(latitude: latitude, longitude: longitude)
+        } else {
+            fatalError("Um might wanna figure this one out")
+        }
+    }
 
     var sfSymbolName: String {
         let trimmed = code.replacingOccurrences(of: "Exit", with: "", options: .caseInsensitive)
