@@ -23,15 +23,6 @@ class TransitMapManager {
 
     // Smooth camera state with debounced map center tracking to prevent 120Hz view re-evaluation
     var position: MapCameraPosition = .automatic
-    var immediateMapCenter: CLLocationCoordinate2D? = nil
-    var debouncedMapCenter: CLLocationCoordinate2D? = nil
-    var cameraDebounceTask: Task<Void, Never>? = nil
-    var hasCenteredOnUser: Bool = false
-
-    var currentCameraDistance: Double = 1800
-    var isZooming: Bool = false
-    var hasInitialCameraSettled: Bool = false
-    var zoomHideTask: Task<Void, Never>? = nil
 
     // User Settings AppStorage
     // TODO: figure out an elegant solution that doesn't disable observability
@@ -40,12 +31,17 @@ class TransitMapManager {
     @ObservationIgnored @AppStorage("exitsZoomThreshold") private var exitsZoomThreshold: Int = 60
     @ObservationIgnored @AppStorage("colorSchemeMode") private var colorSchemeMode: String = "system"
 
+    private var cameraDebounceTask: Task<Void, Never>? = nil
+    private var zoomHideTask: Task<Void, Never>? = nil
+
     init(
         ltaService: LTAService,
         locationManager: LocationManager
     ) {
         self.ltaService = ltaService
         self.locationManager = locationManager
+
+        updateProperties()
     }
 
     var preferredColorScheme: ColorScheme? {
@@ -56,63 +52,40 @@ class TransitMapManager {
         }
     }
 
-    // Effective center: user location or map camera center fallback
-    var effectiveCenter: CLLocationCoordinate2D {
-        debouncedMapCenter ?? locationManager.userLocation ?? CLLocationCoordinate2D(latitude: 1.3521, longitude: 103.8198)
-    }
+    // MARK: Camera position
+    /// Effective center: user location or map camera center fallback
+    private(set) var effectiveCenter: CLLocationCoordinate2D!
+    /// Whether the map has centered on the user's position
+    private(set) var hasCenteredOnUser: Bool = false
+    /// The current distance of the camera above the gground
+    private(set) var currentCameraDistance: Double = 1800
+    /// If the camera's initial position has settled
+    private(set) var hasInitialCameraSettled: Bool = false
+    /// The current zoom percentage
+    private(set) var currentZoomPercent: Int = 0
+    /// Whether the ui is currently zooming
+    private(set) var isZooming: Bool = false
 
-    var currentZoomPercent: Int {
-        zoomPercentage(currentCameraDistance)
-    }
-
+    // MARK: Map details
     // Threshold 1: MRT / LRT stations shown at zoom >= mrtZoomThreshold%
-    var showMRTStations: Bool { currentZoomPercent >= mrtZoomThreshold }
-
+    private(set) var showMRTStations: Bool = false
     // Threshold 2: Bus stops shown at zoom >= busStopsZoomThreshold%
-    var showBusStops: Bool { currentZoomPercent >= busStopsZoomThreshold }
-
+    private(set) var showBusStops: Bool = false
     // Threshold 3: Station exit indicators shown at zoom >= exitsZoomThreshold%
-    var showExitIndicators: Bool { currentZoomPercent >= exitsZoomThreshold }
-
+    private(set) var showExitIndicators: Bool = false
     // Dynamic scale for map station caplets based on zoom percentage (0.50x to 1.15x)
-    var stationCapletScale: CGFloat {
-        let pct = Double(currentZoomPercent) / 100.0
-        let scale = 0.50 + (pct * 0.65)
-        return CGFloat(scale)
-    }
-
+    private(set) var stationCapletScale: CGFloat = 1.0
     // Dynamic scale for station exit icons and bus stop badges based on zoom percentage (0.45x to 1.15x)
-    var detailIconScale: CGFloat {
-        let pct = Double(currentZoomPercent) / 100.0
-        let scale = 0.45 + (pct * 0.70)
-        return CGFloat(scale)
-    }
-
+    private(set) var detailIconScale: CGFloat = 1.0
     // Bounding box filter for nearby bus stops (~1.5km) to prevent frame drops when panning
-    var sortedBusStops: [BusStop] {
-        // 33437m = 0.083 deg
-
-        let center = effectiveCenter
-        let visibleDelta = currentCameraDistance * 0.083 / 33437
-        // the precision is rounded to the nearest order of magnitude
-        // tho its in terms of e instead of 10
-        let precision = exp(log(visibleDelta / 10).rounded(.towardZero))
-        let nearby = ltaService.spatialIndex.stops(
-            around: center,
-            visibleDelta: visibleDelta,
-            precision: showBusStops ? 0 : precision
-        )
-        return nearby
-            .map { (dist: $0.distance(from: center) ?? Double.infinity, item: $0) }
-            .sorted { $0.dist < $1.dist }
-            .map { $0.item }
-    }
+    private(set) var sortedBusStops: [BusStop] = []
 
     func startup() async {
         async let a: () = ltaService.fetchTrainServiceAlerts()
         async let b: () = ltaService.fetchLiveBusStops()
 
         _ = await (a, b)
+        updateProperties()
     }
 
     func updateCamera(context: MapCameraUpdateContext) {
@@ -120,8 +93,6 @@ class TransitMapManager {
         let newDistance = context.camera.distance
 
         Task { @MainActor in
-            self.immediateMapCenter = newCenter
-
             if self.hasInitialCameraSettled {
                 if abs(newDistance - self.currentCameraDistance) > 1.0 {
                     withAnimation(.easeInOut(duration: 0.2)) {
@@ -143,6 +114,7 @@ class TransitMapManager {
                 self.hasInitialCameraSettled = true
             }
             self.currentCameraDistance = newDistance
+            updateProperties()
 
             // Debounce map updates by 1.5 seconds after panning stops
             guard cameraDebounceTask == nil else { return }
@@ -151,12 +123,26 @@ class TransitMapManager {
                 try? await Task.sleep(nanoseconds: 0_200_000_000) // 5Hz
                 if !Task.isCancelled {
                     await MainActor.run {
-                        self.debouncedMapCenter = newCenter
+                        self.effectiveCenter = newCenter
                         self.cameraDebounceTask = nil
+                        updateProperties()
                     }
                 }
             }
         }
+    }
+
+    func updateLocation() {
+        guard let userLoc = locationManager.userLocation, !hasCenteredOnUser else { return }
+        // If user location is in Singapore, center map on user location
+        guard userLoc.latitude > 1.1 && userLoc.latitude < 1.5 && userLoc.longitude > 103.5 && userLoc.longitude < 104.1 else { return }
+
+        hasCenteredOnUser = true
+        withAnimation(.spring(response: 0.8, dampingFraction: 0.8)) {
+            position = .camera(MapCamera(centerCoordinate: userLoc, distance: 1800))
+        }
+
+        updateProperties()
     }
 
     func selectAndNavigateTo(item: TransitPathItem, atRoot: Bool = false) {
@@ -184,6 +170,47 @@ class TransitMapManager {
     }
 
     private func updateProperties() {
+        // Effective center: user location or map camera center fallback
+        effectiveCenter = if let effectiveCenter {
+            effectiveCenter
+        } else {
+            locationManager.userLocation ?? CLLocationCoordinate2D(latitude: 1.3521, longitude: 103.8198)
+        }
 
+        currentZoomPercent = zoomPercentage(currentCameraDistance)
+
+        // Threshold 1: MRT / LRT stations shown at zoom >= mrtZoomThreshold%
+        showMRTStations = currentZoomPercent >= mrtZoomThreshold
+
+        // Threshold 2: Bus stops shown at zoom >= busStopsZoomThreshold%
+        showBusStops = currentZoomPercent >= busStopsZoomThreshold
+
+        // Threshold 3: Station exit indicators shown at zoom >= exitsZoomThreshold%
+        showExitIndicators = currentZoomPercent >= exitsZoomThreshold
+
+        // Dynamic scale for map station caplets based on zoom percentage (0.50x to 1.15x)
+        let pct = Double(currentZoomPercent) / 100.0
+        stationCapletScale = CGFloat(0.50 + (pct * 0.65))
+
+        // Dynamic scale for station exit icons and bus stop badges based on zoom percentage (0.45x to 1.15x)
+        detailIconScale = CGFloat(0.45 + (pct * 0.70))
+
+        // Bounding box filter for nearby bus stops (~1.5km) to prevent frame drops when panning
+
+        // 33437m = 0.083 deg
+        let center = effectiveCenter
+        let visibleDelta = currentCameraDistance * 0.083 / 33437
+        // the precision is rounded to the nearest order of magnitude
+        // tho its in terms of e instead of 10
+        let precision = exp(log(visibleDelta / 10).rounded(.towardZero))
+        let nearby = ltaService.spatialIndex.stops(
+            around: center!,
+            visibleDelta: visibleDelta,
+            precision: showBusStops ? 0 : precision
+        )
+        sortedBusStops = nearby
+            .map { (dist: $0.distance(from: center) ?? Double.infinity, item: $0) }
+            .sorted { $0.dist < $1.dist }
+            .map { $0.item }
     }
 }

@@ -77,18 +77,20 @@ struct ContentView: View {
         }
         // Center map on user location automatically when location updates at startup
         .onChange(of: manager.locationManager.userLocation?.latitude) { _, _ in
-            if let userLoc = manager.locationManager.userLocation, !manager.hasCenteredOnUser {
-                // If user location is in Singapore, center map on user location
-                if userLoc.latitude > 1.1 && userLoc.latitude < 1.5 && userLoc.longitude > 103.5 && userLoc.longitude < 104.1 {
-                    manager.hasCenteredOnUser = true
-                    withAnimation(.spring(response: 0.8, dampingFraction: 0.8)) {
-                        manager.position = .camera(MapCamera(centerCoordinate: userLoc, distance: 1800))
-                    }
-                }
-            }
+            manager.updateLocation()
         }
         .onChange(of: manager.navigationPath) { _, newValue in
             // TODO: update the current UI
+        }
+        .overlay(alignment: .topLeading) {
+            let text: String = [manager.showMRTStations, manager.showBusStops, manager.showExitIndicators]
+                .map { $0 ? "Y" : "N"}
+                .joined(separator: " ")
+
+            Text(text)
+                .background {
+                    Color.blue
+                }
         }
     }
 
@@ -123,15 +125,18 @@ struct ContentView: View {
                 }
             }
 
-            Annotation(station.name, coordinate: station.coordinate) {
-                if manager.showMRTStations {
+            if manager.showMRTStations {
+                Annotation(station.name, coordinate: station.coordinate) {
                     StationCodeCapletView(station: station)
                         .scaleEffect(manager.stationCapletScale)
                         .animation(.interactiveSpring(response: 0.3, dampingFraction: 0.85), value: manager.stationCapletScale)
                         .onTapGesture {
                             manager.selectAndNavigateTo(item: .trainStop(station), atRoot: true)
                         }
-                } else {
+                }
+                .tag(TransitPathItem.trainStop(station))
+            } else {
+                Annotation(station.name, coordinate: station.coordinate) {
                     StationCodeMiniCapletView(station: station)
                         .scaleEffect(manager.stationCapletScale)
                         .animation(.interactiveSpring(response: 0.3, dampingFraction: 0.85), value: manager.stationCapletScale)
@@ -139,8 +144,8 @@ struct ContentView: View {
                             manager.selectAndNavigateTo(item: .trainStop(station), atRoot: true)
                         }
                 }
+                .tag(TransitPathItem.trainStop(station))
             }
-            .tag(TransitPathItem.trainStop(station))
         }
     }
 
