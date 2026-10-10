@@ -6,7 +6,7 @@ import Combine
 // MARK: - Main Content View (Interactive Map with Custom Pins)
 
 struct ContentView: View {
-    @State var manager: TransitMapManager
+    @ObservedObject var manager: TransitMapManager
 
     var body: some View {
         ZStack(alignment: .topLeading) {

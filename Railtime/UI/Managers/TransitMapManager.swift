@@ -10,19 +10,16 @@ import MapKit
 import LTAAPI
 import Combine
 
-@Observable
-class TransitMapManager {
-    @ObservationIgnored
+class TransitMapManager: ObservableObject {
     var ltaService: LTAService
-    @ObservationIgnored
     var locationManager: LocationManager
 
-    var navigationPath: [TransitPathItem] = []
-    var sheetSelection: PresentationDetent = .fraction(0.25)
-    var selectedTransitItem: TransitPathItem? = nil
+    @Published var navigationPath: [TransitPathItem] = []
+    @Published var sheetSelection: PresentationDetent = .fraction(0.25)
+    @Published var selectedTransitItem: TransitPathItem? = nil
 
     // Smooth camera state with debounced map center tracking to prevent 120Hz view re-evaluation
-    var position: MapCameraPosition = .automatic
+    @Published var position: MapCameraPosition = .automatic
 
     // User Settings AppStorage
     // TODO: figure out an elegant solution that doesn't disable observability
@@ -54,31 +51,31 @@ class TransitMapManager {
 
     // MARK: Camera position
     /// Effective center: user location or map camera center fallback
-    private(set) var effectiveCenter: CLLocationCoordinate2D!
+    @Published private(set) var effectiveCenter: CLLocationCoordinate2D!
     /// Whether the map has centered on the user's position
-    private(set) var hasCenteredOnUser: Bool = false
+    @Published private(set) var hasCenteredOnUser: Bool = false
     /// The current distance of the camera above the gground
-    private(set) var currentCameraDistance: Double = 1800
+    @Published private(set) var currentCameraDistance: Double = 1800
     /// If the camera's initial position has settled
-    private(set) var hasInitialCameraSettled: Bool = false
+    @Published private(set) var hasInitialCameraSettled: Bool = false
     /// The current zoom percentage
-    private(set) var currentZoomPercent: Int = 0
+    @Published private(set) var currentZoomPercent: Int = 0
     /// Whether the ui is currently zooming
-    private(set) var isZooming: Bool = false
+    @Published private(set) var isZooming: Bool = false
 
     // MARK: Map details
     // Threshold 1: MRT / LRT stations shown at zoom >= mrtZoomThreshold%
-    private(set) var showMRTStations: Bool = false
+    @Published private(set) var showMRTStations: Bool = false
     // Threshold 2: Bus stops shown at zoom >= busStopsZoomThreshold%
-    private(set) var showBusStops: Bool = false
+    @Published private(set) var showBusStops: Bool = false
     // Threshold 3: Station exit indicators shown at zoom >= exitsZoomThreshold%
-    private(set) var showExitIndicators: Bool = false
+    @Published private(set) var showExitIndicators: Bool = false
     // Dynamic scale for map station caplets based on zoom percentage (0.50x to 1.15x)
-    private(set) var stationCapletScale: CGFloat = 1.0
+    @Published private(set) var stationCapletScale: CGFloat = 1.0
     // Dynamic scale for station exit icons and bus stop badges based on zoom percentage (0.45x to 1.15x)
-    private(set) var detailIconScale: CGFloat = 1.0
+    @Published private(set) var detailIconScale: CGFloat = 1.0
     // Bounding box filter for nearby bus stops (~1.5km) to prevent frame drops when panning
-    private(set) var sortedBusStops: [BusStop] = []
+    @Published private(set) var sortedBusStops: [BusStop] = []
 
     func startup() async {
         async let a: () = ltaService.fetchTrainServiceAlerts()
