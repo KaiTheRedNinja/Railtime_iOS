@@ -2,9 +2,15 @@
 
 ## Goals
 
-Railtime intends to be a competitor with Google Maps and Citymapper. Its differentiating features are:
-- Allowing the user to visualise transfers in a more intuitive manner
-- Provide the user with the option to switch routes halfway through
+Railtime intends to be a competitor with Google Maps and Citymapper, but right now acts more like MyTransport. It allows you to:
+- See nearby bus and MRT stops
+- MRT stations:
+  - How crowded the station is
+  - The exits of the station
+  - Nearby bus stops
+- Bus stops:
+  - List of bus services that go through that stop
+  - The next 3 arrivals of each service
 
 ## Architecture
 
@@ -19,10 +25,9 @@ Railtime uses a MVVM architecture:
 
 - `API`: LTAClient wraps LTA DataMall's REST API
 - `BusEstimation`: A (mostly) stateless manager that can estimate bus timings given the LTA API, but only on a single route
-- `Journey`: A stateful manager that holds the journey, and also "context" which is derived from Estimation.
 
 ## Todo
-- [ ] Figure out how to optimise the display of things on maps UI
+- [x] Figure out how to optimise the display of things on maps UI
 - [ ] A\* algorithm
   - [ ] Centralised list of bus and train stops
   - [ ] Figure out how to get the A\* algo working in the first place
