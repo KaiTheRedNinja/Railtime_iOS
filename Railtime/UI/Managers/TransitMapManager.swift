@@ -200,20 +200,24 @@ class TransitMapManager: ObservableObject {
         // Bounding box filter for nearby bus stops (~1.5km) to prevent frame drops when panning
 
         // 33437m = 0.083 deg
-        let center = effectiveCenter
-        let visibleDelta = currentCameraDistance * 0.083 / 33437
-        // the precision is rounded to the nearest order of magnitude
-        // tho its in terms of e instead of 10
-        let precision = exp(log(visibleDelta / 10).rounded(.towardZero))
-        let nearby = ltaService.spatialIndex.stops(
-            around: center!,
-            visibleDelta: visibleDelta,
-            precision: showBusStops ? 0 : precision
-        )
-        sortedBusStops = nearby
-            .map { (dist: $0.distance(from: center) ?? Double.infinity, item: $0) }
-            .sorted { $0.dist < $1.dist }
-            .map { $0.item }
+        if showMRTStations {
+            let center = effectiveCenter
+            let visibleDelta = currentCameraDistance * 0.083 / 33437
+            // the precision is rounded to the nearest order of magnitude
+            // tho its in terms of e instead of 10
+            let precision = exp(log(visibleDelta / 10).rounded(.towardZero))
+            let nearby = ltaService.spatialIndex.stops(
+                around: center!,
+                visibleDelta: visibleDelta,
+                precision: showBusStops ? 0 : precision
+            )
+            sortedBusStops = nearby
+                .map { (dist: $0.distance(from: center) ?? Double.infinity, item: $0) }
+                .sorted { $0.dist < $1.dist }
+                .map { $0.item }
+        } else {
+            sortedBusStops = []
+        }
     }
 
     func updateAnnotations() {
@@ -237,16 +241,18 @@ class TransitMapManager: ObservableObject {
                 }
             }
         }
-        for stop in sortedBusStops {
-            let key = AnyHashable(stop)
-            if let existing = annotationObjects[key] {
-                newAnnotations[key] = existing
-            } else {
-                newAnnotations[key] = TransitAnnotation(stop)
+        if showMRTStations {
+            for stop in sortedBusStops {
+                let key = AnyHashable(stop)
+                if let existing = annotationObjects[key] {
+                    newAnnotations[key] = existing
+                } else {
+                    newAnnotations[key] = TransitAnnotation(stop)
+                }
             }
         }
-        self.annotationObjects = newAnnotations
 
+        self.annotationObjects = newAnnotations
         mapController.setAnnotations(newAnnotations.values)
     }
 }

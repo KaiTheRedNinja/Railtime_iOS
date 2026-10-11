@@ -22,23 +22,37 @@ struct ContentView: View {
                 manager.updateCamera(camera: context.camera)
             } annotationViewProvider: { mapView, annotation in
                 guard let annotation = annotation as? TransitAnnotation else { return nil }
-                mapView.register(HostingAnnotationView.self, forAnnotationViewWithReuseIdentifier: "HOSTING_ANNOTATION_VIEW")
+                mapView.register(HostingAnnotationView.self, forAnnotationViewWithReuseIdentifier: "HOSTING_ANNOTATION_VIEW_MRT")
+                mapView.register(HostingAnnotationView.self, forAnnotationViewWithReuseIdentifier: "HOSTING_ANNOTATION_VIEW_BUS")
+                mapView.register(HostingAnnotationView.self, forAnnotationViewWithReuseIdentifier: "HOSTING_ANNOTATION_VIEW_EXIT")
 
-                let view = mapView.dequeueReusableAnnotationView(
-                    withIdentifier: "HOSTING_ANNOTATION_VIEW",
-                    for: annotation
-                ) as! HostingAnnotationView
+                var view: HostingAnnotationView?
 
                 if let station = annotation.underlying as? LTATrainStopInfo {
-                    view.configure(annotation: annotation) {
+                    view = mapView.dequeueReusableAnnotationView(
+                        withIdentifier: "HOSTING_ANNOTATION_VIEW_MRT",
+                        for: annotation
+                    ) as? HostingAnnotationView
+
+                    view!.configure(annotation: annotation) {
                         TrainAnnotation(manager: manager, station: station)
                     }
                 } else if let stop = annotation.underlying as? LTABusStopInfo {
-                    view.configure(annotation: annotation) {
+                    view = mapView.dequeueReusableAnnotationView(
+                        withIdentifier: "HOSTING_ANNOTATION_VIEW_BUS",
+                        for: annotation
+                    ) as? HostingAnnotationView
+
+                    view!.configure(annotation: annotation) {
                         BusAnnotation(manager: manager, stop: stop)
                     }
                 } else if let exit = annotation.underlying as? LTATrainStopInfo.Exit {
-                    view.configure(annotation: annotation) {
+                    view = mapView.dequeueReusableAnnotationView(
+                        withIdentifier: "HOSTING_ANNOTATION_VIEW_EXIT",
+                        for: annotation
+                    ) as? HostingAnnotationView
+
+                    view!.configure(annotation: annotation) {
                         ExitAnnotation(manager: manager, exit: exit)
                     }
                 }
@@ -104,16 +118,6 @@ struct ContentView: View {
         }
         .onChange(of: manager.navigationPath) { _, newValue in
             // TODO: update the current UI
-        }
-        .overlay(alignment: .topLeading) {
-            let text: String = [manager.showMRTStations, manager.showBusStops, manager.showExitIndicators]
-                .map { $0 ? "Y" : "N"}
-                .joined(separator: " ")
-
-            Text(text)
-                .background {
-                    Color.blue
-                }
         }
         .onReceive(updateTimer) { _ in
             manager.updateAnnotations()
