@@ -24,15 +24,15 @@ class TransitMapManager: ObservableObject {
 
     // User Settings AppStorage
     // TODO: figure out an elegant solution that doesn't disable observability
-    @ObservationIgnored @AppStorage("mrtZoomThreshold") private var mrtZoomThreshold: Int = 1
-    @ObservationIgnored @AppStorage("busStopsZoomThreshold") private var busStopsZoomThreshold: Int = 40
-    @ObservationIgnored @AppStorage("exitsZoomThreshold") private var exitsZoomThreshold: Int = 60
-    @ObservationIgnored @AppStorage("colorSchemeMode") private var colorSchemeMode: String = "system"
+    @ObservationIgnored @AppStorage("mrtZoomThreshold") internal var mrtZoomThreshold: Int = 1
+    @ObservationIgnored @AppStorage("busStopsZoomThreshold") internal var busStopsZoomThreshold: Int = 40
+    @ObservationIgnored @AppStorage("exitsZoomThreshold") internal var exitsZoomThreshold: Int = 60
+    @ObservationIgnored @AppStorage("colorSchemeMode") internal var colorSchemeMode: String = "system"
 
-    private var cameraDebounceTask: Task<Void, Never>? = nil
-    private var zoomHideTask: Task<Void, Never>? = nil
-    private var annotationObjects: [AnyHashable: any MKAnnotation] = [:]
-    private var overlayObjects: [AnyHashable: any MKOverlay] = [:]
+    internal var cameraDebounceTask: Task<Void, Never>? = nil
+    internal var zoomHideTask: Task<Void, Never>? = nil
+    internal var annotationObjects: [AnyHashable: any MKAnnotation] = [:]
+    internal var overlayObjects: [AnyHashable: any MKOverlay] = [:]
 
     init(
         ltaService: LTAService,
@@ -55,31 +55,31 @@ class TransitMapManager: ObservableObject {
 
     // MARK: Camera position
     /// Effective center: user location or map camera center fallback
-    @Published private(set) var effectiveCenter: CLLocationCoordinate2D!
+    @Published var effectiveCenter: CLLocationCoordinate2D!
     /// Whether the map has centered on the user's position
-    @Published private(set) var hasCenteredOnUser: Bool = false
+    @Published var hasCenteredOnUser: Bool = false
     /// The current distance of the camera above the gground
-    @Published private(set) var currentCameraDistance: Double = 1800
+    @Published var currentCameraDistance: Double = 1800
     /// If the camera's initial position has settled
-    @Published private(set) var hasInitialCameraSettled: Bool = false
+    @Published var hasInitialCameraSettled: Bool = false
     /// The current zoom percentage
-    @Published private(set) var currentZoomPercent: Int = 0
+    @Published var currentZoomPercent: Int = 0
     /// Whether the ui is currently zooming
-    @Published private(set) var isZooming: Bool = false
+    @Published var isZooming: Bool = false
 
     // MARK: Map details
     // Threshold 1: MRT / LRT stations shown at zoom >= mrtZoomThreshold%
-    @Published private(set) var showMRTStations: Bool = false
+    @Published var showMRTStations: Bool = false
     // Threshold 2: Bus stops shown at zoom >= busStopsZoomThreshold%
-    @Published private(set) var showBusStops: Bool = false
+    @Published var showBusStops: Bool = false
     // Threshold 3: Station exit indicators shown at zoom >= exitsZoomThreshold%
-    @Published private(set) var showExitIndicators: Bool = false
+    @Published var showExitIndicators: Bool = false
     // Dynamic scale for map station caplets based on zoom percentage (0.50x to 1.15x)
-    @Published private(set) var stationCapletScale: CGFloat = 1.0
+    @Published var stationCapletScale: CGFloat = 1.0
     // Dynamic scale for station exit icons and bus stop badges based on zoom percentage (0.45x to 1.15x)
-    @Published private(set) var detailIconScale: CGFloat = 1.0
+    @Published var detailIconScale: CGFloat = 1.0
     // Bounding box filter for nearby bus stops (~1.5km) to prevent frame drops when panning
-    @Published private(set) var sortedBusStops: [BusStop] = []
+    @Published var sortedBusStops: [BusStop] = []
 
     func startup() async {
         async let a: () = ltaService.fetchTrainServiceAlerts()
@@ -88,227 +88,4 @@ class TransitMapManager: ObservableObject {
         _ = await (a, b)
         updateProperties()
     }
-
-    func updateCamera(camera: MKMapCamera) {
-        let newCenter = camera.centerCoordinate
-        let newDistance = camera.centerCoordinateDistance
-
-        Task { @MainActor in
-            if self.hasInitialCameraSettled {
-                if abs(newDistance - self.currentCameraDistance) > 1.0 {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        self.isZooming = true
-                    }
-                    self.zoomHideTask?.cancel()
-                    self.zoomHideTask = Task {
-                        try? await Task.sleep(nanoseconds: 1_200_000_000)
-                        if !Task.isCancelled {
-                            await MainActor.run {
-                                withAnimation(.easeInOut(duration: 0.35)) {
-                                    self.isZooming = false
-                                }
-                            }
-                        }
-                    }
-                }
-            } else {
-                self.hasInitialCameraSettled = true
-            }
-            self.currentCameraDistance = newDistance
-//            updateProperties()
-
-            // Debounce map updates by 1.5 seconds after panning stops
-//            guard cameraDebounceTask == nil else { return }
-//
-//            self.cameraDebounceTask = Task {
-//                try? await Task.sleep(nanoseconds: 0_200_000_000) // 5Hz
-//                if !Task.isCancelled {
-//                    await MainActor.run {
-                        self.effectiveCenter = newCenter
-                        self.cameraDebounceTask = nil
-                        updateProperties()
-//                    }
-//                }
-//            }
-        }
-    }
-
-    func updateLocation() {
-        guard let userLoc = locationManager.userLocation, !hasCenteredOnUser else { return }
-        // If user location is in Singapore, center map on user location
-        guard userLoc.latitude > 1.1 && userLoc.latitude < 1.5 && userLoc.longitude > 103.5 && userLoc.longitude < 104.1 else { return }
-
-        hasCenteredOnUser = true
-        withAnimation(.spring(response: 0.8, dampingFraction: 0.8)) {
-            position = .camera(MapCamera(centerCoordinate: userLoc, distance: 1800))
-            mapController.setCamera(.init(lookingAtCenter: userLoc, fromDistance: 1800, pitch: 0, heading: 0))
-        }
-
-        updateProperties()
-    }
-
-    func selectAndNavigateTo(item: TransitPathItem, atRoot: Bool = false) {
-        if atRoot { navigationPath = [] }
-
-        navigationPath.append(item)
-
-        if let coordinate = item.coordinate {
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.75)) {
-                position = .camera(MapCamera(centerCoordinate: coordinate, distance: 1200))
-                mapController.setCamera(.init(lookingAtCenter: coordinate, fromDistance: 1200, pitch: 0, heading: 0))
-                sheetSelection = .large
-            }
-        }
-    }
-
-    private func zoomPercentage(_ distance: Double) -> Int {
-        let minDist = 200.0   // 100% zoomed in
-        let maxDist = 50000.0 // 0% zoomed out
-        let clamped = max(minDist, min(maxDist, distance))
-        let logMin = log(minDist)
-        let logMax = log(maxDist)
-        let fraction = 1.0 - ((log(clamped) - logMin) / (logMax - logMin))
-        let percentage = Int((fraction * 100.0).rounded())
-        return max(0, min(100, percentage))
-    }
-
-    private func updateProperties() {
-        // Effective center: user location or map camera center fallback
-        effectiveCenter = if let effectiveCenter {
-            effectiveCenter
-        } else {
-            locationManager.userLocation ?? CLLocationCoordinate2D(latitude: 1.3521, longitude: 103.8198)
-        }
-
-        currentZoomPercent = zoomPercentage(currentCameraDistance)
-
-        // Threshold 1: MRT / LRT stations shown at zoom >= mrtZoomThreshold%
-        showMRTStations = currentZoomPercent >= mrtZoomThreshold
-
-        // Threshold 2: Bus stops shown at zoom >= busStopsZoomThreshold%
-        showBusStops = currentZoomPercent >= busStopsZoomThreshold
-
-        // Threshold 3: Station exit indicators shown at zoom >= exitsZoomThreshold%
-        showExitIndicators = currentZoomPercent >= exitsZoomThreshold
-
-        // Dynamic scale for map station caplets based on zoom percentage (0.50x to 1.15x)
-        let pct = Double(currentZoomPercent) / 100.0
-        stationCapletScale = CGFloat(0.50 + (pct * 0.65))
-
-        // Dynamic scale for station exit icons and bus stop badges based on zoom percentage (0.45x to 1.15x)
-        detailIconScale = CGFloat(0.45 + (pct * 0.70))
-
-        // Bounding box filter for nearby bus stops (~1.5km) to prevent frame drops when panning
-
-        // 33437m = 0.083 deg
-        if showMRTStations {
-            let center = effectiveCenter
-            let visibleDelta = currentCameraDistance * 0.083 / 33437
-            // the precision is rounded to the nearest order of magnitude
-            // tho its in terms of e instead of 10
-            let precision = exp(log(visibleDelta / 10).rounded(.towardZero))
-            let nearby = ltaService.spatialIndex.stops(
-                around: center!,
-                visibleDelta: visibleDelta,
-                precision: showBusStops ? 0 : precision
-            )
-            sortedBusStops = nearby
-                .map { (dist: $0.distance(from: center) ?? Double.infinity, item: $0) }
-                .sorted { $0.dist < $1.dist }
-                .map { $0.item }
-        } else {
-            sortedBusStops = []
-        }
-    }
-
-    func updateAnnotations() {
-        var newAnnotations: [AnyHashable: any MKAnnotation] = [:]
-        for station in ltaService.allStations {
-            let key = AnyHashable(station)
-            if let existing = annotationObjects[key] {
-                newAnnotations[key] = existing
-            } else {
-                newAnnotations[key] = TransitAnnotation(station)
-            }
-
-            if showExitIndicators {
-                for exit in station.exits {
-                    let key = AnyHashable(exit)
-                    if let existing = annotationObjects[key] {
-                        newAnnotations[key] = existing
-                    } else {
-                        newAnnotations[key] = TransitAnnotation(exit)
-                    }
-                }
-            }
-        }
-        if showMRTStations {
-            for stop in sortedBusStops {
-                let key = AnyHashable(stop)
-                if let existing = annotationObjects[key] {
-                    newAnnotations[key] = existing
-                } else {
-                    newAnnotations[key] = TransitAnnotation(stop)
-                }
-            }
-        }
-
-        self.annotationObjects = newAnnotations
-        mapController.setAnnotations(newAnnotations.values)
-
-        var newOverlays: [AnyHashable: any MKOverlay] = [:]
-        for routes in ltaService.allMRTRoutes {
-            for uniqueRoute in routes.uniqueRoutes {
-                let key = AnyHashable(uniqueRoute)
-
-                if let existing = overlayObjects[key] {
-                    newOverlays[key] = existing
-                } else {
-                    let points = uniqueRoute.compactMap { ltaService.allStationsById[$0]?.coordinate}
-                    let overlay = TrainLineOverlay(coordinates: points, count: points.count)
-                    overlay.code = routes.code
-                    overlay.color = UIColor(rgb: routes.color, fallback: .gray)
-                    newOverlays[key] = overlay
-                }
-            }
-        }
-
-        self.overlayObjects = newOverlays
-        mapController.setOverlays(newOverlays.values)
-    }
-}
-
-protocol MKAnnotationStructProtocol: Hashable {
-    var coordinate: CLLocationCoordinate2D { get }
-    var title: String? { get }
-    var subtitle: String? { get }
-}
-extension LTABusStopInfo: MKAnnotationStructProtocol {
-    var title: String? { self.name }
-    var subtitle: String? { nil }
-}
-extension LTATrainStopInfo: MKAnnotationStructProtocol {
-    var title: String? { self.name }
-    var subtitle: String? { nil }
-}
-extension LTATrainStopInfo.Exit: MKAnnotationStructProtocol {
-    var title: String? { self.code }
-    var subtitle: String? { nil }
-}
-
-class TransitAnnotation: NSObject, MKAnnotation {
-    var underlying: any MKAnnotationStructProtocol
-
-    init(_ underlying: any MKAnnotationStructProtocol) {
-        self.underlying = underlying
-    }
-
-    var coordinate: CLLocationCoordinate2D { underlying.coordinate }
-    var title: String? { underlying.title }
-    var subtitle: String? { underlying.subtitle }
-}
-
-final class TrainLineOverlay: MKPolyline {
-    var code: String!
-    var color: UIColor!
 }
