@@ -241,7 +241,7 @@ public extension UIKitMapView {
         }
 
         // MARK: Overlay management (e.g., polylines)
-        public func setOverlays(_ overlays: [MKOverlay], level: MKOverlayLevel = .aboveRoads) {
+        public func setOverlays(_ overlays: any Sequence<MKOverlay>, level: MKOverlayLevel = .aboveRoads) {
             guard let mapView else { return }
             let existing = Set(mapView.overlays.map { $0 as? NSObject })
             let incoming = Set(overlays.map { $0 as? NSObject })
@@ -252,7 +252,7 @@ public extension UIKitMapView {
             if !toRemove.isEmpty { mapView.removeOverlays(toRemove) }
             if !toAdd.isEmpty { mapView.addOverlays(toAdd, level: level) }
             removeAllOverlays()
-            addOverlays(overlays, level: level)
+            addOverlays(Array(overlays), level: level)
         }
 
         public func addOverlays(_ overlays: [MKOverlay], level: MKOverlayLevel = .aboveRoads) {

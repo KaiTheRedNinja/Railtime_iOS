@@ -60,7 +60,16 @@ struct ContentView: View {
                 return view
             } overlayRendererProvider: { mapView, overlay in
                 print("Requested overlay for \(overlay)")
-                return MKOverlayRenderer(overlay: overlay)
+                if let polyline = overlay as? TrainLineOverlay {
+                    let renderer = MKPolylineRenderer(polyline: polyline)
+                    renderer.strokeColor = polyline.color
+                    renderer.lineWidth = 5
+                    renderer.lineCap = .round
+                    renderer.lineJoin = .round
+                    return renderer
+                } else {
+                    return MKOverlayRenderer(overlay: overlay)
+                }
             }
             .ignoresSafeArea(.all, edges: .all)
 
@@ -238,6 +247,26 @@ extension Color {
         let blue = Double(value & 0xFF) / 255.0
 
         self = Color(red: red, green: green, blue: blue)
+    }
+}
+
+extension UIColor {
+    convenience init(rgb hexString: String, fallback: UIColor = .clear) {
+        let hex = hexString
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "#", with: "")
+
+        guard hex.count == 6,
+              let value = UInt64(hex, radix: 16) else {
+            self.init(cgColor: fallback.cgColor)
+            return
+        }
+
+        let red = Double((value >> 16) & 0xFF) / 255.0
+        let green = Double((value >> 8) & 0xFF) / 255.0
+        let blue = Double(value & 0xFF) / 255.0
+
+        self.init(red: red, green: green, blue: blue, alpha: 1)
     }
 }
 

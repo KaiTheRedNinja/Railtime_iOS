@@ -32,6 +32,7 @@ class TransitMapManager: ObservableObject {
     private var cameraDebounceTask: Task<Void, Never>? = nil
     private var zoomHideTask: Task<Void, Never>? = nil
     private var annotationObjects: [AnyHashable: any MKAnnotation] = [:]
+    private var overlayObjects: [AnyHashable: any MKOverlay] = [:]
 
     init(
         ltaService: LTAService,
@@ -254,6 +255,26 @@ class TransitMapManager: ObservableObject {
 
         self.annotationObjects = newAnnotations
         mapController.setAnnotations(newAnnotations.values)
+
+        var newOverlays: [AnyHashable: any MKOverlay] = [:]
+        for routes in ltaService.allMRTRoutes {
+            for uniqueRoute in routes.uniqueRoutes {
+                let key = AnyHashable(uniqueRoute)
+
+                if let existing = overlayObjects[key] {
+                    newOverlays[key] = existing
+                } else {
+                    let points = uniqueRoute.compactMap { ltaService.allStationsById[$0]?.coordinate}
+                    let overlay = TrainLineOverlay(coordinates: points, count: points.count)
+                    overlay.code = routes.code
+                    overlay.color = UIColor(rgb: routes.color, fallback: .gray)
+                    newOverlays[key] = overlay
+                }
+            }
+        }
+
+        self.overlayObjects = newOverlays
+        mapController.setOverlays(newOverlays.values)
     }
 }
 
@@ -285,4 +306,9 @@ class TransitAnnotation: NSObject, MKAnnotation {
     var coordinate: CLLocationCoordinate2D { underlying.coordinate }
     var title: String? { underlying.title }
     var subtitle: String? { underlying.subtitle }
+}
+
+final class TrainLineOverlay: MKPolyline {
+    var code: String!
+    var color: UIColor!
 }
