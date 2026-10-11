@@ -112,6 +112,10 @@ public extension UIKitMapView {
             // no change
         }
 
+        public func mapView(_ mapView: MKMapView, didSelect annotation: any MKAnnotation) {
+            parent.controller.onAnnotationSelected?(annotation)
+        }
+
         public func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
             if parent.continuousCameraUpdate {
                 self.mapView(mapView, regionDidChangeAnimated: false)
@@ -251,8 +255,6 @@ public extension UIKitMapView {
 
             if !toRemove.isEmpty { mapView.removeOverlays(toRemove) }
             if !toAdd.isEmpty { mapView.addOverlays(toAdd, level: level) }
-            removeAllOverlays()
-            addOverlays(Array(overlays), level: level)
         }
 
         public func addOverlays(_ overlays: [MKOverlay], level: MKOverlayLevel = .aboveRoads) {

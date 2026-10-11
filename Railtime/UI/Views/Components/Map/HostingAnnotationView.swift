@@ -101,8 +101,8 @@ final class HostingAnnotationView: MKAnnotationView {
         bounds = CGRect(origin: .zero, size: size)
         hostingController.view.frame = bounds
 
-        // Anchor the bottom center at the geographic coordinate.
-        centerOffset = CGPoint(x: 0, y: -size.height / 2)
+        // Center it
+        centerOffset = .zero
     }
 
     override func layoutSubviews() {
