@@ -120,10 +120,9 @@ extension TransitMapManager {
         // Dynamic scale for station exit icons and bus stop badges based on zoom percentage (0.45x to 1.15x)
         detailIconScale = CGFloat(0.45 + (pct * 0.70))
 
-        // Bounding box filter for nearby bus stops (~1.5km) to prevent frame drops when panning
-
         // 33437m = 0.083 deg
         if showMRTStations {
+            // Bounding box filter for nearby bus stops (~1.5km) to prevent frame drops when panning
             let center = effectiveCenter
             let visibleDelta = currentCameraDistance * 0.083 / 33437
             // the precision is rounded to the nearest order of magnitude
@@ -140,6 +139,55 @@ extension TransitMapManager {
                 .map { $0.item }
         } else {
             sortedBusStops = []
+        }
+    }
+
+    internal func updateForCurrentSelection() async throws {
+        // bus route to show
+        shownRoutes = []
+
+        let targetServices: [(service: String, stopCode: String?)]
+
+        switch navigationPath.last {
+        case let .busStop(busStopInfo):
+            guard let services = ltaService.dataSource.getServices(busStopCode: busStopInfo.busStopCode) else { return }
+            targetServices = services.map { ($0, busStopInfo.busStopCode) }
+        case let .busService(busServiceDetail):
+            targetServices = [(busServiceDetail.serviceNo, busServiceDetail.originStopCode)]
+        default: return
+        }
+
+        for (service, stopCode) in targetServices {
+            let route = try await ltaService.dataSource.getServiceRoutes(serviceNo: service)
+            var direction: Int?
+            let prevStops: [LTABusRouteRow]
+            let nextStops: [LTABusRouteRow]
+            if let stopCode, let thisStopIndex = route.firstIndex(where: { $0.busStopCode == stopCode }) {
+                let thisStop = route[thisStopIndex]
+                let stopsInDirection = route.filter { $0.direction == thisStop.direction }
+                let dirStopIndex = stopsInDirection.firstIndex(of: thisStop)!
+                prevStops = Array(stopsInDirection[0...dirStopIndex])
+                nextStops = Array(stopsInDirection[dirStopIndex...])
+                direction = thisStop.direction
+            } else { // couldn't get the current stop. default to direction 1, show direction 2 as "prev" if needed
+                direction = 1
+                prevStops = route.filter { $0.direction == 2 }
+                nextStops = route.filter { $0.direction == 1 }
+            }
+
+            async let prevStopsInfo = prevStops.concurrentCompactMap { try await self.ltaService.dataSource.getStopInfo(busStopCode: $0.busStopCode) }
+            async let nextStopsInfo = nextStops.concurrentCompactMap { try await self.ltaService.dataSource.getStopInfo(busStopCode: $0.busStopCode) }
+
+            await shownRoutes.append(
+                .init(
+                    serviceNo: service,
+                    direction: direction!,
+                    prevStops: prevStops,
+                    prevStopsInfo: try prevStopsInfo,
+                    nextStops: nextStops,
+                    nextStopsInfo: try nextStopsInfo
+                )
+            )
         }
     }
 
@@ -178,20 +226,45 @@ extension TransitMapManager {
         self.annotationObjects = newAnnotations
         mapController.setAnnotations(newAnnotations.values)
 
+        // only show the train routes if no bus routes are being shown
         var newOverlays: [AnyHashable: any MKOverlay] = [:]
-        for routes in ltaService.allMRTRoutes {
-            for uniqueRoute in routes.uniqueRoutes {
-                let key = AnyHashable(uniqueRoute)
+        if shownRoutes.isEmpty {
+            for routes in ltaService.allMRTRoutes {
+                for uniqueRoute in routes.uniqueRoutes {
+                    let key = AnyHashable(uniqueRoute)
 
-                if let existing = overlayObjects[key] {
-                    newOverlays[key] = existing
-                } else {
-                    let points = uniqueRoute.compactMap { ltaService.allStationsById[$0]?.coordinate}
-                    let overlay = TrainLineOverlay(coordinates: points, count: points.count)
-                    overlay.code = routes.code
-                    overlay.color = UIColor(rgb: routes.color, fallback: .gray)
-                    newOverlays[key] = overlay
+                    if let existing = overlayObjects[key] {
+                        newOverlays[key] = existing
+                    } else {
+                        let points = uniqueRoute.compactMap { ltaService.allStationsById[$0]?.coordinate}
+                        let overlay = TrainLineOverlay(coordinates: points, count: points.count)
+                        overlay.code = routes.code
+                        overlay.color = UIColor(rgb: routes.color, fallback: .gray)
+                        newOverlays[key] = overlay
+                    }
                 }
+            }
+        }
+
+        for route in shownRoutes {
+            let keyPrev = AnyHashable(route.prevStops)
+            let keyNext = AnyHashable(route.nextStops)
+
+            if let existingPrev = overlayObjects[keyPrev], let existingNext = overlayObjects[keyNext] {
+                newOverlays[keyPrev] = existingPrev
+                newOverlays[keyNext] = existingNext
+            } else {
+                let prevPoints = route.prevStopsInfo.map { $0.coordinate }
+                let prevOverlay = BusLineOverlay(coordinates: prevPoints, count: prevPoints.count)
+                prevOverlay.serviceNo = route.serviceNo
+                prevOverlay.hasPassed = true
+                let nextPoints = route.nextStopsInfo.map { $0.coordinate }
+                let nextOverlay = BusLineOverlay(coordinates: nextPoints, count: nextPoints.count)
+                nextOverlay.serviceNo = route.serviceNo
+                nextOverlay.hasPassed = false
+
+                newOverlays[keyPrev] = prevOverlay
+                newOverlays[keyNext] = nextOverlay
             }
         }
 

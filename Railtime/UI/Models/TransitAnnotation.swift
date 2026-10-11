@@ -42,3 +42,23 @@ final class TrainLineOverlay: MKPolyline {
     var code: String!
     var color: UIColor!
 }
+
+struct BusRouteDisplay {
+    /// The service number of this bus
+    var serviceNo: String
+    /// The direction of this bus (1 or 2)
+    var direction: Int
+    /// The stops that the bus has already travelled. This includes the current stop as the last element so that everything connects.
+    var prevStops: [LTABusRouteRow]
+    /// The information about the stops that the bus has already travelled
+    var prevStopsInfo: [LTABusStopInfo]
+    /// The stops that this bus is yet to travel
+    var nextStops: [LTABusRouteRow]
+    /// The information about the stops that the bus has yet to travel to
+    var nextStopsInfo: [LTABusStopInfo]
+}
+
+final class BusLineOverlay: MKPolyline {
+    var serviceNo: String!
+    var hasPassed: Bool!
+}

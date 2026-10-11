@@ -80,6 +80,8 @@ class TransitMapManager: ObservableObject {
     @Published var detailIconScale: CGFloat = 1.0
     // Bounding box filter for nearby bus stops (~1.5km) to prevent frame drops when panning
     @Published var sortedBusStops: [BusStop] = []
+    // The routes to show on screen
+    @Published var shownRoutes: [BusRouteDisplay] = []
 
     func startup() async {
         async let a: () = ltaService.fetchTrainServiceAlerts()

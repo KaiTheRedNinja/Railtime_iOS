@@ -9,7 +9,7 @@ import Foundation
 
 /// A single row from the 2.3 BusRoutes endpoint: one (service, direction,
 /// stop-sequence) entry along a route.
-public struct LTABusRouteRow: Hashable, Codable {
+public struct LTABusRouteRow: Hashable, Codable, Sendable {
     /// The bus service number, e.g. "15".
     public let serviceNo: String
     /// The bus operator code, e.g. "SBST".

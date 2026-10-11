@@ -67,6 +67,17 @@ struct ContentView: View {
                     renderer.lineCap = .round
                     renderer.lineJoin = .round
                     return renderer
+                } else if let polyline = overlay as? BusLineOverlay {
+                    let renderer = MKPolylineRenderer(polyline: polyline)
+                    renderer.strokeColor = if polyline.hasPassed {
+                        UIColor.gray.withAlphaComponent(0.5)
+                    } else {
+                        UIColor.green
+                    }
+                    renderer.lineWidth = 5
+                    renderer.lineCap = .round
+                    renderer.lineJoin = .round
+                    return renderer
                 } else {
                     return MKOverlayRenderer(overlay: overlay)
                 }
@@ -126,7 +137,13 @@ struct ContentView: View {
             manager.updateLocation()
         }
         .onChange(of: manager.navigationPath) { _, newValue in
-            // TODO: update the current UI
+            Task {
+                do {
+                    try await manager.updateForCurrentSelection()
+                } catch {
+                    print("ERROR UPDATING SELECTION: \(error)")
+                }
+            }
         }
         .onReceive(updateTimer) { _ in
             manager.updateAnnotations()

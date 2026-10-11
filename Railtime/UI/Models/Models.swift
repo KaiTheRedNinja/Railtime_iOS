@@ -77,3 +77,49 @@ struct LineTrainSchedule: Identifiable, Hashable {
     let lineName: String
     let directions: [TrainDirectionSchedule]
 }
+
+extension Collection where Element: Sendable {
+    func concurrentMap<U: Sendable>(
+        transform: @escaping @Sendable (Element) async throws -> U
+    ) async throws -> [U] {
+        try await withThrowingTaskGroup(
+            of: (Int, U).self
+        ) { group in
+            for (index, element) in self.enumerated() {
+                group.addTask {
+                    (index, try await transform(element))
+                }
+            }
+
+            var results = Array<U?>(repeating: nil, count: self.count)
+
+            for try await (index, result) in group {
+                results[index] = result
+            }
+
+            return results.map { $0! }
+        }
+    }
+
+    func concurrentCompactMap<U: Sendable>(
+        transform: @escaping @Sendable (Element) async throws -> U?
+    ) async throws -> [U] {
+        try await withThrowingTaskGroup(
+            of: (Int, U?).self
+        ) { group in
+            for (index, element) in self.enumerated() {
+                group.addTask {
+                    (index, try await transform(element))
+                }
+            }
+
+            var results = Array<U?>(repeating: nil, count: self.count)
+
+            for try await (index, result) in group {
+                results[index] = result
+            }
+
+            return results.compactMap { $0 }
+        }
+    }
+}
